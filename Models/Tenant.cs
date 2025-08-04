@@ -2,24 +2,32 @@ using System.ComponentModel.DataAnnotations;
 
 namespace irevlogix_backend.Models
 {
-    public class Tenant
+    public class Tenant : BaseEntity
     {
-        [Key]
-        public int Id { get; set; }
-        
         [Required]
         [MaxLength(100)]
         public string Name { get; set; } = string.Empty;
         
-        [Required]
-        public string ClientId { get; set; } = string.Empty;
+        [MaxLength(500)]
+        public string? Description { get; set; }
         
-        public DateTime DateCreated { get; set; } = DateTime.UtcNow;
+        public bool IsActive { get; set; } = true;
         
-        public DateTime DateUpdated { get; set; } = DateTime.UtcNow;
+        [MaxLength(255)]
+        public string? LogoUrl { get; set; }
         
-        public int CreatedBy { get; set; }
+        [MaxLength(50)]
+        public string? PrimaryColor { get; set; }
         
-        public int UpdatedBy { get; set; }
+        [MaxLength(50)]
+        public string? SecondaryColor { get; set; }
+        
+        [MaxLength(100)]
+        public string? TimeZone { get; set; }
+        
+        [MaxLength(10)]
+        public string? Currency { get; set; }
+        
+        public virtual ICollection<User> Users { get; set; } = new List<User>();
     }
 }
