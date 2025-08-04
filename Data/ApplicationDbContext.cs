@@ -96,10 +96,6 @@ namespace irevlogix_backend.Data
                 entity.HasKey(e => e.Id);
                 entity.Property(e => e.ShipmentNumber).IsRequired().HasMaxLength(100);
                 entity.HasIndex(e => new { e.ShipmentNumber, e.ClientId }).IsUnique();
-                entity.HasOne(e => e.Client)
-                    .WithMany(e => e.Shipments)
-                    .HasForeignKey(e => e.ClientId)
-                    .OnDelete(DeleteBehavior.Restrict);
             });
 
             modelBuilder.Entity<ShipmentItem>(entity =>

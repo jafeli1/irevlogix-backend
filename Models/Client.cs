@@ -41,6 +41,5 @@ namespace irevlogix_backend.Models
         [MaxLength(50)]
         public string? ClientType { get; set; }
         
-        public virtual ICollection<Shipment> Shipments { get; set; } = new List<Shipment>();
     }
 }
