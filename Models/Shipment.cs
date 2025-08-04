@@ -8,8 +8,7 @@ namespace irevlogix_backend.Models
         [MaxLength(100)]
         public string ShipmentNumber { get; set; } = string.Empty;
         
-        public int ClientId { get; set; }
-        public virtual Client Client { get; set; } = null!;
+        public new string ClientId { get; set; } = string.Empty;
         
         public DateTime ShipmentDate { get; set; }
         
