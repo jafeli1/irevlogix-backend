@@ -14,6 +14,8 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
 
 builder.Services.AddControllers();
 
+builder.Services.AddHttpClient();
+
 builder.Services.AddScoped<OpenAIService>();
 builder.Services.AddScoped<AIRecommendationService>();
 
