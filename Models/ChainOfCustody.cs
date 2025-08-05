@@ -1,0 +1,33 @@
+using System.ComponentModel.DataAnnotations;
+
+namespace irevlogix_backend.Models
+{
+    public class ChainOfCustody : BaseEntity
+    {
+        public int AssetId { get; set; }
+        public virtual Asset Asset { get; set; } = null!;
+        
+        public DateTime Timestamp { get; set; } = DateTime.UtcNow;
+        
+        [MaxLength(100)]
+        public string? Location { get; set; }
+        
+        public int? UserId { get; set; }
+        public virtual User? User { get; set; }
+        
+        public int? StatusChangeId { get; set; }
+        
+        [Required]
+        [MaxLength(200)]
+        public string StatusChange { get; set; } = string.Empty;
+        
+        [MaxLength(1000)]
+        public string? Notes { get; set; }
+        
+        [MaxLength(50)]
+        public string? ActionType { get; set; }
+        
+        [MaxLength(200)]
+        public string? DocumentReference { get; set; }
+    }
+}

@@ -8,18 +8,15 @@ namespace irevlogix_backend.Models
         [MaxLength(100)]
         public string Name { get; set; } = string.Empty;
         
-        [MaxLength(500)]
         public string? Description { get; set; }
-        
-        [MaxLength(50)]
-        public string? Category { get; set; }
         
         public bool IsActive { get; set; } = true;
         
-        [MaxLength(100)]
-        public string? RecyclingMethod { get; set; }
+        public decimal? DefaultPricePerUnit { get; set; }
         
-        [MaxLength(100)]
-        public string? UnitOfMeasure { get; set; }
+        public string? Unit { get; set; } // kg, lbs, pieces, etc.
+        
+        public virtual ICollection<ProcessedMaterial> ProcessedMaterials { get; set; } = new List<ProcessedMaterial>();
+
     }
 }

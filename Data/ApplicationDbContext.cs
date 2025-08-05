@@ -22,6 +22,17 @@ namespace irevlogix_backend.Data
         public DbSet<ProcessingLot> ProcessingLots { get; set; }
         public DbSet<Shipment> Shipments { get; set; }
         public DbSet<ShipmentItem> ShipmentItems { get; set; }
+        public DbSet<MaterialType> MaterialTypes { get; set; }
+        public DbSet<AssetCategory> AssetCategories { get; set; }
+        public DbSet<ClientContact> ClientContacts { get; set; }
+        public DbSet<ProcessingLot> ProcessingLots { get; set; }
+        public DbSet<ProcessingStep> ProcessingSteps { get; set; }
+        public DbSet<ProcessedMaterial> ProcessedMaterials { get; set; }
+        public DbSet<Asset> Assets { get; set; }
+        public DbSet<AssetTrackingStatus> AssetTrackingStatuses { get; set; }
+        public DbSet<ChainOfCustody> ChainOfCustodyRecords { get; set; }
+        public DbSet<ApplicationSettings> ApplicationSettings { get; set; }
+        public DbSet<KnowledgeBaseArticle> KnowledgeBaseArticles { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -169,6 +180,100 @@ namespace irevlogix_backend.Data
                     .WithMany(e => e.ShipmentItems)
                     .HasForeignKey(e => e.ProcessingLotId)
                     .OnDelete(DeleteBehavior.SetNull);
+            });
+
+            modelBuilder.Entity<MaterialType>(entity =>
+            {
+                entity.HasKey(e => e.Id);
+                entity.Property(e => e.Name).IsRequired().HasMaxLength(100);
+                entity.HasIndex(e => new { e.Name, e.ClientId }).IsUnique();
+            });
+
+            modelBuilder.Entity<AssetCategory>(entity =>
+            {
+                entity.HasKey(e => e.Id);
+                entity.Property(e => e.Name).IsRequired().HasMaxLength(100);
+                entity.HasIndex(e => new { e.Name, e.ClientId }).IsUnique();
+            });
+
+            modelBuilder.Entity<ClientContact>(entity =>
+            {
+                entity.HasKey(e => e.Id);
+                entity.Property(e => e.FirstName).IsRequired().HasMaxLength(100);
+                entity.Property(e => e.LastName).IsRequired().HasMaxLength(100);
+                entity.Property(e => e.Email).IsRequired().HasMaxLength(200);
+                entity.HasIndex(e => new { e.Email, e.ClientId }).IsUnique();
+            });
+
+            modelBuilder.Entity<ProcessingLot>(entity =>
+            {
+                entity.HasKey(e => e.Id);
+                entity.Property(e => e.LotID).IsRequired().HasMaxLength(50);
+                entity.HasIndex(e => new { e.LotID, e.ClientId }).IsUnique();
+            });
+
+            modelBuilder.Entity<ProcessingStep>(entity =>
+            {
+                entity.HasKey(e => e.Id);
+                entity.Property(e => e.StepName).IsRequired().HasMaxLength(100);
+                entity.HasOne(e => e.ProcessingLot)
+                    .WithMany(e => e.ProcessingSteps)
+                    .HasForeignKey(e => e.ProcessingLotId)
+                    .OnDelete(DeleteBehavior.Cascade);
+            });
+
+            modelBuilder.Entity<ProcessedMaterial>(entity =>
+            {
+                entity.HasKey(e => e.Id);
+                entity.Property(e => e.MaterialType).IsRequired().HasMaxLength(100);
+                entity.HasOne(e => e.ProcessingLot)
+                    .WithMany(e => e.ProcessedMaterials)
+                    .HasForeignKey(e => e.ProcessingLotId)
+                    .OnDelete(DeleteBehavior.Cascade);
+            });
+
+            modelBuilder.Entity<Asset>(entity =>
+            {
+                entity.HasKey(e => e.Id);
+                entity.Property(e => e.AssetID).IsRequired().HasMaxLength(50);
+                entity.HasIndex(e => new { e.AssetID, e.ClientId }).IsUnique();
+            });
+
+            modelBuilder.Entity<AssetTrackingStatus>(entity =>
+            {
+                entity.HasKey(e => e.Id);
+                entity.Property(e => e.StatusName).IsRequired().HasMaxLength(100);
+                entity.HasIndex(e => new { e.StatusName, e.ClientId }).IsUnique();
+            });
+
+            modelBuilder.Entity<ChainOfCustody>(entity =>
+            {
+                entity.HasKey(e => e.Id);
+                entity.HasOne(e => e.Asset)
+                    .WithMany(e => e.ChainOfCustodyRecords)
+                    .HasForeignKey(e => e.AssetId)
+                    .OnDelete(DeleteBehavior.Cascade);
+                entity.HasOne(e => e.User)
+                    .WithMany()
+                    .HasForeignKey(e => e.UserId)
+                    .OnDelete(DeleteBehavior.Restrict);
+            });
+
+            modelBuilder.Entity<ApplicationSettings>(entity =>
+            {
+                entity.HasKey(e => e.Id);
+                entity.Property(e => e.SettingKey).IsRequired().HasMaxLength(100);
+                entity.HasIndex(e => new { e.SettingKey, e.ClientId }).IsUnique();
+            });
+
+            modelBuilder.Entity<KnowledgeBaseArticle>(entity =>
+            {
+                entity.HasKey(e => e.Id);
+                entity.Property(e => e.Title).IsRequired().HasMaxLength(200);
+                entity.HasOne(e => e.Author)
+                    .WithMany()
+                    .HasForeignKey(e => e.AuthorUserId)
+                    .OnDelete(DeleteBehavior.Restrict);
             });
         }
     }

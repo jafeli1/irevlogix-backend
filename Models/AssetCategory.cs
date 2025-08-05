@@ -13,11 +13,18 @@ namespace irevlogix_backend.Models
         
         public bool IsActive { get; set; } = true;
         
+        public string? DefaultDisposition { get; set; } // Reuse, Resale, Recycle
+        
+        public bool RequiresDataSanitization { get; set; } = false;
+        
+        public virtual ICollection<Asset> Assets { get; set; } = new List<Asset>();
+        
         [MaxLength(100)]
         public string? ParentCategory { get; set; }
         
         public bool RequiresDataDestruction { get; set; } = false;
         
         public bool IsRecoverable { get; set; } = true;
+
     }
 }

@@ -4,9 +4,6 @@ namespace irevlogix_backend.Models
 {
     public class ClientContact : BaseEntity
     {
-        public int ClientId { get; set; }
-        public virtual Client Client { get; set; } = null!;
-        
         [Required]
         [MaxLength(100)]
         public string FirstName { get; set; } = string.Empty;
@@ -15,8 +12,11 @@ namespace irevlogix_backend.Models
         [MaxLength(100)]
         public string LastName { get; set; } = string.Empty;
         
+
+        [Required]
+        [MaxLength(200)]
         [EmailAddress]
-        [MaxLength(255)]
+
         public string Email { get; set; } = string.Empty;
         
         [MaxLength(20)]
@@ -32,7 +32,10 @@ namespace irevlogix_backend.Models
         
         public bool IsPrimaryContact { get; set; } = false;
         
-        [MaxLength(1000)]
+
         public string? Notes { get; set; }
+        
+        public virtual ICollection<Shipment> Shipments { get; set; } = new List<Shipment>();
+
     }
 }
