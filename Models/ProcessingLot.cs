@@ -45,5 +45,6 @@ namespace irevlogix_backend.Models
         public virtual ICollection<ProcessingStep> ProcessingSteps { get; set; } = new List<ProcessingStep>();
         public virtual ICollection<ProcessedMaterial> ProcessedMaterials { get; set; } = new List<ProcessedMaterial>();
         public virtual ICollection<ShipmentItem> IncomingShipmentItems { get; set; } = new List<ShipmentItem>();
+
     }
 }

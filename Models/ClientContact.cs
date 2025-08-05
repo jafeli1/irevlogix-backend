@@ -12,9 +12,11 @@ namespace irevlogix_backend.Models
         [MaxLength(100)]
         public string LastName { get; set; } = string.Empty;
         
+
         [Required]
         [MaxLength(200)]
         [EmailAddress]
+
         public string Email { get; set; } = string.Empty;
         
         [MaxLength(20)]
@@ -30,8 +32,10 @@ namespace irevlogix_backend.Models
         
         public bool IsPrimaryContact { get; set; } = false;
         
+
         public string? Notes { get; set; }
         
         public virtual ICollection<Shipment> Shipments { get; set; } = new List<Shipment>();
+
     }
 }

@@ -16,6 +16,10 @@ namespace irevlogix_backend.Data
         public DbSet<UserRole> UserRoles { get; set; }
         public DbSet<RolePermission> RolePermissions { get; set; }
         public DbSet<Client> Clients { get; set; }
+        public DbSet<ClientContact> ClientContacts { get; set; }
+        public DbSet<MaterialType> MaterialTypes { get; set; }
+        public DbSet<AssetCategory> AssetCategories { get; set; }
+        public DbSet<ProcessingLot> ProcessingLots { get; set; }
         public DbSet<Shipment> Shipments { get; set; }
         public DbSet<ShipmentItem> ShipmentItems { get; set; }
         public DbSet<MaterialType> MaterialTypes { get; set; }
@@ -102,11 +106,58 @@ namespace irevlogix_backend.Data
                 entity.HasIndex(e => new { e.CompanyName, e.ClientId }).IsUnique();
             });
 
+
+            modelBuilder.Entity<ClientContact>(entity =>
+            {
+                entity.HasKey(e => e.Id);
+                entity.Property(e => e.FirstName).IsRequired().HasMaxLength(100);
+                entity.Property(e => e.LastName).IsRequired().HasMaxLength(100);
+                entity.Property(e => e.Email).IsRequired().HasMaxLength(255);
+                entity.HasOne(e => e.Client)
+                    .WithMany()
+                    .HasForeignKey(e => e.ClientId)
+                    .OnDelete(DeleteBehavior.Cascade);
+                entity.HasIndex(e => new { e.Email, e.ClientId }).IsUnique();
+            });
+
+            modelBuilder.Entity<MaterialType>(entity =>
+            {
+                entity.HasKey(e => e.Id);
+                entity.Property(e => e.Name).IsRequired().HasMaxLength(100);
+                entity.HasIndex(e => new { e.Name, e.ClientId }).IsUnique();
+            });
+
+            modelBuilder.Entity<AssetCategory>(entity =>
+            {
+                entity.HasKey(e => e.Id);
+                entity.Property(e => e.Name).IsRequired().HasMaxLength(100);
+                entity.HasIndex(e => new { e.Name, e.ClientId }).IsUnique();
+            });
+
+            modelBuilder.Entity<ProcessingLot>(entity =>
+            {
+                entity.HasKey(e => e.Id);
+                entity.Property(e => e.LotNumber).IsRequired().HasMaxLength(100);
+                entity.HasIndex(e => new { e.LotNumber, e.ClientId }).IsUnique();
+                entity.HasOne(e => e.SourceShipment)
+                    .WithMany()
+                    .HasForeignKey(e => e.SourceShipmentId)
+                    .OnDelete(DeleteBehavior.SetNull);
+            });
+
             modelBuilder.Entity<Shipment>(entity =>
             {
                 entity.HasKey(e => e.Id);
                 entity.Property(e => e.ShipmentNumber).IsRequired().HasMaxLength(100);
                 entity.HasIndex(e => new { e.ShipmentNumber, e.ClientId }).IsUnique();
+                entity.HasOne(e => e.OriginatorClient)
+                    .WithMany()
+                    .HasForeignKey(e => e.OriginatorClientId)
+                    .OnDelete(DeleteBehavior.SetNull);
+                entity.HasOne(e => e.ClientContact)
+                    .WithMany()
+                    .HasForeignKey(e => e.ClientContactId)
+                    .OnDelete(DeleteBehavior.SetNull);
             });
 
             modelBuilder.Entity<ShipmentItem>(entity =>
@@ -117,6 +168,18 @@ namespace irevlogix_backend.Data
                     .WithMany(e => e.ShipmentItems)
                     .HasForeignKey(e => e.ShipmentId)
                     .OnDelete(DeleteBehavior.Cascade);
+                entity.HasOne(e => e.MaterialType)
+                    .WithMany()
+                    .HasForeignKey(e => e.MaterialTypeId)
+                    .OnDelete(DeleteBehavior.SetNull);
+                entity.HasOne(e => e.AssetCategory)
+                    .WithMany()
+                    .HasForeignKey(e => e.AssetCategoryId)
+                    .OnDelete(DeleteBehavior.SetNull);
+                entity.HasOne(e => e.ProcessingLot)
+                    .WithMany(e => e.ShipmentItems)
+                    .HasForeignKey(e => e.ProcessingLotId)
+                    .OnDelete(DeleteBehavior.SetNull);
             });
 
             modelBuilder.Entity<MaterialType>(entity =>

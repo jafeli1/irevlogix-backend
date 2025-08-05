@@ -10,8 +10,15 @@ namespace irevlogix_backend.Models
         
         public new string ClientId { get; set; } = string.Empty;
         
-        public DateTime ShipmentDate { get; set; }
+        public int? OriginatorClientId { get; set; }
+        public virtual Client? OriginatorClient { get; set; }
         
+        public int? ClientContactId { get; set; }
+        public virtual ClientContact? ClientContact { get; set; }
+        
+        public DateTime? ScheduledPickupDate { get; set; }
+        public DateTime? ActualPickupDate { get; set; }
+        public DateTime ShipmentDate { get; set; }
         public DateTime? ReceivedDate { get; set; }
         
         [Required]
@@ -34,15 +41,23 @@ namespace irevlogix_backend.Models
         [MaxLength(1000)]
         public string? Notes { get; set; }
         
-        public decimal? EstimatedValue { get; set; }
+        [MaxLength(1000)]
+        public string? DispositionNotes { get; set; }
         
+        public decimal? EstimatedValue { get; set; }
         public decimal? ActualValue { get; set; }
+        public decimal? TransportationCost { get; set; }
+        public decimal? LogisticsCost { get; set; }
+        public decimal? DispositionCost { get; set; }
         
         [MaxLength(500)]
         public string? PickupAddress { get; set; }
         
         [MaxLength(500)]
         public string? DeliveryAddress { get; set; }
+        
+        [MaxLength(500)]
+        public string? OriginAddress { get; set; }
         
         public virtual ICollection<ShipmentItem> ShipmentItems { get; set; } = new List<ShipmentItem>();
     }

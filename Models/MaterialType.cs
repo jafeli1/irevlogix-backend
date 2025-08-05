@@ -17,5 +17,6 @@ namespace irevlogix_backend.Models
         public string? Unit { get; set; } // kg, lbs, pieces, etc.
         
         public virtual ICollection<ProcessedMaterial> ProcessedMaterials { get; set; } = new List<ProcessedMaterial>();
+
     }
 }

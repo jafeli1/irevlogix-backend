@@ -7,6 +7,15 @@ namespace irevlogix_backend.Models
         public int ShipmentId { get; set; }
         public virtual Shipment Shipment { get; set; } = null!;
         
+        public int? MaterialTypeId { get; set; }
+        public virtual MaterialType? MaterialType { get; set; }
+        
+        public int? AssetCategoryId { get; set; }
+        public virtual AssetCategory? AssetCategory { get; set; }
+        
+        public int? ProcessingLotId { get; set; }
+        public virtual ProcessingLot? ProcessingLot { get; set; }
+        
         [Required]
         [MaxLength(200)]
         public string Description { get; set; } = string.Empty;
@@ -26,11 +35,16 @@ namespace irevlogix_backend.Models
         public int Quantity { get; set; } = 1;
         
         [MaxLength(50)]
+        public string? UnitOfMeasure { get; set; }
+        
+        [MaxLength(50)]
         public string? Condition { get; set; }
         
-        public decimal? EstimatedValue { get; set; }
+        public bool IsAssetRecoverable { get; set; } = false;
         
+        public decimal? EstimatedValue { get; set; }
         public decimal? ActualValue { get; set; }
+        public decimal? DispositionCost { get; set; }
         
         public decimal? Weight { get; set; }
         
@@ -42,6 +56,9 @@ namespace irevlogix_backend.Models
         
         [MaxLength(50)]
         public string? ProcessingStatus { get; set; }
+        
+        [MaxLength(50)]
+        public string? DispositionMethod { get; set; }
         
         public bool IsDataBearingDevice { get; set; } = false;
         
