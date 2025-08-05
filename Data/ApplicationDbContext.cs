@@ -22,10 +22,6 @@ namespace irevlogix_backend.Data
         public DbSet<ProcessingLot> ProcessingLots { get; set; }
         public DbSet<Shipment> Shipments { get; set; }
         public DbSet<ShipmentItem> ShipmentItems { get; set; }
-        public DbSet<MaterialType> MaterialTypes { get; set; }
-        public DbSet<AssetCategory> AssetCategories { get; set; }
-        public DbSet<ClientContact> ClientContacts { get; set; }
-        public DbSet<ProcessingLot> ProcessingLots { get; set; }
         public DbSet<ProcessingStep> ProcessingSteps { get; set; }
         public DbSet<ProcessedMaterial> ProcessedMaterials { get; set; }
         public DbSet<Asset> Assets { get; set; }
@@ -112,11 +108,7 @@ namespace irevlogix_backend.Data
                 entity.HasKey(e => e.Id);
                 entity.Property(e => e.FirstName).IsRequired().HasMaxLength(100);
                 entity.Property(e => e.LastName).IsRequired().HasMaxLength(100);
-                entity.Property(e => e.Email).IsRequired().HasMaxLength(255);
-                entity.HasOne(e => e.Client)
-                    .WithMany()
-                    .HasForeignKey(e => e.ClientId)
-                    .OnDelete(DeleteBehavior.Cascade);
+                entity.Property(e => e.Email).IsRequired().HasMaxLength(200);
                 entity.HasIndex(e => new { e.Email, e.ClientId }).IsUnique();
             });
 
@@ -137,11 +129,11 @@ namespace irevlogix_backend.Data
             modelBuilder.Entity<ProcessingLot>(entity =>
             {
                 entity.HasKey(e => e.Id);
-                entity.Property(e => e.LotNumber).IsRequired().HasMaxLength(100);
-                entity.HasIndex(e => new { e.LotNumber, e.ClientId }).IsUnique();
-                entity.HasOne(e => e.SourceShipment)
+                entity.Property(e => e.LotID).IsRequired().HasMaxLength(50);
+                entity.HasIndex(e => new { e.LotID, e.ClientId }).IsUnique();
+                entity.HasOne(e => e.Operator)
                     .WithMany()
-                    .HasForeignKey(e => e.SourceShipmentId)
+                    .HasForeignKey(e => e.OperatorUserId)
                     .OnDelete(DeleteBehavior.SetNull);
             });
 
@@ -177,40 +169,11 @@ namespace irevlogix_backend.Data
                     .HasForeignKey(e => e.AssetCategoryId)
                     .OnDelete(DeleteBehavior.SetNull);
                 entity.HasOne(e => e.ProcessingLot)
-                    .WithMany(e => e.ShipmentItems)
+                    .WithMany(e => e.IncomingShipmentItems)
                     .HasForeignKey(e => e.ProcessingLotId)
                     .OnDelete(DeleteBehavior.SetNull);
             });
 
-            modelBuilder.Entity<MaterialType>(entity =>
-            {
-                entity.HasKey(e => e.Id);
-                entity.Property(e => e.Name).IsRequired().HasMaxLength(100);
-                entity.HasIndex(e => new { e.Name, e.ClientId }).IsUnique();
-            });
-
-            modelBuilder.Entity<AssetCategory>(entity =>
-            {
-                entity.HasKey(e => e.Id);
-                entity.Property(e => e.Name).IsRequired().HasMaxLength(100);
-                entity.HasIndex(e => new { e.Name, e.ClientId }).IsUnique();
-            });
-
-            modelBuilder.Entity<ClientContact>(entity =>
-            {
-                entity.HasKey(e => e.Id);
-                entity.Property(e => e.FirstName).IsRequired().HasMaxLength(100);
-                entity.Property(e => e.LastName).IsRequired().HasMaxLength(100);
-                entity.Property(e => e.Email).IsRequired().HasMaxLength(200);
-                entity.HasIndex(e => new { e.Email, e.ClientId }).IsUnique();
-            });
-
-            modelBuilder.Entity<ProcessingLot>(entity =>
-            {
-                entity.HasKey(e => e.Id);
-                entity.Property(e => e.LotID).IsRequired().HasMaxLength(50);
-                entity.HasIndex(e => new { e.LotID, e.ClientId }).IsUnique();
-            });
 
             modelBuilder.Entity<ProcessingStep>(entity =>
             {
