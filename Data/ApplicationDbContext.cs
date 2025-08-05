@@ -9,6 +9,12 @@ namespace irevlogix_backend.Data
         {
         }
 
+        protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
+        {
+            optionsBuilder.ConfigureWarnings(warnings =>
+                warnings.Ignore(Microsoft.EntityFrameworkCore.Diagnostics.RelationalEventId.PendingModelChangesWarning));
+        }
+
         public DbSet<Tenant> Tenants { get; set; }
         public DbSet<User> Users { get; set; }
         public DbSet<Role> Roles { get; set; }
@@ -145,13 +151,11 @@ namespace irevlogix_backend.Data
                 entity.HasOne(e => e.OriginatorClient)
                     .WithMany()
                     .HasForeignKey(e => e.OriginatorClientId)
-                    .OnDelete(DeleteBehavior.SetNull)
-                    .IsRequired(false);
+                    .OnDelete(DeleteBehavior.SetNull);
                 entity.HasOne(e => e.ClientContact)
                     .WithMany()
                     .HasForeignKey(e => e.ClientContactId)
-                    .OnDelete(DeleteBehavior.SetNull)
-                    .IsRequired(false);
+                    .OnDelete(DeleteBehavior.SetNull);
                 entity.Property(e => e.OriginatorClientId).IsRequired(false);
                 entity.Property(e => e.ClientContactId).IsRequired(false);
             });
@@ -200,8 +204,7 @@ namespace irevlogix_backend.Data
                 entity.HasOne(e => e.MaterialType)
                     .WithMany()
                     .HasForeignKey(e => e.MaterialTypeId)
-                    .OnDelete(DeleteBehavior.SetNull)
-                    .IsRequired(false);
+                    .OnDelete(DeleteBehavior.SetNull);
                 entity.Property(e => e.MaterialTypeId).IsRequired(false);
             });
 
