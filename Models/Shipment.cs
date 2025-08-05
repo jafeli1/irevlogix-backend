@@ -8,8 +8,6 @@ namespace irevlogix_backend.Models
         [MaxLength(100)]
         public string ShipmentNumber { get; set; } = string.Empty;
         
-        public new string ClientId { get; set; } = string.Empty;
-        
         public int? OriginatorClientId { get; set; }
         public virtual Client? OriginatorClient { get; set; }
         
