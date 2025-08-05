@@ -188,11 +188,15 @@ namespace irevlogix_backend.Data
             modelBuilder.Entity<ProcessedMaterial>(entity =>
             {
                 entity.HasKey(e => e.Id);
-                entity.Property(e => e.MaterialType).IsRequired().HasMaxLength(100);
+                entity.Property(e => e.Description).IsRequired().HasMaxLength(200);
                 entity.HasOne(e => e.ProcessingLot)
                     .WithMany(e => e.ProcessedMaterials)
                     .HasForeignKey(e => e.ProcessingLotId)
                     .OnDelete(DeleteBehavior.Cascade);
+                entity.HasOne(e => e.MaterialType)
+                    .WithMany()
+                    .HasForeignKey(e => e.MaterialTypeId)
+                    .OnDelete(DeleteBehavior.SetNull);
             });
 
             modelBuilder.Entity<Asset>(entity =>
