@@ -145,11 +145,15 @@ namespace irevlogix_backend.Data
                 entity.HasOne(e => e.OriginatorClient)
                     .WithMany()
                     .HasForeignKey(e => e.OriginatorClientId)
-                    .OnDelete(DeleteBehavior.SetNull);
+                    .OnDelete(DeleteBehavior.SetNull)
+                    .IsRequired(false);
                 entity.HasOne(e => e.ClientContact)
                     .WithMany()
                     .HasForeignKey(e => e.ClientContactId)
-                    .OnDelete(DeleteBehavior.SetNull);
+                    .OnDelete(DeleteBehavior.SetNull)
+                    .IsRequired(false);
+                entity.Property(e => e.OriginatorClientId).IsRequired(false);
+                entity.Property(e => e.ClientContactId).IsRequired(false);
             });
 
             modelBuilder.Entity<ShipmentItem>(entity =>
@@ -196,7 +200,9 @@ namespace irevlogix_backend.Data
                 entity.HasOne(e => e.MaterialType)
                     .WithMany()
                     .HasForeignKey(e => e.MaterialTypeId)
-                    .OnDelete(DeleteBehavior.SetNull);
+                    .OnDelete(DeleteBehavior.SetNull)
+                    .IsRequired(false);
+                entity.Property(e => e.MaterialTypeId).IsRequired(false);
             });
 
             modelBuilder.Entity<Asset>(entity =>
