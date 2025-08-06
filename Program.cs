@@ -58,7 +58,18 @@ using (var scope = app.Services.CreateScope())
 {
     var dbContext = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
     dbContext.Database.Migrate();
-    await DataSeeder.SeedAsync(dbContext);
+    
+    try
+    {
+        await DataSeeder.SeedAsync(dbContext);
+        Console.WriteLine("Program: DataSeeder execution completed successfully");
+    }
+    catch (Exception ex)
+    {
+        Console.WriteLine($"Program: DataSeeder execution failed - {ex.Message}");
+        Console.WriteLine($"Program: Stack trace - {ex.StackTrace}");
+        throw;
+    }
 }
 
 // Configure the HTTP request pipeline.
