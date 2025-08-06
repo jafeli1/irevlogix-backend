@@ -64,25 +64,65 @@ namespace irevlogix_backend.Migrations
                 END $$;
             ");
 
-            migrationBuilder.RenameColumn(
-                name: "ProcessingNotes",
-                table: "ProcessingLots",
-                newName: "QualityControlNotes");
+            migrationBuilder.Sql(@"
+                DO $$ 
+                BEGIN
+                    IF NOT EXISTS (
+                        SELECT 1 
+                        FROM information_schema.columns 
+                        WHERE table_name = 'ProcessingLots' 
+                        AND column_name = 'QualityControlNotes'
+                        AND table_schema = 'public'
+                    ) THEN
+                        ALTER TABLE ""ProcessingLots"" RENAME COLUMN ""ProcessingNotes"" TO ""QualityControlNotes"";
+                    END IF;
+                END $$;
+            ");
 
-            migrationBuilder.RenameColumn(
-                name: "ProcessingMethod",
-                table: "ProcessingLots",
-                newName: "CertificationStatus");
+            migrationBuilder.Sql(@"
+                DO $$ 
+                BEGIN
+                    IF NOT EXISTS (
+                        SELECT 1 
+                        FROM information_schema.columns 
+                        WHERE table_name = 'ProcessingLots' 
+                        AND column_name = 'CertificationStatus'
+                        AND table_schema = 'public'
+                    ) THEN
+                        ALTER TABLE ""ProcessingLots"" RENAME COLUMN ""ProcessingMethod"" TO ""CertificationStatus"";
+                    END IF;
+                END $$;
+            ");
 
-            migrationBuilder.RenameColumn(
-                name: "EndDate",
-                table: "ProcessingLots",
-                newName: "CompletionDate");
+            migrationBuilder.Sql(@"
+                DO $$ 
+                BEGIN
+                    IF NOT EXISTS (
+                        SELECT 1 
+                        FROM information_schema.columns 
+                        WHERE table_name = 'ProcessingLots' 
+                        AND column_name = 'CompletionDate'
+                        AND table_schema = 'public'
+                    ) THEN
+                        ALTER TABLE ""ProcessingLots"" RENAME COLUMN ""EndDate"" TO ""CompletionDate"";
+                    END IF;
+                END $$;
+            ");
 
-            migrationBuilder.RenameColumn(
-                name: "ActualReceivedWeight",
-                table: "ProcessingLots",
-                newName: "TotalProcessedWeight");
+            migrationBuilder.Sql(@"
+                DO $$ 
+                BEGIN
+                    IF NOT EXISTS (
+                        SELECT 1 
+                        FROM information_schema.columns 
+                        WHERE table_name = 'ProcessingLots' 
+                        AND column_name = 'TotalProcessedWeight'
+                        AND table_schema = 'public'
+                    ) THEN
+                        ALTER TABLE ""ProcessingLots"" RENAME COLUMN ""ActualReceivedWeight"" TO ""TotalProcessedWeight"";
+                    END IF;
+                END $$;
+            ");
 
             migrationBuilder.Sql(@"
                 DO $$ 
