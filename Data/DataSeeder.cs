@@ -9,29 +9,50 @@ namespace irevlogix_backend.Data
     {
         public static async Task SeedAsync(ApplicationDbContext context)
         {
-            await context.Database.EnsureCreatedAsync();
-
-            if (await context.Roles.AnyAsync(r => r.Name == "Administrator"))
+            try
             {
-                return; // Already seeded
+                await context.Database.EnsureCreatedAsync();
+
+                if (await context.Roles.AnyAsync(r => r.Name == "Administrator"))
+                {
+                    Console.WriteLine("DataSeeder: Administrator role already exists, skipping seeding.");
+                    return; // Already seeded
+                }
+
+                Console.WriteLine("DataSeeder: Starting admin user and permissions seeding...");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"DataSeeder: Error during initial setup - {ex.Message}");
+                throw;
             }
 
             var clientId = "ADMIN_CLIENT_001";
 
-            var adminRole = new Role
+            Role adminRole;
+            try
             {
-                Name = "Administrator",
-                Description = "System Administrator with full access to all modules",
-                IsSystemRole = true,
-                ClientId = clientId,
-                CreatedBy = 1,
-                UpdatedBy = 1,
-                DateCreated = DateTime.UtcNow,
-                DateUpdated = DateTime.UtcNow
-            };
+                adminRole = new Role
+                {
+                    Name = "Administrator",
+                    Description = "System Administrator with full access to all modules",
+                    IsSystemRole = true,
+                    ClientId = clientId,
+                    CreatedBy = 1,
+                    UpdatedBy = 1,
+                    DateCreated = DateTime.UtcNow,
+                    DateUpdated = DateTime.UtcNow
+                };
 
-            context.Roles.Add(adminRole);
-            await context.SaveChangesAsync();
+                context.Roles.Add(adminRole);
+                await context.SaveChangesAsync();
+                Console.WriteLine($"DataSeeder: Created Administrator role with ID {adminRole.Id}");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"DataSeeder: Error creating Administrator role - {ex.Message}");
+                throw;
+            }
 
             var permissions = new List<Permission>
             {
@@ -85,8 +106,17 @@ namespace irevlogix_backend.Data
                 permission.DateUpdated = DateTime.UtcNow;
             }
 
-            context.Permissions.AddRange(permissions);
-            await context.SaveChangesAsync();
+            try
+            {
+                context.Permissions.AddRange(permissions);
+                await context.SaveChangesAsync();
+                Console.WriteLine($"DataSeeder: Created {permissions.Count} permissions");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"DataSeeder: Error creating permissions - {ex.Message}");
+                throw;
+            }
 
             var rolePermissions = permissions.Select(p => new RolePermission
             {
@@ -99,40 +129,70 @@ namespace irevlogix_backend.Data
                 DateUpdated = DateTime.UtcNow
             }).ToList();
 
-            context.RolePermissions.AddRange(rolePermissions);
-            await context.SaveChangesAsync();
-
-            var adminUser = new User
+            try
             {
-                FirstName = "System",
-                LastName = "Administrator",
-                Email = "admin@irevlogix.ai",
-                PasswordHash = HashPassword("AdminPass123!"),
-                ClientId = clientId,
-                CreatedBy = 1,
-                UpdatedBy = 1,
-                DateCreated = DateTime.UtcNow,
-                DateUpdated = DateTime.UtcNow,
-                IsActive = true,
-                FailedLoginAttempts = 0
-            };
-
-            context.Users.Add(adminUser);
-            await context.SaveChangesAsync();
-
-            var userRole = new UserRole
+                context.RolePermissions.AddRange(rolePermissions);
+                await context.SaveChangesAsync();
+                Console.WriteLine($"DataSeeder: Created {rolePermissions.Count} role permissions");
+            }
+            catch (Exception ex)
             {
-                UserId = adminUser.Id,
-                RoleId = adminRole.Id,
-                ClientId = clientId,
-                CreatedBy = 1,
-                UpdatedBy = 1,
-                DateCreated = DateTime.UtcNow,
-                DateUpdated = DateTime.UtcNow
-            };
+                Console.WriteLine($"DataSeeder: Error creating role permissions - {ex.Message}");
+                throw;
+            }
 
-            context.UserRoles.Add(userRole);
-            await context.SaveChangesAsync();
+            User adminUser;
+            try
+            {
+                adminUser = new User
+                {
+                    FirstName = "System",
+                    LastName = "Administrator",
+                    Email = "admin@irevlogix.ai",
+                    PasswordHash = HashPassword("AdminPass123!"),
+                    ClientId = clientId,
+                    CreatedBy = 1,
+                    UpdatedBy = 1,
+                    DateCreated = DateTime.UtcNow,
+                    DateUpdated = DateTime.UtcNow,
+                    IsActive = true,
+                    FailedLoginAttempts = 0,
+                    IsEmailConfirmed = true
+                };
+
+                context.Users.Add(adminUser);
+                await context.SaveChangesAsync();
+                Console.WriteLine($"DataSeeder: Created admin user with ID {adminUser.Id} and email {adminUser.Email}");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"DataSeeder: Error creating admin user - {ex.Message}");
+                throw;
+            }
+
+            try
+            {
+                var userRole = new UserRole
+                {
+                    UserId = adminUser.Id,
+                    RoleId = adminRole.Id,
+                    ClientId = clientId,
+                    CreatedBy = 1,
+                    UpdatedBy = 1,
+                    DateCreated = DateTime.UtcNow,
+                    DateUpdated = DateTime.UtcNow
+                };
+
+                context.UserRoles.Add(userRole);
+                await context.SaveChangesAsync();
+                Console.WriteLine($"DataSeeder: Assigned Administrator role to admin user");
+                Console.WriteLine("DataSeeder: Admin user and permissions seeding completed successfully!");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"DataSeeder: Error creating user role assignment - {ex.Message}");
+                throw;
+            }
         }
 
         private static string HashPassword(string password)
