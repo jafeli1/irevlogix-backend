@@ -48,10 +48,21 @@ namespace irevlogix_backend.Migrations
                 name: "UnitOfMeasure",
                 table: "MaterialTypes");
 
-            migrationBuilder.RenameColumn(
-                name: "SourceShipmentId",
-                table: "ProcessingLots",
-                newName: "OperatorUserId");
+            migrationBuilder.Sql(@"
+                DO $$ 
+                BEGIN
+                    IF NOT EXISTS (
+                        SELECT 1 
+                        FROM information_schema.columns 
+                        WHERE table_name = 'ProcessingLots' 
+                        AND column_name = 'OperatorUserId'
+                        AND table_schema = 'public'
+                    ) THEN
+                        -- Only rename if OperatorUserId doesn't exist
+                        ALTER TABLE ""ProcessingLots"" RENAME COLUMN ""SourceShipmentId"" TO ""OperatorUserId"";
+                    END IF;
+                END $$;
+            ");
 
             migrationBuilder.RenameColumn(
                 name: "ProcessingNotes",
@@ -73,10 +84,20 @@ namespace irevlogix_backend.Migrations
                 table: "ProcessingLots",
                 newName: "TotalProcessedWeight");
 
-            migrationBuilder.RenameIndex(
-                name: "IX_ProcessingLots_SourceShipmentId",
-                table: "ProcessingLots",
-                newName: "IX_ProcessingLots_OperatorUserId");
+            migrationBuilder.Sql(@"
+                DO $$ 
+                BEGIN
+                    IF EXISTS (
+                        SELECT 1 
+                        FROM pg_indexes 
+                        WHERE indexname = 'IX_ProcessingLots_SourceShipmentId'
+                        AND schemaname = 'public'
+                    ) THEN
+                        -- Only rename index if it exists with old name
+                        ALTER INDEX ""IX_ProcessingLots_SourceShipmentId"" RENAME TO ""IX_ProcessingLots_OperatorUserId"";
+                    END IF;
+                END $$;
+            ");
 
             migrationBuilder.AddColumn<int>(
                 name: "ClientContactId1",
