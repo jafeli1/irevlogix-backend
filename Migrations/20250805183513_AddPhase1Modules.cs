@@ -132,8 +132,13 @@ namespace irevlogix_backend.Migrations
                         FROM pg_indexes 
                         WHERE indexname = 'IX_ProcessingLots_SourceShipmentId'
                         AND schemaname = 'public'
+                    ) AND NOT EXISTS (
+                        SELECT 1 
+                        FROM pg_indexes 
+                        WHERE indexname = 'IX_ProcessingLots_OperatorUserId'
+                        AND schemaname = 'public'
                     ) THEN
-                        -- Only rename index if it exists with old name
+                        -- Only rename index if source exists and target doesn't exist
                         ALTER INDEX ""IX_ProcessingLots_SourceShipmentId"" RENAME TO ""IX_ProcessingLots_OperatorUserId"";
                     END IF;
                 END $$;
