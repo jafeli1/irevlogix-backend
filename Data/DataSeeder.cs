@@ -13,9 +13,9 @@ namespace irevlogix_backend.Data
             {
                 await context.Database.EnsureCreatedAsync();
 
-                if (await context.Roles.AnyAsync(r => r.Name == "Administrator"))
+                if (await context.Users.AnyAsync(u => u.Email == "admin@irevlogix.ai"))
                 {
-                    Console.WriteLine("DataSeeder: Administrator role already exists, skipping seeding.");
+                    Console.WriteLine("DataSeeder: Admin user already exists, skipping seeding.");
                     return; // Already seeded
                 }
 
@@ -32,25 +32,34 @@ namespace irevlogix_backend.Data
             Role adminRole;
             try
             {
-                adminRole = new Role
+                adminRole = await context.Roles.FirstOrDefaultAsync(r => r.Name == "Administrator");
+                
+                if (adminRole == null)
                 {
-                    Name = "Administrator",
-                    Description = "System Administrator with full access to all modules",
-                    IsSystemRole = true,
-                    ClientId = clientId,
-                    CreatedBy = 1,
-                    UpdatedBy = 1,
-                    DateCreated = DateTime.UtcNow,
-                    DateUpdated = DateTime.UtcNow
-                };
+                    adminRole = new Role
+                    {
+                        Name = "Administrator",
+                        Description = "System Administrator with full access to all modules",
+                        IsSystemRole = true,
+                        ClientId = clientId,
+                        CreatedBy = 1,
+                        UpdatedBy = 1,
+                        DateCreated = DateTime.UtcNow,
+                        DateUpdated = DateTime.UtcNow
+                    };
 
-                context.Roles.Add(adminRole);
-                await context.SaveChangesAsync();
-                Console.WriteLine($"DataSeeder: Created Administrator role with ID {adminRole.Id}");
+                    context.Roles.Add(adminRole);
+                    await context.SaveChangesAsync();
+                    Console.WriteLine($"DataSeeder: Created Administrator role with ID {adminRole.Id}");
+                }
+                else
+                {
+                    Console.WriteLine($"DataSeeder: Using existing Administrator role with ID {adminRole.Id}");
+                }
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"DataSeeder: Error creating Administrator role - {ex.Message}");
+                Console.WriteLine($"DataSeeder: Error handling Administrator role - {ex.Message}");
                 throw;
             }
 
@@ -108,9 +117,27 @@ namespace irevlogix_backend.Data
 
             try
             {
-                context.Permissions.AddRange(permissions);
-                await context.SaveChangesAsync();
-                Console.WriteLine($"DataSeeder: Created {permissions.Count} permissions");
+                var existingPermissionNames = await context.Permissions
+                    .Select(p => p.Name)
+                    .ToListAsync();
+                
+                var newPermissions = permissions
+                    .Where(p => !existingPermissionNames.Contains(p.Name))
+                    .ToList();
+                
+                if (newPermissions.Any())
+                {
+                    context.Permissions.AddRange(newPermissions);
+                    await context.SaveChangesAsync();
+                    Console.WriteLine($"DataSeeder: Created {newPermissions.Count} new permissions");
+                }
+                else
+                {
+                    Console.WriteLine("DataSeeder: All permissions already exist");
+                }
+                
+                var allPermissions = await context.Permissions.ToListAsync();
+                permissions = allPermissions;
             }
             catch (Exception ex)
             {
@@ -131,9 +158,34 @@ namespace irevlogix_backend.Data
 
             try
             {
-                context.RolePermissions.AddRange(rolePermissions);
-                await context.SaveChangesAsync();
-                Console.WriteLine($"DataSeeder: Created {rolePermissions.Count} role permissions");
+                var existingRolePermissions = await context.RolePermissions
+                    .Where(rp => rp.RoleId == adminRole.Id)
+                    .Select(rp => rp.PermissionId)
+                    .ToListAsync();
+                
+                var newRolePermissions = permissions
+                    .Where(p => !existingRolePermissions.Contains(p.Id))
+                    .Select(p => new RolePermission
+                    {
+                        RoleId = adminRole.Id,
+                        PermissionId = p.Id,
+                        ClientId = clientId,
+                        CreatedBy = 1,
+                        UpdatedBy = 1,
+                        DateCreated = DateTime.UtcNow,
+                        DateUpdated = DateTime.UtcNow
+                    }).ToList();
+                
+                if (newRolePermissions.Any())
+                {
+                    context.RolePermissions.AddRange(newRolePermissions);
+                    await context.SaveChangesAsync();
+                    Console.WriteLine($"DataSeeder: Created {newRolePermissions.Count} new role permissions");
+                }
+                else
+                {
+                    Console.WriteLine("DataSeeder: All role permissions already exist");
+                }
             }
             catch (Exception ex)
             {
