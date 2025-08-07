@@ -119,6 +119,7 @@ namespace irevlogix_backend.Controllers
                     LotID = request.LotId ?? GenerateLotId(),
                     Description = request.Description,
                     OperatorUserId = request.OperatorUserId,
+                    ProcessingCost = request.ProcessingCost,
                     Status = "Created",
                     ClientId = clientId,
                     CreatedBy = userId,
@@ -206,6 +207,7 @@ namespace irevlogix_backend.Controllers
         public string? LotId { get; set; }
         public string? Description { get; set; }
         public int? OperatorUserId { get; set; }
+        public decimal? ProcessingCost { get; set; }
     }
 
     public class UpdateProcessingLotRequest
