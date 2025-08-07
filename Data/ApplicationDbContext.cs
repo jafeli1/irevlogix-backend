@@ -33,6 +33,8 @@ namespace irevlogix_backend.Data
         public DbSet<Asset> Assets { get; set; }
         public DbSet<AssetTrackingStatus> AssetTrackingStatuses { get; set; }
         public DbSet<ChainOfCustody> ChainOfCustodyRecords { get; set; }
+        public DbSet<ShipmentStatusHistory> ShipmentStatusHistories { get; set; }
+        public DbSet<ShipmentDocument> ShipmentDocuments { get; set; }
         public DbSet<ApplicationSettings> ApplicationSettings { get; set; }
         public DbSet<KnowledgeBaseArticle> KnowledgeBaseArticles { get; set; }
 
@@ -230,6 +232,28 @@ namespace irevlogix_backend.Data
                     .WithMany()
                     .HasForeignKey(e => e.UserId)
                     .OnDelete(DeleteBehavior.Restrict);
+            });
+
+            modelBuilder.Entity<ShipmentStatusHistory>(entity =>
+            {
+                entity.HasKey(e => e.Id);
+                entity.HasOne(e => e.Shipment)
+                    .WithMany()
+                    .HasForeignKey(e => e.ShipmentId)
+                    .OnDelete(DeleteBehavior.Cascade);
+                entity.HasOne(e => e.User)
+                    .WithMany()
+                    .HasForeignKey(e => e.UserId)
+                    .OnDelete(DeleteBehavior.SetNull);
+            });
+
+            modelBuilder.Entity<ShipmentDocument>(entity =>
+            {
+                entity.HasKey(e => e.Id);
+                entity.HasOne(e => e.Shipment)
+                    .WithMany()
+                    .HasForeignKey(e => e.ShipmentId)
+                    .OnDelete(DeleteBehavior.Cascade);
             });
 
             modelBuilder.Entity<ApplicationSettings>(entity =>
