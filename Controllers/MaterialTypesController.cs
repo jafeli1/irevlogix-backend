@@ -8,7 +8,6 @@ namespace irevlogix_backend.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
-    [Authorize]
     public class MaterialTypesController : ControllerBase
     {
         private readonly ApplicationDbContext _context;
@@ -21,12 +20,8 @@ namespace irevlogix_backend.Controllers
         [HttpGet]
         public async Task<ActionResult<IEnumerable<MaterialType>>> GetMaterialTypes()
         {
-            var clientId = User.FindFirst("ClientId")?.Value;
-            if (string.IsNullOrEmpty(clientId))
-                return Unauthorized();
-
             var materialTypes = await _context.MaterialTypes
-                .Where(mt => mt.ClientId == clientId && mt.IsActive)
+                .Where(mt => mt.IsActive)
                 .OrderBy(mt => mt.Name)
                 .ToListAsync();
 
@@ -36,12 +31,8 @@ namespace irevlogix_backend.Controllers
         [HttpGet("{id}")]
         public async Task<ActionResult<MaterialType>> GetMaterialType(int id)
         {
-            var clientId = User.FindFirst("ClientId")?.Value;
-            if (string.IsNullOrEmpty(clientId))
-                return Unauthorized();
-
             var materialType = await _context.MaterialTypes
-                .Where(mt => mt.Id == id && mt.ClientId == clientId)
+                .Where(mt => mt.Id == id)
                 .FirstOrDefaultAsync();
 
             if (materialType == null)
