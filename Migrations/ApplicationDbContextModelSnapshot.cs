@@ -699,7 +699,7 @@ namespace irevlogix_backend.Migrations
                         .HasMaxLength(100)
                         .HasColumnType("character varying(100)");
 
-                    b.Property<string>("Unit")
+                    b.Property<string>("UnitOfMeasure")
                         .HasColumnType("text");
 
                     b.Property<int>("UpdatedBy")
