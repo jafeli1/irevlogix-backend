@@ -137,8 +137,8 @@ namespace irevlogix_backend.Data
             modelBuilder.Entity<ProcessingLot>(entity =>
             {
                 entity.HasKey(e => e.Id);
-                entity.Property(e => e.LotID).IsRequired().HasMaxLength(50);
-                entity.HasIndex(e => new { e.LotID, e.ClientId }).IsUnique();
+                entity.Property(e => e.LotNumber).IsRequired().HasMaxLength(50);
+                entity.HasIndex(e => new { e.LotNumber, e.ClientId }).IsUnique();
                 entity.HasOne(e => e.Operator)
                     .WithMany()
                     .HasForeignKey(e => e.OperatorUserId)

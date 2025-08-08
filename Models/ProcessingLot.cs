@@ -6,7 +6,7 @@ namespace irevlogix_backend.Models
     {
         [Required]
         [MaxLength(50)]
-        public string LotID { get; set; } = string.Empty;
+        public string LotNumber { get; set; } = string.Empty;
         
         [Required]
         [MaxLength(50)]
