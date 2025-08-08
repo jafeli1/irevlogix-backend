@@ -1157,8 +1157,6 @@ namespace irevlogix_backend.Migrations
                     b.Property<int?>("ClientContactId")
                         .HasColumnType("integer");
 
-                    b.Property<int?>("ClientContactId1")
-                        .HasColumnType("integer");
 
                     b.Property<string>("ClientId")
                         .IsRequired()
@@ -1248,7 +1246,6 @@ namespace irevlogix_backend.Migrations
 
                     b.HasIndex("ClientContactId");
 
-                    b.HasIndex("ClientContactId1");
 
                     b.HasIndex("OriginatorClientId");
 
@@ -1712,9 +1709,6 @@ namespace irevlogix_backend.Migrations
                         .HasForeignKey("ClientContactId")
                         .OnDelete(DeleteBehavior.SetNull);
 
-                    b.HasOne("irevlogix_backend.Models.ClientContact", null)
-                        .WithMany("Shipments")
-                        .HasForeignKey("ClientContactId1");
 
                     b.HasOne("irevlogix_backend.Models.Client", "OriginatorClient")
                         .WithMany()
