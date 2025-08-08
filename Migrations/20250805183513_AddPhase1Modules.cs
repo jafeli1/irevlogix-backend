@@ -139,11 +139,6 @@ namespace irevlogix_backend.Migrations
                 END $$;
             ");
 
-            migrationBuilder.AddColumn<int>(
-                name: "ClientContactId1",
-                table: "Shipments",
-                type: "integer",
-                nullable: true);
 
             migrationBuilder.AddColumn<decimal>(
                 name: "ActualRevenue",
@@ -355,7 +350,6 @@ namespace irevlogix_backend.Migrations
                     CertificationNumber = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: true),
                     IsHazardous = table.Column<bool>(type: "boolean", nullable: false),
                     HazardousClassification = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: true),
-                    MaterialTypeId1 = table.Column<int>(type: "integer", nullable: true),
                     DateCreated = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
                     DateUpdated = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
                     CreatedBy = table.Column<int>(type: "integer", nullable: false),
@@ -371,11 +365,6 @@ namespace irevlogix_backend.Migrations
                         principalTable: "MaterialTypes",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.SetNull);
-                    table.ForeignKey(
-                        name: "FK_ProcessedMaterials_MaterialTypes_MaterialTypeId1",
-                        column: x => x.MaterialTypeId1,
-                        principalTable: "MaterialTypes",
-                        principalColumn: "Id");
                     table.ForeignKey(
                         name: "FK_ProcessedMaterials_ProcessingLots_ProcessingLotId",
                         column: x => x.ProcessingLotId,
@@ -553,10 +542,6 @@ namespace irevlogix_backend.Migrations
                         onDelete: ReferentialAction.Restrict);
                 });
 
-            migrationBuilder.CreateIndex(
-                name: "IX_Shipments_ClientContactId1",
-                table: "Shipments",
-                column: "ClientContactId1");
 
             migrationBuilder.CreateIndex(
                 name: "IX_ProcessingLots_LotID_ClientId",
@@ -627,10 +612,6 @@ namespace irevlogix_backend.Migrations
                 table: "ProcessedMaterials",
                 column: "MaterialTypeId");
 
-            migrationBuilder.CreateIndex(
-                name: "IX_ProcessedMaterials_MaterialTypeId1",
-                table: "ProcessedMaterials",
-                column: "MaterialTypeId1");
 
             migrationBuilder.CreateIndex(
                 name: "IX_ProcessedMaterials_ProcessingLotId",
@@ -655,12 +636,6 @@ namespace irevlogix_backend.Migrations
                 principalColumn: "Id",
                 onDelete: ReferentialAction.SetNull);
 
-            migrationBuilder.AddForeignKey(
-                name: "FK_Shipments_ClientContacts_ClientContactId1",
-                table: "Shipments",
-                column: "ClientContactId1",
-                principalTable: "ClientContacts",
-                principalColumn: "Id");
         }
 
         /// <inheritdoc />
@@ -670,9 +645,6 @@ namespace irevlogix_backend.Migrations
                 name: "FK_ProcessingLots_Users_OperatorUserId",
                 table: "ProcessingLots");
 
-            migrationBuilder.DropForeignKey(
-                name: "FK_Shipments_ClientContacts_ClientContactId1",
-                table: "Shipments");
 
             migrationBuilder.DropTable(
                 name: "ApplicationSettings");
@@ -695,17 +667,11 @@ namespace irevlogix_backend.Migrations
             migrationBuilder.DropTable(
                 name: "AssetTrackingStatuses");
 
-            migrationBuilder.DropIndex(
-                name: "IX_Shipments_ClientContactId1",
-                table: "Shipments");
 
             migrationBuilder.DropIndex(
                 name: "IX_ProcessingLots_LotID_ClientId",
                 table: "ProcessingLots");
 
-            migrationBuilder.DropColumn(
-                name: "ClientContactId1",
-                table: "Shipments");
 
             migrationBuilder.DropColumn(
                 name: "ActualRevenue",
