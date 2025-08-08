@@ -52,7 +52,7 @@ namespace irevlogix_backend.Controllers
                     query = query.Where(pl => pl.Status == status);
 
                 if (!string.IsNullOrEmpty(lotId))
-                    query = query.Where(pl => pl.LotID.Contains(lotId));
+                    query = query.Where(pl => pl.LotNumber.Contains(lotId));
 
                 if (startDate.HasValue)
                     query = query.Where(pl => pl.StartDate >= startDate.Value);
@@ -116,7 +116,7 @@ namespace irevlogix_backend.Controllers
 
                 var lot = new ProcessingLot
                 {
-                    LotID = request.LotId ?? GenerateLotId(),
+                    LotNumber = request.LotId ?? GenerateLotId(),
                     Description = request.Description,
                     OperatorUserId = request.OperatorUserId,
                     ProcessingCost = request.ProcessingCost,
