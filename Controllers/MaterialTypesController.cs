@@ -18,21 +18,37 @@ namespace irevlogix_backend.Controllers
         }
 
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<MaterialType>>> GetMaterialTypes()
+        public async Task<ActionResult<IEnumerable<object>>> GetMaterialTypes()
         {
             var materialTypes = await _context.MaterialTypes
                 .Where(mt => mt.IsActive)
                 .OrderBy(mt => mt.Name)
+                .Select(mt => new {
+                    mt.Id,
+                    mt.Name,
+                    mt.Description,
+                    mt.IsActive,
+                    mt.DefaultPricePerUnit,
+                    mt.Unit
+                })
                 .ToListAsync();
 
             return Ok(materialTypes);
         }
 
         [HttpGet("{id}")]
-        public async Task<ActionResult<MaterialType>> GetMaterialType(int id)
+        public async Task<ActionResult<object>> GetMaterialType(int id)
         {
             var materialType = await _context.MaterialTypes
                 .Where(mt => mt.Id == id)
+                .Select(mt => new {
+                    mt.Id,
+                    mt.Name,
+                    mt.Description,
+                    mt.IsActive,
+                    mt.DefaultPricePerUnit,
+                    mt.Unit
+                })
                 .FirstOrDefaultAsync();
 
             if (materialType == null)
