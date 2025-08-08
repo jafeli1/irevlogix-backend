@@ -29,7 +29,7 @@ namespace irevlogix_backend.Controllers
                     mt.Description,
                     mt.IsActive,
                     mt.DefaultPricePerUnit,
-                    mt.Unit
+                    mt.UnitOfMeasure
                 })
                 .ToListAsync();
 
@@ -47,7 +47,7 @@ namespace irevlogix_backend.Controllers
                     mt.Description,
                     mt.IsActive,
                     mt.DefaultPricePerUnit,
-                    mt.Unit
+                    mt.UnitOfMeasure
                 })
                 .FirstOrDefaultAsync();
 
