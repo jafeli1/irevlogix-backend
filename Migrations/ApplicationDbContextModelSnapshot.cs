@@ -916,7 +916,7 @@ namespace irevlogix_backend.Migrations
                         .HasMaxLength(1000)
                         .HasColumnType("character varying(1000)");
 
-                    b.Property<string>("LotID")
+                    b.Property<string>("LotNumber")
                         .IsRequired()
                         .HasMaxLength(50)
                         .HasColumnType("character varying(50)");
@@ -952,7 +952,7 @@ namespace irevlogix_backend.Migrations
 
                     b.HasIndex("OperatorUserId");
 
-                    b.HasIndex("LotID", "ClientId")
+                    b.HasIndex("LotNumber", "ClientId")
                         .IsUnique();
 
                     b.ToTable("ProcessingLots");
