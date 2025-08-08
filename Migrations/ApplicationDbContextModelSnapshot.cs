@@ -814,8 +814,6 @@ namespace irevlogix_backend.Migrations
                     b.Property<int?>("MaterialTypeId")
                         .HasColumnType("integer");
 
-                    b.Property<int?>("MaterialTypeId1")
-                        .HasColumnType("integer");
 
                     b.Property<string>("Notes")
                         .HasMaxLength(1000)
@@ -857,7 +855,6 @@ namespace irevlogix_backend.Migrations
 
                     b.HasIndex("MaterialTypeId");
 
-                    b.HasIndex("MaterialTypeId1");
 
                     b.HasIndex("ProcessingLotId");
 
@@ -1641,9 +1638,6 @@ namespace irevlogix_backend.Migrations
                         .HasForeignKey("MaterialTypeId")
                         .OnDelete(DeleteBehavior.SetNull);
 
-                    b.HasOne("irevlogix_backend.Models.MaterialType", null)
-                        .WithMany("ProcessedMaterials")
-                        .HasForeignKey("MaterialTypeId1");
 
                     b.HasOne("irevlogix_backend.Models.ProcessingLot", "ProcessingLot")
                         .WithMany("ProcessedMaterials")
