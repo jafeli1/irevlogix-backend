@@ -14,7 +14,7 @@ namespace irevlogix_backend.Models
         
         public decimal? DefaultPricePerUnit { get; set; }
         
-        public string? Unit { get; set; } // kg, lbs, pieces, etc.
+        public string? UnitOfMeasure { get; set; } // kg, lbs, pieces, etc.
         
         public virtual ICollection<ProcessedMaterial> ProcessedMaterials { get; set; } = new List<ProcessedMaterial>();
 
