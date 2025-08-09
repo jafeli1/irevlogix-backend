@@ -107,6 +107,12 @@ namespace irevlogix_backend.Controllers
             var userId = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
             var clientId = GetClientId();
 
+            int userIdInt = 0;
+            if (!string.IsNullOrEmpty(userId))
+            {
+                _ = int.TryParse(userId, out userIdInt);
+            }
+
             var v = new Vendor
             {
                 VendorName = dto.VendorName,
@@ -122,8 +128,8 @@ namespace irevlogix_backend.Controllers
                 PaymentTerms = dto.PaymentTerms,
                 VendorRating = dto.VendorRating,
                 ClientId = clientId,
-                CreatedBy = string.IsNullOrEmpty(userId) ? null : int.Parse(userId),
-                UpdatedBy = string.IsNullOrEmpty(userId) ? null : int.Parse(userId),
+                CreatedBy = userIdInt,
+                UpdatedBy = userIdInt,
                 DateCreated = DateTime.UtcNow,
                 DateUpdated = DateTime.UtcNow
             };
