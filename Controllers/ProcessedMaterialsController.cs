@@ -112,6 +112,12 @@ namespace irevlogix_backend.Controllers
             var userId = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
             var clientId = GetClientId();
 
+            int userIdInt = 0;
+            if (!string.IsNullOrEmpty(userId))
+            {
+                _ = int.TryParse(userId, out userIdInt);
+            }
+
             var entity = new ProcessedMaterial
             {
                 MaterialTypeId = dto.MaterialTypeId,
@@ -120,12 +126,12 @@ namespace irevlogix_backend.Controllers
                 UnitOfMeasure = dto.UnitOfMeasure,
                 QualityGrade = dto.QualityGrade,
                 Location = dto.Location,
-                Status = dto.Status,
+                Status = string.IsNullOrWhiteSpace(dto.Status) ? "Available" : dto.Status,
                 ProcessingLotId = dto.ProcessingLotId ?? 0,
                 PurchaseCostPerUnit = dto.PurchaseCostPerUnit,
                 ClientId = clientId,
-                CreatedBy = string.IsNullOrEmpty(userId) ? null : int.Parse(userId),
-                UpdatedBy = string.IsNullOrEmpty(userId) ? null : int.Parse(userId),
+                CreatedBy = userIdInt,
+                UpdatedBy = userIdInt,
                 DateCreated = DateTime.UtcNow,
                 DateUpdated = DateTime.UtcNow
             };
@@ -138,7 +144,7 @@ namespace irevlogix_backend.Controllers
 
         public class UpdateProcessedMaterialDto
         {
-            public string Status { get; set; }
+            public string? Status { get; set; }
         }
 
         [HttpPatch("{id:int}")]
@@ -148,7 +154,7 @@ namespace irevlogix_backend.Controllers
             var entity = await _context.ProcessedMaterials.FirstOrDefaultAsync(x => x.Id == id && (string.IsNullOrEmpty(clientId) || x.ClientId == clientId));
             if (entity == null) return NotFound();
 
-            if (dto.Status != null) entity.Status = dto.Status;
+            if (!string.IsNullOrWhiteSpace(dto.Status)) entity.Status = dto.Status;
             entity.DateUpdated = DateTime.UtcNow;
 
             await _context.SaveChangesAsync();
