@@ -51,5 +51,7 @@ namespace irevlogix_backend.Models
         
         [MaxLength(200)]
         public string? HazardousClassification { get; set; }
+
+        public decimal? PurchaseCostPerUnit { get; set; }
     }
 }
