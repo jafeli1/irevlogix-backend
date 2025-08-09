@@ -209,15 +209,32 @@ namespace irevlogix_backend.Controllers
         }
 
         [HttpGet("roles")]
-        public async Task<ActionResult<IEnumerable<Role>>> GetRoles()
+        public async Task<IActionResult> GetRoles()
         {
             try
             {
                 var clientId = GetClientId();
                 var roles = await _context.Roles
                     .Where(r => r.ClientId == clientId)
-                    .Include(r => r.RolePermissions)
-                        .ThenInclude(rp => rp.Permission)
+                    .Select(r => new {
+                        r.Id,
+                        r.Name,
+                        r.Description,
+                        r.IsSystemRole,
+                        r.DateCreated,
+                        r.DateUpdated,
+                        RolePermissions = r.RolePermissions.Select(rp => new {
+                            rp.Id,
+                            rp.PermissionId,
+                            Permission = new {
+                                rp.Permission.Id,
+                                rp.Permission.Name,
+                                rp.Permission.Module,
+                                rp.Permission.Action,
+                                rp.Permission.Description
+                            }
+                        })
+                    })
                     .OrderBy(r => r.Name)
                     .ToListAsync();
 

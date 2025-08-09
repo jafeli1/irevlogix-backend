@@ -202,7 +202,7 @@ namespace irevlogix_backend.Data
                     .HasForeignKey(e => e.ProcessingLotId)
                     .OnDelete(DeleteBehavior.Cascade);
                 entity.HasOne(e => e.MaterialType)
-                    .WithMany()
+                    .WithMany(mt => mt.ProcessedMaterials)
                     .HasForeignKey(e => e.MaterialTypeId)
                     .OnDelete(DeleteBehavior.SetNull);
             });
