@@ -155,7 +155,7 @@ namespace irevlogix_backend.Data
                     .HasForeignKey(e => e.OriginatorClientId)
                     .OnDelete(DeleteBehavior.SetNull);
                 entity.HasOne(e => e.ClientContact)
-                    .WithMany()
+                    .WithMany(cc => cc.Shipments)
                     .HasForeignKey(e => e.ClientContactId)
                     .OnDelete(DeleteBehavior.SetNull);
             });
@@ -191,6 +191,10 @@ namespace irevlogix_backend.Data
                     .WithMany(e => e.ProcessingSteps)
                     .HasForeignKey(e => e.ProcessingLotId)
                     .OnDelete(DeleteBehavior.Cascade);
+                entity.HasOne(e => e.ResponsibleUser)
+                    .WithMany()
+                    .HasForeignKey(e => e.ResponsibleUserId)
+                    .OnDelete(DeleteBehavior.SetNull);
             });
 
             modelBuilder.Entity<ProcessedMaterial>(entity =>
@@ -238,7 +242,7 @@ namespace irevlogix_backend.Data
             {
                 entity.HasKey(e => e.Id);
                 entity.HasOne(e => e.Shipment)
-                    .WithMany()
+                    .WithMany(s => s.ShipmentStatusHistories)
                     .HasForeignKey(e => e.ShipmentId)
                     .OnDelete(DeleteBehavior.Cascade);
                 entity.HasOne(e => e.User)
@@ -251,7 +255,7 @@ namespace irevlogix_backend.Data
             {
                 entity.HasKey(e => e.Id);
                 entity.HasOne(e => e.Shipment)
-                    .WithMany()
+                    .WithMany(s => s.ShipmentDocuments)
                     .HasForeignKey(e => e.ShipmentId)
                     .OnDelete(DeleteBehavior.Cascade);
             });

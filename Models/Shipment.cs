@@ -58,5 +58,7 @@ namespace irevlogix_backend.Models
         public string? OriginAddress { get; set; }
         
         public virtual ICollection<ShipmentItem> ShipmentItems { get; set; } = new List<ShipmentItem>();
+        public virtual ICollection<ShipmentStatusHistory> ShipmentStatusHistories { get; set; } = new List<ShipmentStatusHistory>();
+        public virtual ICollection<ShipmentDocument> ShipmentDocuments { get; set; } = new List<ShipmentDocument>();
     }
 }
