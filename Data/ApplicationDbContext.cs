@@ -30,6 +30,7 @@ namespace irevlogix_backend.Data
         public DbSet<ShipmentItem> ShipmentItems { get; set; }
         public DbSet<ProcessingStep> ProcessingSteps { get; set; }
         public DbSet<ProcessedMaterial> ProcessedMaterials { get; set; }
+        public DbSet<Vendor> Vendors { get; set; }
         public DbSet<Asset> Assets { get; set; }
         public DbSet<AssetTrackingStatus> AssetTrackingStatuses { get; set; }
         public DbSet<ChainOfCustody> ChainOfCustodyRecords { get; set; }
