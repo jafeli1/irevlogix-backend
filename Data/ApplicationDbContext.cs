@@ -191,6 +191,10 @@ namespace irevlogix_backend.Data
                     .WithMany(e => e.ProcessingSteps)
                     .HasForeignKey(e => e.ProcessingLotId)
                     .OnDelete(DeleteBehavior.Cascade);
+                entity.HasOne(e => e.ResponsibleUser)
+                    .WithMany()
+                    .HasForeignKey(e => e.ResponsibleUserId)
+                    .OnDelete(DeleteBehavior.SetNull);
             });
 
             modelBuilder.Entity<ProcessedMaterial>(entity =>
