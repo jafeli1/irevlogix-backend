@@ -18,6 +18,9 @@ namespace irevlogix_backend.Models
         
         [MaxLength(50)]
         public string? UnitOfMeasure { get; set; }
+
+        [MaxLength(200)]
+        public string? Location { get; set; }
         
         public decimal? ProcessedWeight { get; set; }
         
