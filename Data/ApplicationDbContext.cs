@@ -155,7 +155,7 @@ namespace irevlogix_backend.Data
                     .HasForeignKey(e => e.OriginatorClientId)
                     .OnDelete(DeleteBehavior.SetNull);
                 entity.HasOne(e => e.ClientContact)
-                    .WithMany()
+                    .WithMany(cc => cc.Shipments)
                     .HasForeignKey(e => e.ClientContactId)
                     .OnDelete(DeleteBehavior.SetNull);
             });
