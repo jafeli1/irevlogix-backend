@@ -242,7 +242,7 @@ namespace irevlogix_backend.Data
             {
                 entity.HasKey(e => e.Id);
                 entity.HasOne(e => e.Shipment)
-                    .WithMany()
+                    .WithMany(s => s.ShipmentStatusHistories)
                     .HasForeignKey(e => e.ShipmentId)
                     .OnDelete(DeleteBehavior.Cascade);
                 entity.HasOne(e => e.User)
@@ -255,7 +255,7 @@ namespace irevlogix_backend.Data
             {
                 entity.HasKey(e => e.Id);
                 entity.HasOne(e => e.Shipment)
-                    .WithMany()
+                    .WithMany(s => s.ShipmentDocuments)
                     .HasForeignKey(e => e.ShipmentId)
                     .OnDelete(DeleteBehavior.Cascade);
             });
