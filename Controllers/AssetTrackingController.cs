@@ -198,7 +198,6 @@ namespace irevlogix_backend.Controllers
                     .Where(c => c.ClientId == clientId)
                     .Include(c => c.Asset)
                     .Include(c => c.User)
-                    .Include(c => c.StatusChange)
                     .OrderByDescending(c => c.Timestamp)
                     .Take(10)
                     .ToListAsync();
