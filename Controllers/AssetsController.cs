@@ -31,7 +31,7 @@ namespace irevlogix_backend.Controllers
 
         private static string EscapeCsv(string input)
         {
-            if (input == null) return "";
+            if (string.IsNullOrEmpty(input)) return "";
             if (input.Contains(",") || input.Contains("\"") || input.Contains("\n"))
             {
                 return "\"" + input.Replace("\"", "\"\"") + "\"";
@@ -205,6 +205,11 @@ namespace irevlogix_backend.Controllers
 
                 if (effectiveStatusId.HasValue)
                 {
+                    var statusName = await _context.AssetTrackingStatuses
+                        .Where(s => s.Id == effectiveStatusId.Value && s.ClientId == clientId)
+                        .Select(s => s.StatusName)
+                        .FirstOrDefaultAsync();
+
                     var chainOfCustody = new ChainOfCustody
                     {
                         AssetId = asset.Id,
@@ -212,6 +217,7 @@ namespace irevlogix_backend.Controllers
                         Location = request.CurrentLocation,
                         UserId = userId,
                         StatusChangeId = effectiveStatusId.Value,
+                        StatusChange = string.IsNullOrWhiteSpace(statusName) ? "Asset created" : statusName,
                         Notes = "Asset created",
                         ClientId = clientId,
                         CreatedBy = userId,
