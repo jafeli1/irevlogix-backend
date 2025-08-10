@@ -137,8 +137,6 @@ namespace irevlogix_backend.Controllers
                     .Include(a => a.CurrentStatus)
                     .Include(a => a.ChainOfCustodyRecords)
                         .ThenInclude(c => c.User)
-                    .Include(a => a.ChainOfCustodyRecords)
-                        .ThenInclude(c => c.StatusChange)
                     .FirstOrDefaultAsync();
 
                 if (asset == null)
@@ -342,7 +340,6 @@ namespace irevlogix_backend.Controllers
                 var chainOfCustody = await _context.ChainOfCustodyRecords
                     .Where(c => c.AssetId == id && c.ClientId == clientId)
                     .Include(c => c.User)
-                    .Include(c => c.StatusChange)
                     .OrderByDescending(c => c.Timestamp)
                     .ToListAsync();
 

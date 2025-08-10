@@ -42,7 +42,8 @@ namespace irevlogix_backend.Models
         [MaxLength(50)]
         public string? StorageDeviceType { get; set; }
         
-        public decimal? StorageCapacity { get; set; }
+        [MaxLength(50)]
+        public string? StorageCapacity { get; set; }
         
         [MaxLength(100)]
         public string? DataSanitizationMethod { get; set; }
@@ -52,7 +53,7 @@ namespace irevlogix_backend.Models
         
         public DateTime? DataSanitizationDate { get; set; }
         
-        [MaxLength(200)]
+        [MaxLength(500)]
         public string? DataSanitizationCertificate { get; set; }
         
         public decimal? DataDestructionCost { get; set; }
@@ -63,7 +64,7 @@ namespace irevlogix_backend.Models
         [MaxLength(1000)]
         public string? Notes { get; set; }
         
-        public decimal? InternalAuditScore { get; set; }
+        public int? InternalAuditScore { get; set; }
         
         [MaxLength(100)]
         public string? CurrentLocation { get; set; }
@@ -105,7 +106,7 @@ namespace irevlogix_backend.Models
         public DateTime? RecyclingDate { get; set; }
         public decimal? RecyclingCost { get; set; }
         
-        [MaxLength(200)]
+        [MaxLength(500)]
         public string? CertificateOfRecycling { get; set; }
         
         public int? ProcessingLotId { get; set; }
