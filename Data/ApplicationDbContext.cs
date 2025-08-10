@@ -229,6 +229,7 @@ namespace irevlogix_backend.Data
 
             modelBuilder.Entity<ChainOfCustody>(entity =>
             {
+                entity.ToTable("ChainOfCustody");
                 entity.HasKey(e => e.Id);
                 entity.HasOne(e => e.Asset)
                     .WithMany(e => e.ChainOfCustodyRecords)

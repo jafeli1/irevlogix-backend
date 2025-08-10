@@ -29,6 +29,16 @@ namespace irevlogix_backend.Controllers
             return User.FindFirst("ClientId")?.Value ?? "ADMIN_CLIENT_001";
         }
 
+        private static string EscapeCsv(string input)
+        {
+            if (string.IsNullOrEmpty(input)) return "";
+            if (input.Contains(",") || input.Contains("\"") || input.Contains("\n"))
+            {
+                return "\"" + input.Replace("\"", "\"\"") + "\"";
+            }
+            return input;
+        }
+
         [HttpGet]
         public async Task<ActionResult<IEnumerable<Asset>>> GetAssets(
             [FromQuery] string? search = null,
@@ -124,36 +134,6 @@ namespace irevlogix_backend.Controllers
                 var asset = await _context.Assets
                     .Where(a => a.Id == id && a.ClientId == clientId)
                     .Include(a => a.AssetCategory)
-        private static string EscapeCsv(string input)
-        {
-            if (input == null) return "";
-            if (input.Contains(",") || input.Contains("\"") || input.Contains("\n"))
-            {
-                return "\"" + input.Replace("\"", "\"\"") + "\"";
-            }
-            return input;
-        }
-
-        private static string EscapeCsv(string input)
-        {
-            if (input == null) return "";
-            if (input.Contains(",") || input.Contains("\"") || input.Contains("\n"))
-            {
-                return "\"" + input.Replace("\"", "\"\"") + "\"";
-            }
-            return input;
-        }
-
-        private static string EscapeCsv(string input)
-        {
-            if (input == null) return "";
-            if (input.Contains(",") || input.Contains("\"") || input.Contains("\n"))
-            {
-                return "\"" + input.Replace("\"", "\"\"") + "\"";
-            }
-            return input;
-        }
-
                     .Include(a => a.CurrentStatus)
                     .Include(a => a.ChainOfCustodyRecords)
                         .ThenInclude(c => c.User)
@@ -190,6 +170,15 @@ namespace irevlogix_backend.Controllers
                 if (existingAsset != null)
                     return BadRequest("Asset with this ID already exists");
 
+                int? effectiveStatusId = request.CurrentStatusId;
+                if (!effectiveStatusId.HasValue)
+                {
+                    effectiveStatusId = await _context.AssetTrackingStatuses
+                        .Where(s => s.ClientId == clientId && s.IsActive && s.StatusName == "Received")
+                        .Select(s => (int?)s.Id)
+                        .FirstOrDefaultAsync();
+                }
+
                 var asset = new Asset
                 {
                     AssetID = request.AssetID,
@@ -197,13 +186,14 @@ namespace irevlogix_backend.Controllers
                     Manufacturer = request.Manufacturer,
                     Model = request.Model,
                     SerialNumber = request.SerialNumber,
+                    Description = request.Description ?? string.Empty,
                     Condition = request.Condition,
                     EstimatedValue = request.EstimatedValue,
                     IsDataBearing = request.IsDataBearing,
                     StorageDeviceType = request.StorageDeviceType,
                     DataSanitizationStatus = request.DataSanitizationStatus,
                     CurrentLocation = request.CurrentLocation,
-                    CurrentStatusId = request.CurrentStatusId,
+                    CurrentStatusId = effectiveStatusId,
                     Notes = request.Notes,
                     ClientId = clientId,
                     CreatedBy = userId,
@@ -213,21 +203,30 @@ namespace irevlogix_backend.Controllers
                 _context.Assets.Add(asset);
                 await _context.SaveChangesAsync();
 
-                var chainOfCustody = new ChainOfCustody
+                if (effectiveStatusId.HasValue)
                 {
-                    AssetId = asset.Id,
-                    Timestamp = DateTime.UtcNow,
-                    Location = request.CurrentLocation,
-                    UserId = userId,
-                    StatusChangeId = request.CurrentStatusId,
-                    Notes = "Asset created",
-                    ClientId = clientId,
-                    CreatedBy = userId,
-                    UpdatedBy = userId
-                };
+                    var statusName = await _context.AssetTrackingStatuses
+                        .Where(s => s.Id == effectiveStatusId.Value && s.ClientId == clientId)
+                        .Select(s => s.StatusName)
+                        .FirstOrDefaultAsync();
 
-                _context.ChainOfCustodyRecords.Add(chainOfCustody);
-                await _context.SaveChangesAsync();
+                    var chainOfCustody = new ChainOfCustody
+                    {
+                        AssetId = asset.Id,
+                        Timestamp = DateTime.UtcNow,
+                        Location = request.CurrentLocation,
+                        UserId = userId,
+                        StatusChangeId = effectiveStatusId.Value,
+                        StatusChange = string.IsNullOrWhiteSpace(statusName) ? "Asset created" : statusName,
+                        Notes = "Asset created",
+                        ClientId = clientId,
+                        CreatedBy = userId,
+                        UpdatedBy = userId
+                    };
+
+                    _context.ChainOfCustodyRecords.Add(chainOfCustody);
+                    await _context.SaveChangesAsync();
+                }
 
                 return CreatedAtAction(nameof(GetAsset), new { id = asset.Id }, asset);
             }
@@ -262,6 +261,7 @@ namespace irevlogix_backend.Controllers
                 asset.Manufacturer = request.Manufacturer ?? asset.Manufacturer;
                 asset.Model = request.Model ?? asset.Model;
                 asset.SerialNumber = request.SerialNumber ?? asset.SerialNumber;
+                asset.Description = request.Description ?? asset.Description;
                 asset.Condition = request.Condition ?? asset.Condition;
                 asset.EstimatedValue = request.EstimatedValue ?? asset.EstimatedValue;
                 asset.IsDataBearing = request.IsDataBearing ?? asset.IsDataBearing;
@@ -508,6 +508,7 @@ namespace irevlogix_backend.Controllers
         public string? Manufacturer { get; set; }
         public string? Model { get; set; }
         public string? SerialNumber { get; set; }
+        public string? Description { get; set; }
         public string? Condition { get; set; }
         public decimal? EstimatedValue { get; set; }
         public bool IsDataBearing { get; set; } = false;
@@ -524,6 +525,7 @@ namespace irevlogix_backend.Controllers
         public string? Manufacturer { get; set; }
         public string? Model { get; set; }
         public string? SerialNumber { get; set; }
+        public string? Description { get; set; }
         public string? Condition { get; set; }
         public decimal? EstimatedValue { get; set; }
         public bool? IsDataBearing { get; set; }
