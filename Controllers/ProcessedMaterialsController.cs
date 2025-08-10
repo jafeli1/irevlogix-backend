@@ -33,7 +33,6 @@ namespace irevlogix_backend.Controllers
 
             var q = _context.ProcessedMaterials
                 .Include(p => p.MaterialType)
-                .Include(p => p.ProcessingLot)
                 .AsQueryable();
 
             q = q.Where(x => x.ClientId == clientId);
@@ -73,7 +72,6 @@ namespace irevlogix_backend.Controllers
 
             var item = await _context.ProcessedMaterials
                 .Include(p => p.MaterialType)
-                .Include(p => p.ProcessingLot)
                 .FirstOrDefaultAsync(x => x.Id == id);
 
             if (item == null) return NotFound();
