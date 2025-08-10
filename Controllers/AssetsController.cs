@@ -29,6 +29,16 @@ namespace irevlogix_backend.Controllers
             return User.FindFirst("ClientId")?.Value ?? "ADMIN_CLIENT_001";
         }
 
+        private static string EscapeCsv(string input)
+        {
+            if (input == null) return "";
+            if (input.Contains(",") || input.Contains("\"") || input.Contains("\n"))
+            {
+                return "\"" + input.Replace("\"", "\"\"") + "\"";
+            }
+            return input;
+        }
+
         [HttpGet]
         public async Task<ActionResult<IEnumerable<Asset>>> GetAssets(
             [FromQuery] string? search = null,
@@ -124,36 +134,6 @@ namespace irevlogix_backend.Controllers
                 var asset = await _context.Assets
                     .Where(a => a.Id == id && a.ClientId == clientId)
                     .Include(a => a.AssetCategory)
-        private static string EscapeCsv(string input)
-        {
-            if (input == null) return "";
-            if (input.Contains(",") || input.Contains("\"") || input.Contains("\n"))
-            {
-                return "\"" + input.Replace("\"", "\"\"") + "\"";
-            }
-            return input;
-        }
-
-        private static string EscapeCsv(string input)
-        {
-            if (input == null) return "";
-            if (input.Contains(",") || input.Contains("\"") || input.Contains("\n"))
-            {
-                return "\"" + input.Replace("\"", "\"\"") + "\"";
-            }
-            return input;
-        }
-
-        private static string EscapeCsv(string input)
-        {
-            if (input == null) return "";
-            if (input.Contains(",") || input.Contains("\"") || input.Contains("\n"))
-            {
-                return "\"" + input.Replace("\"", "\"\"") + "\"";
-            }
-            return input;
-        }
-
                     .Include(a => a.CurrentStatus)
                     .Include(a => a.ChainOfCustodyRecords)
                         .ThenInclude(c => c.User)
@@ -190,6 +170,15 @@ namespace irevlogix_backend.Controllers
                 if (existingAsset != null)
                     return BadRequest("Asset with this ID already exists");
 
+                int? effectiveStatusId = request.CurrentStatusId;
+                if (!effectiveStatusId.HasValue)
+                {
+                    effectiveStatusId = await _context.AssetTrackingStatuses
+                        .Where(s => s.ClientId == clientId && s.IsActive && s.StatusName == "Received")
+                        .Select(s => (int?)s.Id)
+                        .FirstOrDefaultAsync();
+                }
+
                 var asset = new Asset
                 {
                     AssetID = request.AssetID,
@@ -203,7 +192,7 @@ namespace irevlogix_backend.Controllers
                     StorageDeviceType = request.StorageDeviceType,
                     DataSanitizationStatus = request.DataSanitizationStatus,
                     CurrentLocation = request.CurrentLocation,
-                    CurrentStatusId = request.CurrentStatusId,
+                    CurrentStatusId = effectiveStatusId,
                     Notes = request.Notes,
                     ClientId = clientId,
                     CreatedBy = userId,
@@ -213,21 +202,24 @@ namespace irevlogix_backend.Controllers
                 _context.Assets.Add(asset);
                 await _context.SaveChangesAsync();
 
-                var chainOfCustody = new ChainOfCustody
+                if (effectiveStatusId.HasValue)
                 {
-                    AssetId = asset.Id,
-                    Timestamp = DateTime.UtcNow,
-                    Location = request.CurrentLocation,
-                    UserId = userId,
-                    StatusChangeId = request.CurrentStatusId,
-                    Notes = "Asset created",
-                    ClientId = clientId,
-                    CreatedBy = userId,
-                    UpdatedBy = userId
-                };
+                    var chainOfCustody = new ChainOfCustody
+                    {
+                        AssetId = asset.Id,
+                        Timestamp = DateTime.UtcNow,
+                        Location = request.CurrentLocation,
+                        UserId = userId,
+                        StatusChangeId = effectiveStatusId.Value,
+                        Notes = "Asset created",
+                        ClientId = clientId,
+                        CreatedBy = userId,
+                        UpdatedBy = userId
+                    };
 
-                _context.ChainOfCustodyRecords.Add(chainOfCustody);
-                await _context.SaveChangesAsync();
+                    _context.ChainOfCustodyRecords.Add(chainOfCustody);
+                    await _context.SaveChangesAsync();
+                }
 
                 return CreatedAtAction(nameof(GetAsset), new { id = asset.Id }, asset);
             }
