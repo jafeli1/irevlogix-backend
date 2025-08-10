@@ -137,7 +137,7 @@ namespace irevlogix_backend.Controllers
                         currentLocation = a.CurrentLocation ?? "",
                         currentStatus = new { statusName = a.CurrentStatus != null ? a.CurrentStatus.StatusName : null },
                         dateCreated = a.DateCreated,
-                        clientName = a.Client != null ? a.Client.Name : null
+                        clientName = (string?)null
                     })
                     .ToListAsync();
 
