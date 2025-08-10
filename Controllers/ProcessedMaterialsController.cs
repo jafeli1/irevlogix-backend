@@ -27,7 +27,7 @@ namespace irevlogix_backend.Controllers
         }
 
         [HttpGet]
-        public async Task<IActionResult> GetList([FromQuery] int? materialTypeId, [FromQuery] string qualityGrade, [FromQuery] string location, [FromQuery] string status, [FromQuery] int page = 1, [FromQuery] int pageSize = 10)
+        public async Task<IActionResult> GetList([FromQuery] int? materialTypeId, [FromQuery] string? qualityGrade, [FromQuery] string? location, [FromQuery] string? status, [FromQuery] int page = 1, [FromQuery] int pageSize = 10)
         {
             var clientId = GetClientId();
 
