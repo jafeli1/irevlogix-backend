@@ -202,7 +202,7 @@ namespace irevlogix_backend.Controllers
                     {
                         Id = c.Id,
                         AssetId = c.AssetId,
-                        Action = c.ActionType ?? c.StatusChange,
+                        Action = c.StatusChange,
                         Timestamp = c.Timestamp,
                         User = c.User != null
                             ? (c.User.FirstName + " " + c.User.LastName).Trim()
