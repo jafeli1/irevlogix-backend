@@ -11,9 +11,9 @@ namespace irevlogix_backend.Models
         
         public DateTime DateUpdated { get; set; } = DateTime.UtcNow;
         
-        public int CreatedBy { get; set; }
+        public string CreatedBy { get; set; } = string.Empty;
         
-        public int UpdatedBy { get; set; }
+        public string UpdatedBy { get; set; } = string.Empty;
         
         [Required]
         public string ClientId { get; set; } = string.Empty;

@@ -107,14 +107,10 @@ namespace irevlogix_backend.Controllers
         [HttpPost]
         public async Task<IActionResult> Create([FromBody] CreateProcessedMaterialDto dto)
         {
-            var userId = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+            var userId = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value 
+                         ?? User.Identity?.Name 
+                         ?? "system";
             var clientId = GetClientId();
-
-            int userIdInt = 0;
-            if (!string.IsNullOrEmpty(userId))
-            {
-                _ = int.TryParse(userId, out userIdInt);
-            }
 
             var entity = new ProcessedMaterial
             {
@@ -128,8 +124,8 @@ namespace irevlogix_backend.Controllers
                 ProcessingLotId = dto.ProcessingLotId ?? 0,
                 PurchaseCostPerUnit = dto.PurchaseCostPerUnit,
                 ClientId = clientId,
-                CreatedBy = userIdInt,
-                UpdatedBy = userIdInt,
+                CreatedBy = userId,
+                UpdatedBy = userId,
                 DateCreated = DateTime.UtcNow,
                 DateUpdated = DateTime.UtcNow
             };

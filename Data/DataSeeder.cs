@@ -42,8 +42,8 @@ namespace irevlogix_backend.Data
                         Description = "System Administrator with full access to all modules",
                         IsSystemRole = true,
                         ClientId = clientId,
-                        CreatedBy = 1,
-                        UpdatedBy = 1,
+                        CreatedBy = "system",
+                        UpdatedBy = "system",
                         DateCreated = DateTime.UtcNow,
                         DateUpdated = DateTime.UtcNow
                     };
@@ -65,48 +65,48 @@ namespace irevlogix_backend.Data
 
             var permissions = new List<Permission>
             {
-                new Permission { Name = "Authentication Read", Module = "Authentication", Action = "Read", Description = "View authentication settings", ClientId = clientId, CreatedBy = 1, UpdatedBy = 1 },
-                new Permission { Name = "Authentication Write", Module = "Authentication", Action = "Write", Description = "Modify authentication settings", ClientId = clientId, CreatedBy = 1, UpdatedBy = 1 },
+                new Permission { Name = "Authentication Read", Module = "Authentication", Action = "Read", Description = "View authentication settings", ClientId = clientId, CreatedBy = "system", UpdatedBy = "system" },
+                new Permission { Name = "Authentication Write", Module = "Authentication", Action = "Write", Description = "Modify authentication settings", ClientId = clientId, CreatedBy = "system", UpdatedBy = "system" },
                 
-                new Permission { Name = "Reverse Logistics Read", Module = "ReverseLogistics", Action = "Read", Description = "View reverse logistics data", ClientId = clientId, CreatedBy = 1, UpdatedBy = 1 },
-                new Permission { Name = "Reverse Logistics Create", Module = "ReverseLogistics", Action = "Create", Description = "Create reverse logistics entries", ClientId = clientId, CreatedBy = 1, UpdatedBy = 1 },
-                new Permission { Name = "Reverse Logistics Update", Module = "ReverseLogistics", Action = "Update", Description = "Update reverse logistics entries", ClientId = clientId, CreatedBy = 1, UpdatedBy = 1 },
-                new Permission { Name = "Reverse Logistics Delete", Module = "ReverseLogistics", Action = "Delete", Description = "Delete reverse logistics entries", ClientId = clientId, CreatedBy = 1, UpdatedBy = 1 },
+                new Permission { Name = "Reverse Logistics Read", Module = "ReverseLogistics", Action = "Read", Description = "View reverse logistics data", ClientId = clientId, CreatedBy = "system", UpdatedBy = "system" },
+                new Permission { Name = "Reverse Logistics Create", Module = "ReverseLogistics", Action = "Create", Description = "Create reverse logistics entries", ClientId = clientId, CreatedBy = "system", UpdatedBy = "system" },
+                new Permission { Name = "Reverse Logistics Update", Module = "ReverseLogistics", Action = "Update", Description = "Update reverse logistics entries", ClientId = clientId, CreatedBy = "system", UpdatedBy = "system" },
+                new Permission { Name = "Reverse Logistics Delete", Module = "ReverseLogistics", Action = "Delete", Description = "Delete reverse logistics entries", ClientId = clientId, CreatedBy = "system", UpdatedBy = "system" },
                 
-                new Permission { Name = "Processing Read", Module = "Processing", Action = "Read", Description = "View processing data", ClientId = clientId, CreatedBy = 1, UpdatedBy = 1 },
-                new Permission { Name = "Processing Create", Module = "Processing", Action = "Create", Description = "Create processing entries", ClientId = clientId, CreatedBy = 1, UpdatedBy = 1 },
-                new Permission { Name = "Processing Update", Module = "Processing", Action = "Update", Description = "Update processing entries", ClientId = clientId, CreatedBy = 1, UpdatedBy = 1 },
-                new Permission { Name = "Processing Delete", Module = "Processing", Action = "Delete", Description = "Delete processing entries", ClientId = clientId, CreatedBy = 1, UpdatedBy = 1 },
+                new Permission { Name = "Processing Read", Module = "Processing", Action = "Read", Description = "View processing data", ClientId = clientId, CreatedBy = "system", UpdatedBy = "system" },
+                new Permission { Name = "Processing Create", Module = "Processing", Action = "Create", Description = "Create processing entries", ClientId = clientId, CreatedBy = "system", UpdatedBy = "system" },
+                new Permission { Name = "Processing Update", Module = "Processing", Action = "Update", Description = "Update processing entries", ClientId = clientId, CreatedBy = "system", UpdatedBy = "system" },
+                new Permission { Name = "Processing Delete", Module = "Processing", Action = "Delete", Description = "Delete processing entries", ClientId = clientId, CreatedBy = "system", UpdatedBy = "system" },
                 
-                new Permission { Name = "Downstream Materials Read", Module = "DownstreamMaterials", Action = "Read", Description = "View downstream materials data", ClientId = clientId, CreatedBy = 1, UpdatedBy = 1 },
-                new Permission { Name = "Downstream Materials Create", Module = "DownstreamMaterials", Action = "Create", Description = "Create downstream materials entries", ClientId = clientId, CreatedBy = 1, UpdatedBy = 1 },
-                new Permission { Name = "Downstream Materials Update", Module = "DownstreamMaterials", Action = "Update", Description = "Update downstream materials entries", ClientId = clientId, CreatedBy = 1, UpdatedBy = 1 },
-                new Permission { Name = "Downstream Materials Delete", Module = "DownstreamMaterials", Action = "Delete", Description = "Delete downstream materials entries", ClientId = clientId, CreatedBy = 1, UpdatedBy = 1 },
+                new Permission { Name = "Downstream Materials Read", Module = "DownstreamMaterials", Action = "Read", Description = "View downstream materials data", ClientId = clientId, CreatedBy = "system", UpdatedBy = "system" },
+                new Permission { Name = "Downstream Materials Create", Module = "DownstreamMaterials", Action = "Create", Description = "Create downstream materials entries", ClientId = clientId, CreatedBy = "system", UpdatedBy = "system" },
+                new Permission { Name = "Downstream Materials Update", Module = "DownstreamMaterials", Action = "Update", Description = "Update downstream materials entries", ClientId = clientId, CreatedBy = "system", UpdatedBy = "system" },
+                new Permission { Name = "Downstream Materials Delete", Module = "DownstreamMaterials", Action = "Delete", Description = "Delete downstream materials entries", ClientId = clientId, CreatedBy = "system", UpdatedBy = "system" },
                 
-                new Permission { Name = "Asset Recovery Read", Module = "AssetRecovery", Action = "Read", Description = "View asset recovery data", ClientId = clientId, CreatedBy = 1, UpdatedBy = 1 },
-                new Permission { Name = "Asset Recovery Create", Module = "AssetRecovery", Action = "Create", Description = "Create asset recovery entries", ClientId = clientId, CreatedBy = 1, UpdatedBy = 1 },
-                new Permission { Name = "Asset Recovery Update", Module = "AssetRecovery", Action = "Update", Description = "Update asset recovery entries", ClientId = clientId, CreatedBy = 1, UpdatedBy = 1 },
-                new Permission { Name = "Asset Recovery Delete", Module = "AssetRecovery", Action = "Delete", Description = "Delete asset recovery entries", ClientId = clientId, CreatedBy = 1, UpdatedBy = 1 },
+                new Permission { Name = "Asset Recovery Read", Module = "AssetRecovery", Action = "Read", Description = "View asset recovery data", ClientId = clientId, CreatedBy = "system", UpdatedBy = "system" },
+                new Permission { Name = "Asset Recovery Create", Module = "AssetRecovery", Action = "Create", Description = "Create asset recovery entries", ClientId = clientId, CreatedBy = "system", UpdatedBy = "system" },
+                new Permission { Name = "Asset Recovery Update", Module = "AssetRecovery", Action = "Update", Description = "Update asset recovery entries", ClientId = clientId, CreatedBy = "system", UpdatedBy = "system" },
+                new Permission { Name = "Asset Recovery Delete", Module = "AssetRecovery", Action = "Delete", Description = "Delete asset recovery entries", ClientId = clientId, CreatedBy = "system", UpdatedBy = "system" },
                 
-                new Permission { Name = "Reporting Read", Module = "Reporting", Action = "Read", Description = "View reports", ClientId = clientId, CreatedBy = 1, UpdatedBy = 1 },
-                new Permission { Name = "Reporting Create", Module = "Reporting", Action = "Create", Description = "Create reports", ClientId = clientId, CreatedBy = 1, UpdatedBy = 1 },
-                new Permission { Name = "Reporting Update", Module = "Reporting", Action = "Update", Description = "Update reports", ClientId = clientId, CreatedBy = 1, UpdatedBy = 1 },
-                new Permission { Name = "Reporting Delete", Module = "Reporting", Action = "Delete", Description = "Delete reports", ClientId = clientId, CreatedBy = 1, UpdatedBy = 1 },
+                new Permission { Name = "Reporting Read", Module = "Reporting", Action = "Read", Description = "View reports", ClientId = clientId, CreatedBy = "system", UpdatedBy = "system" },
+                new Permission { Name = "Reporting Create", Module = "Reporting", Action = "Create", Description = "Create reports", ClientId = clientId, CreatedBy = "system", UpdatedBy = "system" },
+                new Permission { Name = "Reporting Update", Module = "Reporting", Action = "Update", Description = "Update reports", ClientId = clientId, CreatedBy = "system", UpdatedBy = "system" },
+                new Permission { Name = "Reporting Delete", Module = "Reporting", Action = "Delete", Description = "Delete reports", ClientId = clientId, CreatedBy = "system", UpdatedBy = "system" },
                 
-                new Permission { Name = "Administration Read", Module = "Administration", Action = "Read", Description = "View administration settings", ClientId = clientId, CreatedBy = 1, UpdatedBy = 1 },
-                new Permission { Name = "Administration Create", Module = "Administration", Action = "Create", Description = "Create administration entries", ClientId = clientId, CreatedBy = 1, UpdatedBy = 1 },
-                new Permission { Name = "Administration Update", Module = "Administration", Action = "Update", Description = "Update administration entries", ClientId = clientId, CreatedBy = 1, UpdatedBy = 1 },
-                new Permission { Name = "Administration Delete", Module = "Administration", Action = "Delete", Description = "Delete administration entries", ClientId = clientId, CreatedBy = 1, UpdatedBy = 1 },
+                new Permission { Name = "Administration Read", Module = "Administration", Action = "Read", Description = "View administration settings", ClientId = clientId, CreatedBy = "system", UpdatedBy = "system" },
+                new Permission { Name = "Administration Create", Module = "Administration", Action = "Create", Description = "Create administration entries", ClientId = clientId, CreatedBy = "system", UpdatedBy = "system" },
+                new Permission { Name = "Administration Update", Module = "Administration", Action = "Update", Description = "Update administration entries", ClientId = clientId, CreatedBy = "system", UpdatedBy = "system" },
+                new Permission { Name = "Administration Delete", Module = "Administration", Action = "Delete", Description = "Delete administration entries", ClientId = clientId, CreatedBy = "system", UpdatedBy = "system" },
                 
-                new Permission { Name = "Knowledge Base Read", Module = "KnowledgeBase", Action = "Read", Description = "View knowledge base articles", ClientId = clientId, CreatedBy = 1, UpdatedBy = 1 },
-                new Permission { Name = "Knowledge Base Create", Module = "KnowledgeBase", Action = "Create", Description = "Create knowledge base articles", ClientId = clientId, CreatedBy = 1, UpdatedBy = 1 },
-                new Permission { Name = "Knowledge Base Update", Module = "KnowledgeBase", Action = "Update", Description = "Update knowledge base articles", ClientId = clientId, CreatedBy = 1, UpdatedBy = 1 },
-                new Permission { Name = "Knowledge Base Delete", Module = "KnowledgeBase", Action = "Delete", Description = "Delete knowledge base articles", ClientId = clientId, CreatedBy = 1, UpdatedBy = 1 },
+                new Permission { Name = "Knowledge Base Read", Module = "KnowledgeBase", Action = "Read", Description = "View knowledge base articles", ClientId = clientId, CreatedBy = "system", UpdatedBy = "system" },
+                new Permission { Name = "Knowledge Base Create", Module = "KnowledgeBase", Action = "Create", Description = "Create knowledge base articles", ClientId = clientId, CreatedBy = "system", UpdatedBy = "system" },
+                new Permission { Name = "Knowledge Base Update", Module = "KnowledgeBase", Action = "Update", Description = "Update knowledge base articles", ClientId = clientId, CreatedBy = "system", UpdatedBy = "system" },
+                new Permission { Name = "Knowledge Base Delete", Module = "KnowledgeBase", Action = "Delete", Description = "Delete knowledge base articles", ClientId = clientId, CreatedBy = "system", UpdatedBy = "system" },
                 
-                new Permission { Name = "Training Read", Module = "Training", Action = "Read", Description = "View training materials", ClientId = clientId, CreatedBy = 1, UpdatedBy = 1 },
-                new Permission { Name = "Training Create", Module = "Training", Action = "Create", Description = "Create training materials", ClientId = clientId, CreatedBy = 1, UpdatedBy = 1 },
-                new Permission { Name = "Training Update", Module = "Training", Action = "Update", Description = "Update training materials", ClientId = clientId, CreatedBy = 1, UpdatedBy = 1 },
-                new Permission { Name = "Training Delete", Module = "Training", Action = "Delete", Description = "Delete training materials", ClientId = clientId, CreatedBy = 1, UpdatedBy = 1 }
+                new Permission { Name = "Training Read", Module = "Training", Action = "Read", Description = "View training materials", ClientId = clientId, CreatedBy = "system", UpdatedBy = "system" },
+                new Permission { Name = "Training Create", Module = "Training", Action = "Create", Description = "Create training materials", ClientId = clientId, CreatedBy = "system", UpdatedBy = "system" },
+                new Permission { Name = "Training Update", Module = "Training", Action = "Update", Description = "Update training materials", ClientId = clientId, CreatedBy = "system", UpdatedBy = "system" },
+                new Permission { Name = "Training Delete", Module = "Training", Action = "Delete", Description = "Delete training materials", ClientId = clientId, CreatedBy = "system", UpdatedBy = "system" }
             };
 
             foreach (var permission in permissions)
@@ -150,8 +150,8 @@ namespace irevlogix_backend.Data
                 RoleId = adminRole.Id,
                 PermissionId = p.Id,
                 ClientId = clientId,
-                CreatedBy = 1,
-                UpdatedBy = 1,
+                CreatedBy = "system",
+                UpdatedBy = "system",
                 DateCreated = DateTime.UtcNow,
                 DateUpdated = DateTime.UtcNow
             }).ToList();
@@ -170,8 +170,8 @@ namespace irevlogix_backend.Data
                         RoleId = adminRole.Id,
                         PermissionId = p.Id,
                         ClientId = clientId,
-                        CreatedBy = 1,
-                        UpdatedBy = 1,
+                        CreatedBy = "system",
+                        UpdatedBy = "system",
                         DateCreated = DateTime.UtcNow,
                         DateUpdated = DateTime.UtcNow
                     }).ToList();
@@ -203,8 +203,8 @@ namespace irevlogix_backend.Data
                     Email = "admin@irevlogix.ai",
                     PasswordHash = HashPassword("AdminPass123!"),
                     ClientId = clientId,
-                    CreatedBy = 1,
-                    UpdatedBy = 1,
+                    CreatedBy = "system",
+                    UpdatedBy = "system",
                     DateCreated = DateTime.UtcNow,
                     DateUpdated = DateTime.UtcNow,
                     IsActive = true,
@@ -229,8 +229,8 @@ namespace irevlogix_backend.Data
                     UserId = adminUser.Id,
                     RoleId = adminRole.Id,
                     ClientId = clientId,
-                    CreatedBy = 1,
-                    UpdatedBy = 1,
+                    CreatedBy = "system",
+                    UpdatedBy = "system",
                     DateCreated = DateTime.UtcNow,
                     DateUpdated = DateTime.UtcNow
                 };

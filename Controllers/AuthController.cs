@@ -94,8 +94,8 @@ namespace irevlogix_backend.Controllers
                 Email = request.Email,
                 PasswordHash = HashPassword(request.Password),
                 ClientId = request.ClientId,
-                CreatedBy = 1,
-                UpdatedBy = 1
+                CreatedBy = "system",
+                UpdatedBy = "system"
             };
 
             _context.Users.Add(user);

@@ -100,7 +100,7 @@ namespace irevlogix_backend.Controllers
             user.PhoneNumber = request.PhoneNumber;
             user.IsActive = request.IsActive;
             user.DateUpdated = DateTime.UtcNow;
-            user.UpdatedBy = 1;
+            user.UpdatedBy = "system";
 
             try
             {
