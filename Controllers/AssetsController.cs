@@ -186,6 +186,7 @@ namespace irevlogix_backend.Controllers
                     Manufacturer = request.Manufacturer,
                     Model = request.Model,
                     SerialNumber = request.SerialNumber,
+                    Description = request.Description ?? string.Empty,
                     Condition = request.Condition,
                     EstimatedValue = request.EstimatedValue,
                     IsDataBearing = request.IsDataBearing,
@@ -254,6 +255,7 @@ namespace irevlogix_backend.Controllers
                 asset.Manufacturer = request.Manufacturer ?? asset.Manufacturer;
                 asset.Model = request.Model ?? asset.Model;
                 asset.SerialNumber = request.SerialNumber ?? asset.SerialNumber;
+                asset.Description = request.Description ?? asset.Description;
                 asset.Condition = request.Condition ?? asset.Condition;
                 asset.EstimatedValue = request.EstimatedValue ?? asset.EstimatedValue;
                 asset.IsDataBearing = request.IsDataBearing ?? asset.IsDataBearing;
@@ -500,6 +502,7 @@ namespace irevlogix_backend.Controllers
         public string? Manufacturer { get; set; }
         public string? Model { get; set; }
         public string? SerialNumber { get; set; }
+        public string? Description { get; set; }
         public string? Condition { get; set; }
         public decimal? EstimatedValue { get; set; }
         public bool IsDataBearing { get; set; } = false;
@@ -516,6 +519,7 @@ namespace irevlogix_backend.Controllers
         public string? Manufacturer { get; set; }
         public string? Model { get; set; }
         public string? SerialNumber { get; set; }
+        public string? Description { get; set; }
         public string? Condition { get; set; }
         public decimal? EstimatedValue { get; set; }
         public bool? IsDataBearing { get; set; }
