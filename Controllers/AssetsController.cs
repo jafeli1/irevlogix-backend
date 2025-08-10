@@ -285,6 +285,101 @@ namespace irevlogix_backend.Controllers
                 return StatusCode(500, "Internal server error");
             }
         }
+        [HttpGet("{id}/documents")]
+        public async Task<ActionResult<IEnumerable<AssetDocument>>> GetAssetDocuments(int id)
+        {
+            try
+            {
+                var clientId = GetClientId();
+                var asset = await _context.Assets.Where(a => a.Id == id && a.ClientId == clientId).FirstOrDefaultAsync();
+                if (asset == null) return NotFound();
+                var docs = await _context.AssetDocuments
+                    .Where(d => d.AssetId == id && d.ClientId == clientId)
+                    .OrderByDescending(d => d.DateCreated)
+                    .ToListAsync();
+                return Ok(docs);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error retrieving asset documents for asset {Id}", id);
+                return StatusCode(500, "Internal server error");
+            }
+        }
+
+        [HttpPost("{id}/documents")]
+        public async Task<ActionResult> UploadAssetDocument(int id, IFormFile file, [FromForm] string? description = null)
+        {
+            try
+            {
+                var clientId = GetClientId();
+                var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+                int userId = 1;
+                if (!string.IsNullOrEmpty(userIdClaim) && int.TryParse(userIdClaim, out var parsedUserId)) userId = parsedUserId;
+
+                var asset = await _context.Assets.Where(a => a.Id == id && a.ClientId == clientId).FirstOrDefaultAsync();
+                if (asset == null) return NotFound();
+                if (file == null || file.Length == 0) return BadRequest("No file uploaded");
+
+                var uploadsPath = Path.Combine("uploads", "assets", clientId, id.ToString());
+                Directory.CreateDirectory(uploadsPath);
+                var fileName = $"{Guid.NewGuid()}_{file.FileName}";
+                var filePath = Path.Combine(uploadsPath, fileName);
+                using (var stream = new FileStream(filePath, FileMode.Create))
+                {
+                    await file.CopyToAsync(stream);
+                }
+
+                var document = new AssetDocument
+                {
+                    AssetId = id,
+                    FileName = file.FileName,
+                    FilePath = filePath,
+                    ContentType = file.ContentType,
+                    Description = description,
+                    ClientId = clientId,
+                    CreatedBy = userId,
+                    UpdatedBy = userId
+                };
+
+                _context.AssetDocuments.Add(document);
+                await _context.SaveChangesAsync();
+
+                return Ok(document);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error uploading asset document for asset {Id}", id);
+                return StatusCode(500, "Internal server error");
+            }
+        }
+
+        [HttpDelete("{id}/documents/{documentId}")]
+        public async Task<IActionResult> DeleteAssetDocument(int id, int documentId)
+        {
+            try
+            {
+                var clientId = GetClientId();
+                var document = await _context.AssetDocuments
+                    .Where(d => d.Id == documentId && d.AssetId == id && d.ClientId == clientId)
+                    .FirstOrDefaultAsync();
+                if (document == null) return NotFound();
+
+                if (!string.IsNullOrEmpty(document.FilePath) && System.IO.File.Exists(document.FilePath))
+                {
+                    System.IO.File.Delete(document.FilePath);
+                }
+
+                _context.AssetDocuments.Remove(document);
+                await _context.SaveChangesAsync();
+                return NoContent();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error deleting asset document {DocumentId} for asset {Id}", documentId, id);
+                return StatusCode(500, "Internal server error");
+            }
+        }
+
 
         [HttpPost("{id}/disposition-recommendation")]
         public async Task<ActionResult<string>> GetDispositionRecommendation(int id)
