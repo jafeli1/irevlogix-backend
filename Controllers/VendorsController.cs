@@ -104,14 +104,10 @@ namespace irevlogix_backend.Controllers
         [HttpPost]
         public async Task<IActionResult> Create([FromBody] CreateVendorDto dto)
         {
-            var userId = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+            var userIdClaim = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+            int userId = 1;
+            if (!string.IsNullOrEmpty(userIdClaim) && int.TryParse(userIdClaim, out var parsed)) userId = parsed;
             var clientId = GetClientId();
-
-            int userIdInt = 0;
-            if (!string.IsNullOrEmpty(userId))
-            {
-                _ = int.TryParse(userId, out userIdInt);
-            }
 
             var v = new Vendor
             {
@@ -128,8 +124,8 @@ namespace irevlogix_backend.Controllers
                 PaymentTerms = dto.PaymentTerms,
                 VendorRating = dto.VendorRating,
                 ClientId = clientId,
-                CreatedBy = userIdInt,
-                UpdatedBy = userIdInt,
+                CreatedBy = userId,
+                UpdatedBy = userId,
                 DateCreated = DateTime.UtcNow,
                 DateUpdated = DateTime.UtcNow
             };

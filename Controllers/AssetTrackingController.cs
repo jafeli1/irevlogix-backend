@@ -52,7 +52,9 @@ namespace irevlogix_backend.Controllers
             try
             {
                 var clientId = GetClientId();
-                var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? "0");
+                var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+                int userId = 1;
+                if (!string.IsNullOrEmpty(userIdClaim) && int.TryParse(userIdClaim, out var parsedUserId)) userId = parsedUserId;
 
                 var existingStatus = await _context.AssetTrackingStatuses
                     .Where(s => s.StatusName == request.StatusName && s.ClientId == clientId)
@@ -89,7 +91,9 @@ namespace irevlogix_backend.Controllers
             try
             {
                 var clientId = GetClientId();
-                var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? "0");
+                var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+                int userId = 1;
+                if (!string.IsNullOrEmpty(userIdClaim) && int.TryParse(userIdClaim, out var parsedUserId)) userId = parsedUserId;
 
                 var status = await _context.AssetTrackingStatuses
                     .Where(s => s.Id == id && s.ClientId == clientId)
@@ -120,7 +124,9 @@ namespace irevlogix_backend.Controllers
             try
             {
                 var clientId = GetClientId();
-                var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? "0");
+                var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+                int userId = 1;
+                if (!string.IsNullOrEmpty(userIdClaim) && int.TryParse(userIdClaim, out var parsedUserId)) userId = parsedUserId;
 
                 var asset = await _context.Assets
                     .Where(a => a.Id == assetId && a.ClientId == clientId)

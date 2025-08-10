@@ -110,7 +110,9 @@ namespace irevlogix_backend.Controllers
             try
             {
                 var clientId = GetClientId();
-                var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? "0");
+                var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+                var userId = 1;
+                if (!string.IsNullOrEmpty(userIdClaim) && int.TryParse(userIdClaim, out var parsedUserId)) userId = parsedUserId;
 
                 var existingAsset = await _context.Assets
                     .Where(a => a.AssetID == request.AssetID && a.ClientId == clientId)
@@ -173,7 +175,9 @@ namespace irevlogix_backend.Controllers
             try
             {
                 var clientId = GetClientId();
-                var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? "0");
+                var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+                var userId = 1;
+                if (!string.IsNullOrEmpty(userIdClaim) && int.TryParse(userIdClaim, out var parsedUserId)) userId = parsedUserId;
 
                 var asset = await _context.Assets
                     .Where(a => a.Id == id && a.ClientId == clientId)
