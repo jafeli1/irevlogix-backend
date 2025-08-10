@@ -74,10 +74,10 @@ namespace irevlogix_backend.Controllers
             var item = await _context.ProcessedMaterials
                 .Include(p => p.MaterialType)
                 .Include(p => p.ProcessingLot)
-                .Where(x => x.Id == id && (string.IsNullOrEmpty(clientId) || x.ClientId == clientId))
-                .FirstOrDefaultAsync();
+                .FirstOrDefaultAsync(x => x.Id == id);
 
             if (item == null) return NotFound();
+            if (!string.IsNullOrEmpty(clientId) && item.ClientId != clientId) return NotFound();
 
             return Ok(new
             {
@@ -151,8 +151,9 @@ namespace irevlogix_backend.Controllers
         public async Task<IActionResult> Patch([FromRoute] int id, [FromBody] UpdateProcessedMaterialDto dto)
         {
             var clientId = GetClientId();
-            var entity = await _context.ProcessedMaterials.FirstOrDefaultAsync(x => x.Id == id && (string.IsNullOrEmpty(clientId) || x.ClientId == clientId));
+            var entity = await _context.ProcessedMaterials.FirstOrDefaultAsync(x => x.Id == id);
             if (entity == null) return NotFound();
+            if (!string.IsNullOrEmpty(clientId) && entity.ClientId != clientId) return NotFound();
 
             if (!string.IsNullOrWhiteSpace(dto.Status)) entity.Status = dto.Status;
             entity.DateUpdated = DateTime.UtcNow;
