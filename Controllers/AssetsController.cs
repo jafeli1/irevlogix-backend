@@ -42,7 +42,7 @@ namespace irevlogix_backend.Controllers
         }
 
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<Asset>>> GetAssets(
+        public async Task<ActionResult<IEnumerable<object>>> GetAssets(
             [FromQuery] string? search = null,
             [FromQuery] int? categoryId = null,
             [FromQuery] string? condition = null,
@@ -57,8 +57,6 @@ namespace irevlogix_backend.Controllers
                 var clientId = GetClientId();
                 var query = _context.Assets
                     .Where(a => a.ClientId == clientId)
-                    .Include(a => a.AssetCategory)
-                    .Include(a => a.CurrentStatus)
                     .AsQueryable();
 
                 if (!string.IsNullOrEmpty(search))
@@ -83,8 +81,19 @@ namespace irevlogix_backend.Controllers
                 {
                     var all = await query
                         .OrderBy(a => a.AssetID)
-                        .Include(a => a.AssetCategory)
-                        .Include(a => a.CurrentStatus)
+                        .Select(a => new
+                        {
+                            AssetID = a.AssetID,
+                            Category = a.AssetCategory != null ? a.AssetCategory.Name : "",
+                            Manufacturer = a.Manufacturer ?? "",
+                            Model = a.Model ?? "",
+                            SerialNumber = a.SerialNumber ?? "",
+                            Condition = a.Condition ?? "",
+                            EstimatedValue = a.EstimatedValue ?? 0,
+                            IsDataBearing = a.IsDataBearing,
+                            CurrentLocation = a.CurrentLocation ?? "",
+                            Status = a.CurrentStatus != null ? a.CurrentStatus.StatusName : ""
+                        })
                         .ToListAsync();
 
                     var lines = new List<string>();
@@ -94,15 +103,15 @@ namespace irevlogix_backend.Controllers
                         string csvLine = string.Join(",", new[]
                         {
                             EscapeCsv(a.AssetID),
-                            EscapeCsv(a.AssetCategory?.Name ?? ""),
-                            EscapeCsv(a.Manufacturer ?? ""),
-                            EscapeCsv(a.Model ?? ""),
-                            EscapeCsv(a.SerialNumber ?? ""),
-                            EscapeCsv(a.Condition ?? ""),
-                            (a.EstimatedValue ?? 0).ToString(),
+                            EscapeCsv(a.Category),
+                            EscapeCsv(a.Manufacturer),
+                            EscapeCsv(a.Model),
+                            EscapeCsv(a.SerialNumber),
+                            EscapeCsv(a.Condition),
+                            a.EstimatedValue.ToString(),
                             a.IsDataBearing ? "Yes" : "No",
-                            EscapeCsv(a.CurrentLocation ?? ""),
-                            EscapeCsv(a.CurrentStatus?.StatusName ?? "")
+                            EscapeCsv(a.CurrentLocation),
+                            EscapeCsv(a.Status)
                         });
                         lines.Add(csvLine);
                     }
@@ -115,9 +124,24 @@ namespace irevlogix_backend.Controllers
                     .OrderBy(a => a.AssetID)
                     .Skip((page - 1) * pageSize)
                     .Take(pageSize)
+                    .Select(a => new
+                    {
+                        id = a.Id,
+                        assetID = a.AssetID,
+                        assetCategory = new { name = a.AssetCategory != null ? a.AssetCategory.Name : null },
+                        manufacturer = a.Manufacturer ?? "",
+                        model = a.Model ?? "",
+                        condition = a.Condition ?? "",
+                        estimatedValue = a.EstimatedValue ?? 0,
+                        isDataBearing = a.IsDataBearing,
+                        currentLocation = a.CurrentLocation ?? "",
+                        currentStatus = new { statusName = a.CurrentStatus != null ? a.CurrentStatus.StatusName : null },
+                        dateCreated = a.DateCreated,
+                        clientName = a.Client != null ? a.Client.Name : null
+                    })
                     .ToListAsync();
 
-                Response.Headers.Add("X-Total-Count", totalCount.ToString());
+                Response.Headers["X-Total-Count"] = totalCount.ToString();
                 return Ok(assets);
             }
             catch (Exception ex)
