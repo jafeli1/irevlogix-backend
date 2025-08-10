@@ -196,10 +196,18 @@ namespace irevlogix_backend.Controllers
 
                 var recentActivity = await _context.ChainOfCustodyRecords
                     .Where(c => c.ClientId == clientId)
-                    .Include(c => c.Asset)
-                    .Include(c => c.User)
                     .OrderByDescending(c => c.Timestamp)
                     .Take(10)
+                    .Select(c => new
+                    {
+                        Id = c.Id,
+                        AssetId = c.AssetId,
+                        Action = c.ActionType ?? c.StatusChange,
+                        Timestamp = c.Timestamp,
+                        User = c.User != null
+                            ? (c.User.FirstName + " " + c.User.LastName).Trim()
+                            : c.UserId.ToString()
+                    })
                     .ToListAsync();
 
                 return Ok(new
