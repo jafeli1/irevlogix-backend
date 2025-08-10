@@ -101,7 +101,9 @@ namespace irevlogix_backend.Controllers
             try
             {
                 var clientId = GetClientId();
-                var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? "0");
+                var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+                int userId = 1;
+                if (!string.IsNullOrEmpty(userIdClaim) && int.TryParse(userIdClaim, out var parsed)) userId = parsed;
 
                 var article = new KnowledgeBaseArticle
                 {
@@ -137,7 +139,9 @@ namespace irevlogix_backend.Controllers
             try
             {
                 var clientId = GetClientId();
-                var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? "0");
+                var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+                int userId = 1;
+                if (!string.IsNullOrEmpty(userIdClaim) && int.TryParse(userIdClaim, out var parsed)) userId = parsed;
 
                 var article = await _context.KnowledgeBaseArticles
                     .Where(kb => kb.Id == id && kb.ClientId == clientId)

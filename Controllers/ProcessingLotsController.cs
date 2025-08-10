@@ -112,7 +112,9 @@ namespace irevlogix_backend.Controllers
             try
             {
                 var clientId = GetClientId();
-                var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? "0");
+                var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+                int userId = 1;
+                if (!string.IsNullOrEmpty(userIdClaim) && int.TryParse(userIdClaim, out var parsed)) userId = parsed;
 
                 var lot = new ProcessingLot
                 {
@@ -144,7 +146,9 @@ namespace irevlogix_backend.Controllers
             try
             {
                 var clientId = GetClientId();
-                var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? "0");
+                var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+                int userId = 1;
+                if (!string.IsNullOrEmpty(userIdClaim) && int.TryParse(userIdClaim, out var parsed)) userId = parsed;
 
                 var lot = await _context.ProcessingLots
                     .Where(pl => pl.Id == id && pl.ClientId == clientId)
