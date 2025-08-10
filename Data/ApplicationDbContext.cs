@@ -36,6 +36,7 @@ namespace irevlogix_backend.Data
         public DbSet<ChainOfCustody> ChainOfCustodyRecords { get; set; }
         public DbSet<ShipmentStatusHistory> ShipmentStatusHistories { get; set; }
         public DbSet<ShipmentDocument> ShipmentDocuments { get; set; }
+        public DbSet<AssetDocument> AssetDocuments { get; set; }
         public DbSet<ApplicationSettings> ApplicationSettings { get; set; }
         public DbSet<KnowledgeBaseArticle> KnowledgeBaseArticles { get; set; }
 
