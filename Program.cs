@@ -44,6 +44,7 @@ builder.Services.AddCors(options =>
         policy.WithOrigins("http://localhost:3000", "https://irevlogix.ai", "https://www.irevlogix.ai", "https://irevlogix-ai.onrender.com")
               .AllowAnyHeader()
               .AllowAnyMethod()
+              .WithExposedHeaders("X-Total-Count")
               .AllowCredentials();
     });
 });
