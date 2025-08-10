@@ -36,6 +36,7 @@ namespace irevlogix_backend.Data
         public DbSet<ChainOfCustody> ChainOfCustodyRecords { get; set; }
         public DbSet<ShipmentStatusHistory> ShipmentStatusHistories { get; set; }
         public DbSet<ShipmentDocument> ShipmentDocuments { get; set; }
+        public DbSet<AssetDocument> AssetDocuments { get; set; }
         public DbSet<ApplicationSettings> ApplicationSettings { get; set; }
         public DbSet<KnowledgeBaseArticle> KnowledgeBaseArticles { get; set; }
 
@@ -260,6 +261,15 @@ namespace irevlogix_backend.Data
                     .HasForeignKey(e => e.ShipmentId)
                     .OnDelete(DeleteBehavior.Cascade);
             });
+            modelBuilder.Entity<AssetDocument>(entity =>
+            {
+                entity.HasKey(e => e.Id);
+                entity.HasOne(e => e.Asset)
+                    .WithMany()
+                    .HasForeignKey(e => e.AssetId)
+                    .OnDelete(DeleteBehavior.Cascade);
+            });
+
 
             modelBuilder.Entity<ApplicationSettings>(entity =>
             {
