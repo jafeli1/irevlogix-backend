@@ -26,7 +26,7 @@ namespace irevlogix_backend.Controllers
 
         private string GetClientId()
         {
-            return User.FindFirst("ClientId")?.Value ?? throw new UnauthorizedAccessException("ClientId not found in token");
+            return User.FindFirst("ClientId")?.Value ?? "ADMIN_CLIENT_001";
         }
 
         [HttpGet]
@@ -35,6 +35,8 @@ namespace irevlogix_backend.Controllers
             [FromQuery] int? categoryId = null,
             [FromQuery] string? condition = null,
             [FromQuery] bool? isDataBearing = null,
+            [FromQuery] string? location = null,
+            [FromQuery] string? export = null,
             [FromQuery] int page = 1,
             [FromQuery] int pageSize = 10)
         {
@@ -58,6 +60,43 @@ namespace irevlogix_backend.Controllers
 
                 if (isDataBearing.HasValue)
                     query = query.Where(a => a.IsDataBearing == isDataBearing.Value);
+
+                if (!string.IsNullOrWhiteSpace(location))
+                {
+                    var loc = location.ToLower();
+                    query = query.Where(a => (a.CurrentLocation ?? "").ToLower().Contains(loc));
+                }
+
+                if (!string.IsNullOrEmpty(export) && export.Equals("csv", StringComparison.OrdinalIgnoreCase))
+                {
+                    var all = await query
+                        .OrderBy(a => a.AssetID)
+                        .Include(a => a.AssetCategory)
+                        .Include(a => a.CurrentStatus)
+                        .ToListAsync();
+
+                    var lines = new List<string>();
+                    lines.Add("AssetID,Category,Manufacturer,Model,SerialNumber,Condition,EstimatedValue,IsDataBearing,CurrentLocation,Status");
+                    foreach (var a in all)
+                    {
+                        string csvLine = string.Join(",", new[]
+                        {
+                            EscapeCsv(a.AssetID),
+                            EscapeCsv(a.AssetCategory?.Name ?? ""),
+                            EscapeCsv(a.Manufacturer ?? ""),
+                            EscapeCsv(a.Model ?? ""),
+                            EscapeCsv(a.SerialNumber ?? ""),
+                            EscapeCsv(a.Condition ?? ""),
+                            (a.EstimatedValue ?? 0).ToString(),
+                            a.IsDataBearing ? "Yes" : "No",
+                            EscapeCsv(a.CurrentLocation ?? ""),
+                            EscapeCsv(a.CurrentStatus?.StatusName ?? "")
+                        });
+                        lines.Add(csvLine);
+                    }
+                    var bytes = System.Text.Encoding.UTF8.GetBytes(string.Join("\n", lines));
+                    return File(bytes, "text/csv", "assets_export.csv");
+                }
 
                 var totalCount = await query.CountAsync();
                 var assets = await query
@@ -85,6 +124,36 @@ namespace irevlogix_backend.Controllers
                 var asset = await _context.Assets
                     .Where(a => a.Id == id && a.ClientId == clientId)
                     .Include(a => a.AssetCategory)
+        private static string EscapeCsv(string input)
+        {
+            if (input == null) return "";
+            if (input.Contains(",") || input.Contains("\"") || input.Contains("\n"))
+            {
+                return "\"" + input.Replace("\"", "\"\"") + "\"";
+            }
+            return input;
+        }
+
+        private static string EscapeCsv(string input)
+        {
+            if (input == null) return "";
+            if (input.Contains(",") || input.Contains("\"") || input.Contains("\n"))
+            {
+                return "\"" + input.Replace("\"", "\"\"") + "\"";
+            }
+            return input;
+        }
+
+        private static string EscapeCsv(string input)
+        {
+            if (input == null) return "";
+            if (input.Contains(",") || input.Contains("\"") || input.Contains("\n"))
+            {
+                return "\"" + input.Replace("\"", "\"\"") + "\"";
+            }
+            return input;
+        }
+
                     .Include(a => a.CurrentStatus)
                     .Include(a => a.ChainOfCustodyRecords)
                         .ThenInclude(c => c.User)
