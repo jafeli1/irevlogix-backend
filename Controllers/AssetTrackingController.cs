@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.Cors;
 using irevlogix_backend.Data;
 using irevlogix_backend.Models;
 using System.Security.Claims;
@@ -10,6 +11,7 @@ namespace irevlogix_backend.Controllers
     [ApiController]
     [Route("api/[controller]")]
     [Authorize]
+    [EnableCors("AllowFrontend")]
     public class AssetTrackingController : ControllerBase
     {
         private readonly ApplicationDbContext _context;
