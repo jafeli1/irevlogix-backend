@@ -4,9 +4,18 @@ namespace irevlogix_backend.Models
 {
     public class User : BaseEntity
     {
+        [MaxLength(100)]
+        public string? Username { get; set; }
+        
+        [MaxLength(200)]
+        public string? DisplayName { get; set; }
+        
         [Required]
         [MaxLength(100)]
         public string FirstName { get; set; } = string.Empty;
+        
+        [MaxLength(100)]
+        public string? MiddleName { get; set; }
         
         [Required]
         [MaxLength(100)]
@@ -22,6 +31,26 @@ namespace irevlogix_backend.Models
         
         [MaxLength(20)]
         public string? PhoneNumber { get; set; }
+        
+        [MaxLength(500)]
+        public string? Address { get; set; }
+        
+        [MaxLength(500)]
+        public string? Address2 { get; set; }
+        
+        [MaxLength(100)]
+        public string? City { get; set; }
+        
+        [MaxLength(50)]
+        public string? State { get; set; }
+        
+        [MaxLength(20)]
+        public string? PostalCode { get; set; }
+        
+        [MaxLength(100)]
+        public string? Country { get; set; }
+        
+        public bool TwoFactorAuthEnabled { get; set; } = false;
         
         public bool IsActive { get; set; } = true;
         
