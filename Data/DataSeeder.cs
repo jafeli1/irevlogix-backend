@@ -65,9 +65,6 @@ namespace irevlogix_backend.Data
 
             var permissions = new List<Permission>
             {
-                new Permission { Name = "Authentication Read", Module = "Authentication", Action = "Read", Description = "View authentication settings", ClientId = clientId, CreatedBy = 1, UpdatedBy = 1 },
-                new Permission { Name = "Authentication Write", Module = "Authentication", Action = "Write", Description = "Modify authentication settings", ClientId = clientId, CreatedBy = 1, UpdatedBy = 1 },
-                
                 new Permission { Name = "Reverse Logistics Read", Module = "ReverseLogistics", Action = "Read", Description = "View reverse logistics data", ClientId = clientId, CreatedBy = 1, UpdatedBy = 1 },
                 new Permission { Name = "Reverse Logistics Create", Module = "ReverseLogistics", Action = "Create", Description = "Create reverse logistics entries", ClientId = clientId, CreatedBy = 1, UpdatedBy = 1 },
                 new Permission { Name = "Reverse Logistics Update", Module = "ReverseLogistics", Action = "Update", Description = "Update reverse logistics entries", ClientId = clientId, CreatedBy = 1, UpdatedBy = 1 },
