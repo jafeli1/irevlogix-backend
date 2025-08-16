@@ -428,7 +428,7 @@ namespace irevlogix_backend.Controllers
         }
 
         [HttpPost("users")]
-        public async Task<ActionResult<object>> CreateUser(CreateUserRequest request)
+        public async Task<ActionResult<object>> CreateUser(AdminCreateUserRequest request)
         {
             try
             {
@@ -488,7 +488,7 @@ namespace irevlogix_backend.Controllers
         }
 
         [HttpPut("users/{id}")]
-        public async Task<IActionResult> UpdateUser(int id, UpdateUserRequest request)
+        public async Task<IActionResult> UpdateUser(int id, AdminUpdateUserRequest request)
         {
             try
             {
@@ -589,7 +589,7 @@ namespace irevlogix_backend.Controllers
         public Dictionary<string, object> SecuritySettings { get; set; } = new();
     }
 
-    public class CreateUserRequest
+    public class AdminCreateUserRequest
     {
         public string? Username { get; set; }
         public string DisplayName { get; set; } = string.Empty;
@@ -610,7 +610,7 @@ namespace irevlogix_backend.Controllers
         public string ClientId { get; set; } = string.Empty;
     }
 
-    public class UpdateUserRequest
+    public class AdminUpdateUserRequest
     {
         public string? Username { get; set; }
         public string? DisplayName { get; set; }
