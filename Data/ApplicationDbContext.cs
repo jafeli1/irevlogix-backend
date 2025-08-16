@@ -275,7 +275,8 @@ namespace irevlogix_backend.Data
             modelBuilder.Entity<ApplicationSettings>(entity =>
             {
                 entity.HasKey(e => e.Id);
-                entity.Property(e => e.SettingKey).IsRequired().HasMaxLength(100);
+                entity.Property(e => e.SettingKey).HasMaxLength(100);
+                entity.Property(e => e.SettingValue).HasMaxLength(1000);
                 entity.HasIndex(e => new { e.SettingKey, e.ClientId }).IsUnique();
             });
 

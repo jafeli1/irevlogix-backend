@@ -173,6 +173,95 @@ namespace irevlogix_backend.Controllers
             }
         }
 
+        [HttpPost("settings/bulk-save")]
+        public async Task<IActionResult> BulkSaveSettings(BulkSaveSettingsRequest request)
+        {
+            try
+            {
+                var clientId = GetClientId();
+                var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? "0");
+
+                await UpsertSettings(request.ApplicationSettings, "Application", clientId, userId);
+                
+                await UpsertSettings(request.GeneralSettings, "General", clientId, userId);
+                
+                await UpsertSettings(request.SecuritySettings, "Security", clientId, userId);
+
+                await _context.SaveChangesAsync();
+                return Ok(new { message = "Settings saved successfully" });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error bulk saving settings");
+                return StatusCode(500, "Internal server error");
+            }
+        }
+
+        private async Task UpsertSettings(Dictionary<string, object> settings, string category, string clientId, int userId)
+        {
+            foreach (var kvp in settings)
+            {
+                var existingSetting = await _context.ApplicationSettings
+                    .Where(s => s.ClientId == clientId && s.SettingKey == kvp.Key)
+                    .FirstOrDefaultAsync();
+
+                if (existingSetting != null)
+                {
+                    existingSetting.SettingValue = kvp.Value?.ToString();
+                    existingSetting.Category = category;
+                    existingSetting.UpdatedBy = userId;
+                    existingSetting.DateUpdated = DateTime.UtcNow;
+                }
+                else
+                {
+                    var newSetting = new ApplicationSettings
+                    {
+                        SettingKey = kvp.Key,
+                        SettingValue = kvp.Value?.ToString(),
+                        Category = category,
+                        ClientId = clientId,
+                        CreatedBy = userId,
+                        UpdatedBy = userId
+                    };
+                    _context.ApplicationSettings.Add(newSetting);
+                }
+            }
+        }
+
+        [HttpPost("settings/upload-logo")]
+        public async Task<IActionResult> UploadApplicationLogo(IFormFile file)
+        {
+            try
+            {
+                if (file == null || file.Length == 0)
+                    return BadRequest("No file uploaded");
+
+                var clientId = GetClientId();
+                var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? "0");
+
+                var uploadsPath = Path.Combine("uploads", clientId, "logos");
+                Directory.CreateDirectory(uploadsPath);
+
+                var fileName = $"logo_{DateTime.UtcNow:yyyyMMddHHmmss}{Path.GetExtension(file.FileName)}";
+                var filePath = Path.Combine(uploadsPath, fileName);
+
+                using (var stream = new FileStream(filePath, FileMode.Create))
+                {
+                    await file.CopyToAsync(stream);
+                }
+
+                await UpsertSettings(new Dictionary<string, object> { { "ApplicationLogoPath", filePath } }, "General", clientId, userId);
+                await _context.SaveChangesAsync();
+
+                return Ok(new { filePath, message = "Logo uploaded successfully" });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error uploading logo");
+                return StatusCode(500, "Internal server error");
+            }
+        }
+
         [HttpGet("users")]
         public async Task<ActionResult<IEnumerable<User>>> GetUsers(
             [FromQuery] string? search = null,
@@ -283,5 +372,12 @@ namespace irevlogix_backend.Controllers
         public string? SettingValue { get; set; }
         public string? Description { get; set; }
         public string? Category { get; set; }
+    }
+
+    public class BulkSaveSettingsRequest
+    {
+        public Dictionary<string, object> ApplicationSettings { get; set; } = new();
+        public Dictionary<string, object> GeneralSettings { get; set; } = new();
+        public Dictionary<string, object> SecuritySettings { get; set; } = new();
     }
 }
