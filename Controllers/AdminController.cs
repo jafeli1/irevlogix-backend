@@ -2,9 +2,10 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Cors;
+using System.Security.Claims;
+using System.Security.Cryptography;
 using irevlogix_backend.Data;
 using irevlogix_backend.Models;
-using System.Security.Claims;
 
 namespace irevlogix_backend.Controllers
 {
@@ -450,7 +451,7 @@ namespace irevlogix_backend.Controllers
                 if (existingEmail != null)
                     return BadRequest("Email already exists for this client");
 
-                var passwordHash = BCrypt.Net.BCrypt.HashPassword(request.Password);
+                var passwordHash = HashPassword(request.Password);
 
                 var user = new User
                 {
@@ -531,7 +532,7 @@ namespace irevlogix_backend.Controllers
 
                 if (!string.IsNullOrEmpty(request.Password))
                 {
-                    user.PasswordHash = BCrypt.Net.BCrypt.HashPassword(request.Password);
+                    user.PasswordHash = HashPassword(request.Password);
                 }
 
                 await _context.SaveChangesAsync();
@@ -562,6 +563,22 @@ namespace irevlogix_backend.Controllers
                 _logger.LogError(ex, "Error retrieving clients");
                 return StatusCode(500, "Internal server error");
             }
+        }
+
+        private string HashPassword(string password)
+        {
+            using var rng = RandomNumberGenerator.Create();
+            var salt = new byte[16];
+            rng.GetBytes(salt);
+            
+            using var pbkdf2 = new Rfc2898DeriveBytes(password, salt, 10000, HashAlgorithmName.SHA256);
+            var hash = pbkdf2.GetBytes(32);
+            
+            var hashBytes = new byte[48];
+            Array.Copy(salt, 0, hashBytes, 0, 16);
+            Array.Copy(hash, 0, hashBytes, 16, 32);
+            
+            return Convert.ToBase64String(hashBytes);
         }
     }
 
