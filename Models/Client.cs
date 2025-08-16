@@ -24,6 +24,9 @@ namespace irevlogix_backend.Models
         [MaxLength(500)]
         public string? Address { get; set; }
         
+        [MaxLength(500)]
+        public string? Address2 { get; set; }
+        
         [MaxLength(100)]
         public string? City { get; set; }
         
