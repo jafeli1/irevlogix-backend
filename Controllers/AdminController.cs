@@ -323,13 +323,27 @@ namespace irevlogix_backend.Controllers
         }
 
         [HttpGet("roles")]
-        public async Task<IActionResult> GetRoles()
+        public async Task<IActionResult> GetRoles(
+            [FromQuery] string? name = null,
+            [FromQuery] int page = 1,
+            [FromQuery] int pageSize = 10)
         {
             try
             {
                 var clientId = GetClientId();
-                var roles = await _context.Roles
+                var query = _context.Roles
+                    .Include(r => r.UserRoles)
                     .Where(r => r.ClientId == clientId)
+                    .AsQueryable();
+
+                if (!string.IsNullOrEmpty(name))
+                    query = query.Where(r => r.Name.Contains(name));
+
+                var totalCount = await query.CountAsync();
+                var roles = await query
+                    .OrderBy(r => r.Name)
+                    .Skip((page - 1) * pageSize)
+                    .Take(pageSize)
                     .Select(r => new {
                         r.Id,
                         r.Name,
@@ -337,6 +351,7 @@ namespace irevlogix_backend.Controllers
                         r.IsSystemRole,
                         r.DateCreated,
                         r.DateUpdated,
+                        UserCount = r.UserRoles.Count(),
                         RolePermissions = r.RolePermissions.Select(rp => new {
                             rp.Id,
                             rp.PermissionId,
@@ -349,9 +364,9 @@ namespace irevlogix_backend.Controllers
                             }
                         })
                     })
-                    .OrderBy(r => r.Name)
                     .ToListAsync();
 
+                Response.Headers.Add("X-Total-Count", totalCount.ToString());
                 return Ok(roles);
             }
             catch (Exception ex)
@@ -545,6 +560,338 @@ namespace irevlogix_backend.Controllers
             }
         }
 
+        [HttpGet("roles/{id}")]
+        public async Task<ActionResult<object>> GetRole(int id)
+        {
+            try
+            {
+                var clientId = GetClientId();
+                var role = await _context.Roles
+                    .Include(r => r.RolePermissions)
+                        .ThenInclude(rp => rp.Permission)
+                    .Include(r => r.UserRoles)
+                        .ThenInclude(ur => ur.User)
+                    .Where(r => r.Id == id && r.ClientId == clientId)
+                    .FirstOrDefaultAsync();
+
+                if (role == null)
+                    return NotFound();
+
+                return Ok(new
+                {
+                    role.Id,
+                    role.Name,
+                    role.Description,
+                    role.IsSystemRole,
+                    role.DateCreated,
+                    role.DateUpdated,
+                    role.CreatedBy,
+                    role.UpdatedBy,
+                    RolePermissions = role.RolePermissions.Select(rp => new {
+                        rp.Id,
+                        rp.PermissionId,
+                        Permission = new {
+                            rp.Permission.Id,
+                            rp.Permission.Name,
+                            rp.Permission.Module,
+                            rp.Permission.Action,
+                            rp.Permission.Description
+                        }
+                    }),
+                    AssignedUsers = role.UserRoles.Select(ur => new {
+                        ur.User.Id,
+                        ur.User.FirstName,
+                        ur.User.LastName,
+                        ur.User.Email,
+                        ur.User.IsActive
+                    })
+                });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error retrieving role {Id}", id);
+                return StatusCode(500, "Internal server error");
+            }
+        }
+
+        [HttpPost("roles")]
+        public async Task<ActionResult<object>> CreateRole(CreateRoleRequest request)
+        {
+            try
+            {
+                var clientId = GetClientId();
+                var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? "0");
+
+                var existingRole = await _context.Roles
+                    .Where(r => r.Name == request.Name && r.ClientId == clientId)
+                    .FirstOrDefaultAsync();
+
+                if (existingRole != null)
+                    return BadRequest("Role with this name already exists");
+
+                var role = new Role
+                {
+                    Name = request.Name,
+                    Description = request.Description,
+                    IsSystemRole = false,
+                    ClientId = clientId,
+                    CreatedBy = userId,
+                    UpdatedBy = userId
+                };
+
+                _context.Roles.Add(role);
+                await _context.SaveChangesAsync();
+
+                return CreatedAtAction(nameof(GetRole), new { id = role.Id }, role);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error creating role");
+                return StatusCode(500, "Internal server error");
+            }
+        }
+
+        [HttpPut("roles/{id}")]
+        public async Task<IActionResult> UpdateRole(int id, UpdateRoleRequest request)
+        {
+            try
+            {
+                var clientId = GetClientId();
+                var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? "0");
+
+                var role = await _context.Roles
+                    .Where(r => r.Id == id && r.ClientId == clientId)
+                    .FirstOrDefaultAsync();
+
+                if (role == null)
+                    return NotFound();
+
+                if (role.IsSystemRole)
+                    return BadRequest("Cannot modify system roles");
+
+                if (!string.IsNullOrEmpty(request.Name) && request.Name != role.Name)
+                {
+                    var existingRole = await _context.Roles
+                        .Where(r => r.Name == request.Name && r.ClientId == clientId && r.Id != id)
+                        .FirstOrDefaultAsync();
+                    if (existingRole != null)
+                        return BadRequest("Role with this name already exists");
+                }
+
+                role.Name = request.Name ?? role.Name;
+                role.Description = request.Description ?? role.Description;
+                role.UpdatedBy = userId;
+                role.DateUpdated = DateTime.UtcNow;
+
+                await _context.SaveChangesAsync();
+                return NoContent();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error updating role {Id}", id);
+                return StatusCode(500, "Internal server error");
+            }
+        }
+
+        [HttpDelete("roles/{id}")]
+        public async Task<IActionResult> DeleteRole(int id)
+        {
+            try
+            {
+                var clientId = GetClientId();
+                var role = await _context.Roles
+                    .Include(r => r.UserRoles)
+                    .Include(r => r.RolePermissions)
+                    .Where(r => r.Id == id && r.ClientId == clientId)
+                    .FirstOrDefaultAsync();
+
+                if (role == null)
+                    return NotFound();
+
+                if (role.IsSystemRole)
+                    return BadRequest("Cannot delete system roles");
+
+                if (role.UserRoles.Any())
+                    return BadRequest("Cannot delete role that has assigned users");
+
+                _context.RolePermissions.RemoveRange(role.RolePermissions);
+                _context.Roles.Remove(role);
+                await _context.SaveChangesAsync();
+
+                return NoContent();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error deleting role {Id}", id);
+                return StatusCode(500, "Internal server error");
+            }
+        }
+
+        [HttpGet("roles/{id}/users")]
+        public async Task<ActionResult<IEnumerable<object>>> GetRoleUsers(int id)
+        {
+            try
+            {
+                var clientId = GetClientId();
+                var role = await _context.Roles
+                    .Where(r => r.Id == id && r.ClientId == clientId)
+                    .FirstOrDefaultAsync();
+
+                if (role == null)
+                    return NotFound();
+
+                var users = await _context.UserRoles
+                    .Include(ur => ur.User)
+                    .Where(ur => ur.RoleId == id && ur.User.ClientId == clientId)
+                    .Select(ur => new {
+                        ur.User.Id,
+                        ur.User.FirstName,
+                        ur.User.LastName,
+                        ur.User.Email,
+                        ur.User.IsActive,
+                        ur.DateCreated
+                    })
+                    .OrderBy(u => u.LastName).ThenBy(u => u.FirstName)
+                    .ToListAsync();
+
+                return Ok(users);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error retrieving users for role {Id}", id);
+                return StatusCode(500, "Internal server error");
+            }
+        }
+
+        [HttpPost("roles/{id}/users")]
+        public async Task<IActionResult> AssignUserToRole(int id, AssignUserToRoleRequest request)
+        {
+            try
+            {
+                var clientId = GetClientId();
+                var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? "0");
+
+                var role = await _context.Roles
+                    .Where(r => r.Id == id && r.ClientId == clientId)
+                    .FirstOrDefaultAsync();
+
+                if (role == null)
+                    return NotFound("Role not found");
+
+                var user = await _context.Users
+                    .Where(u => u.Id == request.UserId && u.ClientId == clientId)
+                    .FirstOrDefaultAsync();
+
+                if (user == null)
+                    return NotFound("User not found");
+
+                var existingUserRole = await _context.UserRoles
+                    .Where(ur => ur.UserId == request.UserId && ur.RoleId == id)
+                    .FirstOrDefaultAsync();
+
+                if (existingUserRole != null)
+                    return BadRequest("User is already assigned to this role");
+
+                var userRole = new UserRole
+                {
+                    UserId = request.UserId,
+                    RoleId = id,
+                    CreatedBy = userId,
+                    UpdatedBy = userId
+                };
+
+                _context.UserRoles.Add(userRole);
+                await _context.SaveChangesAsync();
+
+                return Ok();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error assigning user {UserId} to role {RoleId}", request.UserId, id);
+                return StatusCode(500, "Internal server error");
+            }
+        }
+
+        [HttpDelete("roles/{id}/users/{userId}")]
+        public async Task<IActionResult> RemoveUserFromRole(int id, int userId)
+        {
+            try
+            {
+                var clientId = GetClientId();
+
+                var userRole = await _context.UserRoles
+                    .Include(ur => ur.User)
+                    .Include(ur => ur.Role)
+                    .Where(ur => ur.UserId == userId && ur.RoleId == id && 
+                                ur.User.ClientId == clientId && ur.Role.ClientId == clientId)
+                    .FirstOrDefaultAsync();
+
+                if (userRole == null)
+                    return NotFound();
+
+                _context.UserRoles.Remove(userRole);
+                await _context.SaveChangesAsync();
+
+                return NoContent();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error removing user {UserId} from role {RoleId}", userId, id);
+                return StatusCode(500, "Internal server error");
+            }
+        }
+
+        [HttpPut("roles/{id}/permissions")]
+        public async Task<IActionResult> UpdateRolePermissions(int id, UpdateRolePermissionsRequest request)
+        {
+            try
+            {
+                var clientId = GetClientId();
+                var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? "0");
+
+                var role = await _context.Roles
+                    .Include(r => r.RolePermissions)
+                    .Where(r => r.Id == id && r.ClientId == clientId)
+                    .FirstOrDefaultAsync();
+
+                if (role == null)
+                    return NotFound();
+
+                if (role.IsSystemRole)
+                    return BadRequest("Cannot modify permissions for system roles");
+
+                var validPermissions = await _context.Permissions
+                    .Where(p => p.ClientId == clientId && request.PermissionIds.Contains(p.Id))
+                    .Select(p => p.Id)
+                    .ToListAsync();
+
+                _context.RolePermissions.RemoveRange(role.RolePermissions);
+
+                foreach (var permissionId in validPermissions)
+                {
+                    var rolePermission = new RolePermission
+                    {
+                        RoleId = id,
+                        PermissionId = permissionId,
+                        CreatedBy = userId,
+                        UpdatedBy = userId
+                    };
+                    _context.RolePermissions.Add(rolePermission);
+                }
+
+                role.UpdatedBy = userId;
+                role.DateUpdated = DateTime.UtcNow;
+
+                await _context.SaveChangesAsync();
+                return NoContent();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error updating permissions for role {Id}", id);
+                return StatusCode(500, "Internal server error");
+            }
+        }
+
         [HttpGet("clients")]
         public async Task<ActionResult<IEnumerable<object>>> GetClients()
         {
@@ -645,5 +992,27 @@ namespace irevlogix_backend.Controllers
         public string? Country { get; set; }
         public bool TwoFactorAuthEnabled { get; set; }
         public bool IsActive { get; set; }
+    }
+
+    public class CreateRoleRequest
+    {
+        public string Name { get; set; } = string.Empty;
+        public string? Description { get; set; }
+    }
+
+    public class UpdateRoleRequest
+    {
+        public string? Name { get; set; }
+        public string? Description { get; set; }
+    }
+
+    public class AssignUserToRoleRequest
+    {
+        public int UserId { get; set; }
+    }
+
+    public class UpdateRolePermissionsRequest
+    {
+        public List<int> PermissionIds { get; set; } = new();
     }
 }
