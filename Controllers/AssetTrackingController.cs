@@ -29,21 +29,59 @@ namespace irevlogix_backend.Controllers
         }
 
         [HttpGet("statuses")]
-        public async Task<ActionResult<IEnumerable<AssetTrackingStatus>>> GetStatuses()
+        public async Task<ActionResult<IEnumerable<AssetTrackingStatus>>> GetStatuses(
+            [FromQuery] string? statusName = null,
+            [FromQuery] int page = 1,
+            [FromQuery] int pageSize = 10)
         {
             try
             {
                 var clientId = GetClientId();
-                var statuses = await _context.AssetTrackingStatuses
-                    .Where(s => s.ClientId == clientId && s.IsActive)
-                    .OrderBy(s => s.StatusName)
+                var query = _context.AssetTrackingStatuses
+                    .Where(s => s.ClientId == clientId && s.IsActive);
+
+                if (!string.IsNullOrEmpty(statusName))
+                {
+                    query = query.Where(s => s.StatusName.Contains(statusName));
+                }
+
+                var totalCount = await query.CountAsync();
+                
+                var statuses = await query
+                    .OrderBy(s => s.SortOrder)
+                    .ThenBy(s => s.StatusName)
+                    .Skip((page - 1) * pageSize)
+                    .Take(pageSize)
                     .ToListAsync();
 
+                Response.Headers.Add("X-Total-Count", totalCount.ToString());
                 return Ok(statuses);
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error retrieving asset tracking statuses");
+                return StatusCode(500, "Internal server error");
+            }
+        }
+
+        [HttpGet("statuses/{id}")]
+        public async Task<ActionResult<AssetTrackingStatus>> GetStatus(int id)
+        {
+            try
+            {
+                var clientId = GetClientId();
+                var status = await _context.AssetTrackingStatuses
+                    .Where(s => s.Id == id && s.ClientId == clientId)
+                    .FirstOrDefaultAsync();
+
+                if (status == null)
+                    return NotFound();
+
+                return Ok(status);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error retrieving asset tracking status {Id}", id);
                 return StatusCode(500, "Internal server error");
             }
         }
@@ -70,6 +108,8 @@ namespace irevlogix_backend.Controllers
                     StatusName = request.StatusName,
                     Description = request.Description,
                     IsActive = request.IsActive,
+                    SortOrder = request.SortOrder,
+                    ColorCode = request.ColorCode,
                     ClientId = clientId,
                     CreatedBy = userId,
                     UpdatedBy = userId
@@ -78,7 +118,7 @@ namespace irevlogix_backend.Controllers
                 _context.AssetTrackingStatuses.Add(status);
                 await _context.SaveChangesAsync();
 
-                return CreatedAtAction(nameof(GetStatuses), status);
+                return CreatedAtAction(nameof(GetStatus), new { id = status.Id }, status);
             }
             catch (Exception ex)
             {
@@ -107,6 +147,8 @@ namespace irevlogix_backend.Controllers
                 status.StatusName = request.StatusName ?? status.StatusName;
                 status.Description = request.Description ?? status.Description;
                 status.IsActive = request.IsActive ?? status.IsActive;
+                status.SortOrder = request.SortOrder ?? status.SortOrder;
+                status.ColorCode = request.ColorCode ?? status.ColorCode;
                 status.UpdatedBy = userId;
                 status.DateUpdated = DateTime.UtcNow;
 
@@ -226,6 +268,36 @@ namespace irevlogix_backend.Controllers
                 return StatusCode(500, "Internal server error");
             }
         }
+
+        [HttpDelete("statuses/{id}")]
+        public async Task<IActionResult> DeleteStatus(int id)
+        {
+            try
+            {
+                var clientId = GetClientId();
+                var status = await _context.AssetTrackingStatuses
+                    .Where(s => s.Id == id && s.ClientId == clientId)
+                    .FirstOrDefaultAsync();
+
+                if (status == null)
+                    return NotFound();
+
+                _context.AssetTrackingStatuses.Remove(status);
+                await _context.SaveChangesAsync();
+
+                return NoContent();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error deleting asset tracking status {Id}", id);
+                return StatusCode(500, "Internal server error");
+            }
+        }
+
+        private bool AssetTrackingStatusExists(int id, string clientId)
+        {
+            return _context.AssetTrackingStatuses.Any(s => s.Id == id && s.ClientId == clientId);
+        }
     }
 
     public class CreateStatusRequest
@@ -233,6 +305,8 @@ namespace irevlogix_backend.Controllers
         public string StatusName { get; set; } = string.Empty;
         public string? Description { get; set; }
         public bool IsActive { get; set; } = true;
+        public int SortOrder { get; set; } = 0;
+        public string? ColorCode { get; set; }
     }
 
     public class UpdateStatusRequest
@@ -240,6 +314,8 @@ namespace irevlogix_backend.Controllers
         public string? StatusName { get; set; }
         public string? Description { get; set; }
         public bool? IsActive { get; set; }
+        public int? SortOrder { get; set; }
+        public string? ColorCode { get; set; }
     }
 
     public class UpdateAssetStatusRequest
