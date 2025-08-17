@@ -39,6 +39,8 @@ namespace irevlogix_backend.Data
         public DbSet<AssetDocument> AssetDocuments { get; set; }
         public DbSet<ApplicationSettings> ApplicationSettings { get; set; }
         public DbSet<KnowledgeBaseArticle> KnowledgeBaseArticles { get; set; }
+        public DbSet<ContractorTechnician> ContractorTechnicians { get; set; }
+        public DbSet<ContractorTechnicianDocument> ContractorTechnicianDocuments { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -288,6 +290,29 @@ namespace irevlogix_backend.Data
                     .WithMany()
                     .HasForeignKey(e => e.AuthorUserId)
                     .OnDelete(DeleteBehavior.Restrict);
+            });
+
+            modelBuilder.Entity<ContractorTechnician>(entity =>
+            {
+                entity.HasKey(e => e.Id);
+                entity.Property(e => e.FirstName).IsRequired().HasMaxLength(100);
+                entity.Property(e => e.LastName).IsRequired().HasMaxLength(100);
+                entity.HasOne(e => e.User)
+                    .WithMany()
+                    .HasForeignKey(e => e.UserId)
+                    .OnDelete(DeleteBehavior.Restrict);
+                entity.HasIndex(e => new { e.FirstName, e.LastName, e.ClientId });
+            });
+
+            modelBuilder.Entity<ContractorTechnicianDocument>(entity =>
+            {
+                entity.HasKey(e => e.Id);
+                entity.Property(e => e.FileName).IsRequired().HasMaxLength(255);
+                entity.Property(e => e.FilePath).IsRequired().HasMaxLength(500);
+                entity.HasOne(e => e.ContractorTechnician)
+                    .WithMany()
+                    .HasForeignKey(e => e.ContractorTechnicianId)
+                    .OnDelete(DeleteBehavior.Cascade);
             });
         }
     }
