@@ -8,6 +8,7 @@ namespace irevlogix_backend.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
+    [Authorize]
     public class MaterialTypesController : ControllerBase
     {
         private readonly ApplicationDbContext _context;
@@ -18,37 +19,44 @@ namespace irevlogix_backend.Controllers
         }
 
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<object>>> GetMaterialTypes()
+        public async Task<ActionResult<IEnumerable<MaterialType>>> GetMaterialTypes(
+            [FromQuery] string? name = null,
+            [FromQuery] int page = 1,
+            [FromQuery] int pageSize = 10)
         {
-            var materialTypes = await _context.MaterialTypes
-                .Where(mt => mt.IsActive)
+            var clientId = User.FindFirst("ClientId")?.Value;
+            if (string.IsNullOrEmpty(clientId))
+                return Unauthorized();
+
+            var query = _context.MaterialTypes
+                .Where(mt => mt.ClientId == clientId && mt.IsActive);
+
+            if (!string.IsNullOrEmpty(name))
+            {
+                query = query.Where(mt => mt.Name.Contains(name));
+            }
+
+            var totalCount = await query.CountAsync();
+            
+            var materialTypes = await query
                 .OrderBy(mt => mt.Name)
-                .Select(mt => new {
-                    mt.Id,
-                    mt.Name,
-                    mt.Description,
-                    mt.IsActive,
-                    mt.DefaultPricePerUnit,
-                    mt.UnitOfMeasure
-                })
+                .Skip((page - 1) * pageSize)
+                .Take(pageSize)
                 .ToListAsync();
 
+            Response.Headers.Add("X-Total-Count", totalCount.ToString());
             return Ok(materialTypes);
         }
 
         [HttpGet("{id}")]
-        public async Task<ActionResult<object>> GetMaterialType(int id)
+        public async Task<ActionResult<MaterialType>> GetMaterialType(int id)
         {
+            var clientId = User.FindFirst("ClientId")?.Value;
+            if (string.IsNullOrEmpty(clientId))
+                return Unauthorized();
+
             var materialType = await _context.MaterialTypes
-                .Where(mt => mt.Id == id)
-                .Select(mt => new {
-                    mt.Id,
-                    mt.Name,
-                    mt.Description,
-                    mt.IsActive,
-                    mt.DefaultPricePerUnit,
-                    mt.UnitOfMeasure
-                })
+                .Where(mt => mt.Id == id && mt.ClientId == clientId)
                 .FirstOrDefaultAsync();
 
             if (materialType == null)
@@ -76,6 +84,72 @@ namespace irevlogix_backend.Controllers
             await _context.SaveChangesAsync();
 
             return CreatedAtAction(nameof(GetMaterialType), new { id = materialType.Id }, materialType);
+        }
+
+        [HttpPut("{id}")]
+        public async Task<IActionResult> UpdateMaterialType(int id, MaterialType materialType)
+        {
+            var clientId = User.FindFirst("ClientId")?.Value;
+            var userId = User.FindFirst("UserId")?.Value;
+            
+            if (string.IsNullOrEmpty(clientId) || string.IsNullOrEmpty(userId))
+                return Unauthorized();
+
+            if (id != materialType.Id)
+                return BadRequest();
+
+            var existingMaterialType = await _context.MaterialTypes
+                .Where(mt => mt.Id == id && mt.ClientId == clientId)
+                .FirstOrDefaultAsync();
+
+            if (existingMaterialType == null)
+                return NotFound();
+
+            existingMaterialType.Name = materialType.Name;
+            existingMaterialType.Description = materialType.Description;
+            existingMaterialType.IsActive = materialType.IsActive;
+            existingMaterialType.DefaultPricePerUnit = materialType.DefaultPricePerUnit;
+            existingMaterialType.UnitOfMeasure = materialType.UnitOfMeasure;
+            existingMaterialType.UpdatedBy = int.Parse(userId);
+            existingMaterialType.DateUpdated = DateTime.UtcNow;
+
+            try
+            {
+                await _context.SaveChangesAsync();
+            }
+            catch (DbUpdateConcurrencyException)
+            {
+                if (!MaterialTypeExists(id, clientId))
+                    return NotFound();
+                throw;
+            }
+
+            return NoContent();
+        }
+
+        [HttpDelete("{id}")]
+        public async Task<IActionResult> DeleteMaterialType(int id)
+        {
+            var clientId = User.FindFirst("ClientId")?.Value;
+            if (string.IsNullOrEmpty(clientId))
+                return Unauthorized();
+
+            var materialType = await _context.MaterialTypes
+                .Where(mt => mt.Id == id && mt.ClientId == clientId)
+                .FirstOrDefaultAsync();
+
+            if (materialType == null)
+                return NotFound();
+
+            _context.MaterialTypes.Remove(materialType);
+            await _context.SaveChangesAsync();
+
+            return NoContent();
+        }
+
+        private bool MaterialTypeExists(int id, string clientId)
+        {
+            return _context.MaterialTypes.Any(mt => mt.Id == id && mt.ClientId == clientId);
         }
     }
 }
