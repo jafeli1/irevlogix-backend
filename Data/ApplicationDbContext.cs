@@ -42,6 +42,7 @@ namespace irevlogix_backend.Data
         public DbSet<ContractorTechnician> ContractorTechnicians { get; set; }
         public DbSet<ContractorTechnicianDocument> ContractorTechnicianDocuments { get; set; }
         public DbSet<ReverseRequest> ReverseRequests { get; set; }
+        public DbSet<RecoveryRequest> RecoveryRequests { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -317,6 +318,14 @@ namespace irevlogix_backend.Data
             });
 
             modelBuilder.Entity<ReverseRequest>(entity =>
+            {
+                entity.HasKey(e => e.Id);
+                entity.Property(e => e.PrimaryContactFirstName).HasMaxLength(100);
+                entity.Property(e => e.PrimaryContactLastName).HasMaxLength(100);
+                entity.HasIndex(e => new { e.PrimaryContactFirstName, e.PrimaryContactLastName, e.ClientId });
+            });
+
+            modelBuilder.Entity<RecoveryRequest>(entity =>
             {
                 entity.HasKey(e => e.Id);
                 entity.Property(e => e.PrimaryContactFirstName).HasMaxLength(100);
