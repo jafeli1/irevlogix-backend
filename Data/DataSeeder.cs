@@ -103,7 +103,12 @@ namespace irevlogix_backend.Data
                 new Permission { Name = "Training Read", Module = "Training", Action = "Read", Description = "View training materials", ClientId = clientId, CreatedBy = 1, UpdatedBy = 1 },
                 new Permission { Name = "Training Create", Module = "Training", Action = "Create", Description = "Create training materials", ClientId = clientId, CreatedBy = 1, UpdatedBy = 1 },
                 new Permission { Name = "Training Update", Module = "Training", Action = "Update", Description = "Update training materials", ClientId = clientId, CreatedBy = 1, UpdatedBy = 1 },
-                new Permission { Name = "Training Delete", Module = "Training", Action = "Delete", Description = "Delete training materials", ClientId = clientId, CreatedBy = 1, UpdatedBy = 1 }
+                new Permission { Name = "Training Delete", Module = "Training", Action = "Delete", Description = "Delete training materials", ClientId = clientId, CreatedBy = 1, UpdatedBy = 1 },
+                
+                new Permission { Name = "Project Management Read", Module = "ProjectManagement", Action = "Read", Description = "View project management data", ClientId = clientId, CreatedBy = 1, UpdatedBy = 1 },
+                new Permission { Name = "Project Management Create", Module = "ProjectManagement", Action = "Create", Description = "Create project management entries", ClientId = clientId, CreatedBy = 1, UpdatedBy = 1 },
+                new Permission { Name = "Project Management Update", Module = "ProjectManagement", Action = "Update", Description = "Update project management entries", ClientId = clientId, CreatedBy = 1, UpdatedBy = 1 },
+                new Permission { Name = "Project Management Delete", Module = "ProjectManagement", Action = "Delete", Description = "Delete project management entries", ClientId = clientId, CreatedBy = 1, UpdatedBy = 1 }
             };
 
             foreach (var permission in permissions)
