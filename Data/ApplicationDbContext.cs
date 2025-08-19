@@ -30,6 +30,7 @@ namespace irevlogix_backend.Data
         public DbSet<ShipmentItem> ShipmentItems { get; set; }
         public DbSet<ProcessingStep> ProcessingSteps { get; set; }
         public DbSet<ProcessedMaterial> ProcessedMaterials { get; set; }
+        public DbSet<ProcessedMaterialSales> ProcessedMaterialSales { get; set; }
         public DbSet<Vendor> Vendors { get; set; }
         public DbSet<Asset> Assets { get; set; }
         public DbSet<AssetTrackingStatus> AssetTrackingStatuses { get; set; }
@@ -216,6 +217,24 @@ namespace irevlogix_backend.Data
                     .WithMany(mt => mt.ProcessedMaterials)
                     .HasForeignKey(e => e.MaterialTypeId)
                     .OnDelete(DeleteBehavior.SetNull);
+            });
+
+            modelBuilder.Entity<ProcessedMaterialSales>(entity =>
+            {
+                entity.HasKey(e => e.Id);
+                entity.HasOne(e => e.ProcessedMaterial)
+                    .WithMany()
+                    .HasForeignKey(e => e.ProcessedMaterialId)
+                    .OnDelete(DeleteBehavior.Cascade);
+                entity.HasOne(e => e.Vendor)
+                    .WithMany()
+                    .HasForeignKey(e => e.VendorId)
+                    .OnDelete(DeleteBehavior.SetNull);
+                entity.Property(e => e.Carrier).HasMaxLength(500);
+                entity.Property(e => e.TrackingNumber).HasMaxLength(500);
+                entity.Property(e => e.InvoiceId).HasMaxLength(500);
+                entity.Property(e => e.ClientId).HasMaxLength(500);
+                entity.Property(e => e.InvoiceStatus).HasMaxLength(50);
             });
 
             modelBuilder.Entity<Asset>(entity =>
