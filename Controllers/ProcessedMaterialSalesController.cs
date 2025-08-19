@@ -153,8 +153,8 @@ namespace irevlogix_backend.Controllers
                 InvoiceTotal = dto.InvoiceTotal,
                 InvoiceStatus = dto.InvoiceStatus,
                 ClientId = clientId,
-                CreatedBy = userId,
-                UpdatedBy = userId,
+                CreatedBy = int.Parse(userId),
+                UpdatedBy = int.Parse(userId),
                 DateCreated = DateTime.UtcNow,
                 DateUpdated = DateTime.UtcNow
             };

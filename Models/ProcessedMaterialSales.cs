@@ -26,9 +26,6 @@ namespace irevlogix_backend.Models
         [MaxLength(500)]
         public string? InvoiceId { get; set; }
         
-        [MaxLength(500)]
-        public string? ClientId { get; set; }
-        
         public DateTime? InvoiceDate { get; set; }
         public DateTime? DateInvoicePaid { get; set; }
         public decimal? InvoiceTotal { get; set; }
