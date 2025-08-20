@@ -87,7 +87,11 @@ namespace irevlogix_backend.Controllers
                 item.QualityGrade,
                 item.Location,
                 Status = item.Status,
-                item.ProcessingLotId
+                item.ProcessingLotId,
+                item.PurchaseCostPerUnit,
+                item.ProcessingCostPerUnit,
+                item.ActualSalesPrice,
+                item.ExpectedSalesPrice
             });
         }
 
@@ -101,6 +105,7 @@ namespace irevlogix_backend.Controllers
             public string Location { get; set; }
             public string Status { get; set; }
             public decimal? PurchaseCostPerUnit { get; set; }
+            public decimal? ProcessingCostPerUnit { get; set; }
             public int? ProcessingLotId { get; set; }
         }
 
@@ -123,6 +128,7 @@ namespace irevlogix_backend.Controllers
                 Status = string.IsNullOrWhiteSpace(dto.Status) ? "Available" : dto.Status,
                 ProcessingLotId = dto.ProcessingLotId ?? 0,
                 PurchaseCostPerUnit = dto.PurchaseCostPerUnit,
+                ProcessingCostPerUnit = dto.ProcessingCostPerUnit,
                 ClientId = clientId,
                 CreatedBy = userId,
                 UpdatedBy = userId,
@@ -139,6 +145,7 @@ namespace irevlogix_backend.Controllers
         public class UpdateProcessedMaterialDto
         {
             public string? Status { get; set; }
+            public decimal? ProcessingCostPerUnit { get; set; }
         }
 
         [HttpPatch("{id:int}")]
@@ -150,6 +157,7 @@ namespace irevlogix_backend.Controllers
             if (!string.IsNullOrEmpty(clientId) && entity.ClientId != clientId) return NotFound();
 
             if (!string.IsNullOrWhiteSpace(dto.Status)) entity.Status = dto.Status;
+            if (dto.ProcessingCostPerUnit.HasValue) entity.ProcessingCostPerUnit = dto.ProcessingCostPerUnit.Value;
             entity.DateUpdated = DateTime.UtcNow;
 
             await _context.SaveChangesAsync();

@@ -53,5 +53,6 @@ namespace irevlogix_backend.Models
         public string? HazardousClassification { get; set; }
 
         public decimal? PurchaseCostPerUnit { get; set; }
+        public decimal? ProcessingCostPerUnit { get; set; }
     }
 }
