@@ -32,6 +32,7 @@ namespace irevlogix_backend.Data
         public DbSet<ProcessedMaterial> ProcessedMaterials { get; set; }
         public DbSet<ProcessedMaterialSales> ProcessedMaterialSales { get; set; }
         public DbSet<ProcessedMaterialTests> ProcessedMaterialTests { get; set; }
+        public DbSet<ProcessedMaterialDocuments> ProcessedMaterialDocuments { get; set; }
         public DbSet<Vendor> Vendors { get; set; }
         public DbSet<Asset> Assets { get; set; }
         public DbSet<AssetTrackingStatus> AssetTrackingStatuses { get; set; }
@@ -248,6 +249,18 @@ namespace irevlogix_backend.Data
                     .OnDelete(DeleteBehavior.Cascade);
                 entity.HasIndex(e => e.ClientId).HasDatabaseName("idx_pmt_clientid");
                 entity.HasIndex(e => e.ProcessedMaterialId).HasDatabaseName("idx_pmt_material");
+            });
+
+            modelBuilder.Entity<ProcessedMaterialDocuments>(entity =>
+            {
+                entity.HasKey(e => e.Id);
+                entity.Property(e => e.Id).ValueGeneratedOnAdd();
+                entity.HasOne(e => e.ProcessedMaterial)
+                    .WithMany()
+                    .HasForeignKey(e => e.ProcessedMaterialId)
+                    .OnDelete(DeleteBehavior.Cascade);
+                entity.HasIndex(e => e.ClientId).HasDatabaseName("idx_pmd_clientid");
+                entity.HasIndex(e => e.ProcessedMaterialId).HasDatabaseName("idx_pmd_material");
             });
 
             modelBuilder.Entity<Asset>(entity =>
