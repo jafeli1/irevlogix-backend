@@ -47,10 +47,7 @@ namespace irevlogix_backend.Data
         public DbSet<ReverseRequest> ReverseRequests { get; set; }
         public DbSet<RecoveryRequest> RecoveryRequests { get; set; }
         public DbSet<FreightLossDamageClaim> FreightLossDamageClaims { get; set; }
-        public DbSet<VendorCommunications> VendorCommunications { get; set; }
-        public DbSet<VendorContracts> VendorContracts { get; set; }
-        public DbSet<VendorDocuments> VendorDocuments { get; set; }
-        public DbSet<VendorPricing> VendorPricing { get; set; }
+        public DbSet<VendorContract> VendorContracts { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -392,7 +389,7 @@ namespace irevlogix_backend.Data
                 entity.HasIndex(e => new { e.ClaimantCompanyName, e.DateOfClaim, e.ClientId });
             });
 
-            modelBuilder.Entity<VendorContracts>()
+            modelBuilder.Entity<VendorContract>()
                 .HasOne(vc => vc.Vendor)
                 .WithMany()
                 .HasForeignKey(vc => vc.VendorId)
