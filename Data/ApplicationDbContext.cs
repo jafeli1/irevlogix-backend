@@ -50,6 +50,7 @@ namespace irevlogix_backend.Data
         public DbSet<VendorContract> VendorContracts { get; set; }
         public DbSet<VendorPricing> VendorPricing { get; set; }
         public DbSet<VendorCommunications> VendorCommunications { get; set; }
+        public DbSet<VendorDocuments> VendorDocuments { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -413,6 +414,12 @@ namespace irevlogix_backend.Data
                 .HasOne(vc => vc.Vendor)
                 .WithMany()
                 .HasForeignKey(vc => vc.VendorId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<VendorDocuments>()
+                .HasOne(vd => vd.Vendor)
+                .WithMany()
+                .HasForeignKey(vd => vd.VendorId)
                 .OnDelete(DeleteBehavior.Cascade);
         }
     }
