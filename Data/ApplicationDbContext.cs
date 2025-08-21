@@ -49,6 +49,7 @@ namespace irevlogix_backend.Data
         public DbSet<FreightLossDamageClaim> FreightLossDamageClaims { get; set; }
         public DbSet<VendorContract> VendorContracts { get; set; }
         public DbSet<VendorPricing> VendorPricing { get; set; }
+        public DbSet<VendorCommunications> VendorCommunications { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -407,6 +408,12 @@ namespace irevlogix_backend.Data
                 .WithMany()
                 .HasForeignKey(vp => vp.MaterialTypeId)
                 .OnDelete(DeleteBehavior.SetNull);
+
+            modelBuilder.Entity<VendorCommunications>()
+                .HasOne(vc => vc.Vendor)
+                .WithMany()
+                .HasForeignKey(vc => vc.VendorId)
+                .OnDelete(DeleteBehavior.Cascade);
         }
     }
 }
