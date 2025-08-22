@@ -16,5 +16,9 @@ namespace irevlogix_backend.Models
         public string MaterialsOfInterest { get; set; }
         public string PaymentTerms { get; set; }
         public decimal? VendorRating { get; set; }
+        public string VendorTier { get; set; }
+        public int? UpstreamTierVendor { get; set; }
+        
+        public virtual Vendor? UpstreamVendor { get; set; }
     }
 }
