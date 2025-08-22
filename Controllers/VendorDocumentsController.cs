@@ -47,6 +47,13 @@ namespace irevlogix_backend.Controllers
                     x.DocumentUrl,
                     x.Filename,
                     x.ContentType,
+                    x.DocumentType,
+                    x.IssueDate,
+                    x.ExpirationDate,
+                    x.DateReceived,
+                    x.ReviewComment,
+                    x.LastReviewDate,
+                    x.ReviewedBy,
                     x.DateCreated,
                     x.DateUpdated
                 })
@@ -75,6 +82,13 @@ namespace irevlogix_backend.Controllers
                 item.DocumentUrl,
                 item.Filename,
                 item.ContentType,
+                item.DocumentType,
+                item.IssueDate,
+                item.ExpirationDate,
+                item.DateReceived,
+                item.ReviewComment,
+                item.LastReviewDate,
+                item.ReviewedBy,
                 item.DateCreated,
                 item.DateUpdated
             });
@@ -86,6 +100,13 @@ namespace irevlogix_backend.Controllers
             public string? DocumentUrl { get; set; }
             public string? Filename { get; set; }
             public string? ContentType { get; set; }
+            public string? DocumentType { get; set; }
+            public DateTime? IssueDate { get; set; }
+            public DateTime? ExpirationDate { get; set; }
+            public DateTime? DateReceived { get; set; }
+            public string? ReviewComment { get; set; }
+            public DateTime? LastReviewDate { get; set; }
+            public int? ReviewedBy { get; set; }
         }
 
         [HttpPost]
@@ -101,6 +122,13 @@ namespace irevlogix_backend.Controllers
                 DocumentUrl = dto.DocumentUrl,
                 Filename = dto.Filename,
                 ContentType = dto.ContentType,
+                DocumentType = dto.DocumentType,
+                IssueDate = dto.IssueDate,
+                ExpirationDate = dto.ExpirationDate,
+                DateReceived = dto.DateReceived,
+                ReviewComment = dto.ReviewComment,
+                LastReviewDate = dto.LastReviewDate,
+                ReviewedBy = dto.ReviewedBy,
                 ClientId = clientId,
                 CreatedBy = int.Parse(userId),
                 UpdatedBy = int.Parse(userId),
@@ -118,6 +146,13 @@ namespace irevlogix_backend.Controllers
             public string? DocumentUrl { get; set; }
             public string? Filename { get; set; }
             public string? ContentType { get; set; }
+            public string? DocumentType { get; set; }
+            public DateTime? IssueDate { get; set; }
+            public DateTime? ExpirationDate { get; set; }
+            public DateTime? DateReceived { get; set; }
+            public string? ReviewComment { get; set; }
+            public DateTime? LastReviewDate { get; set; }
+            public int? ReviewedBy { get; set; }
         }
 
         [HttpPatch("{id:int}")]
@@ -133,6 +168,13 @@ namespace irevlogix_backend.Controllers
             if (!string.IsNullOrEmpty(dto.DocumentUrl)) entity.DocumentUrl = dto.DocumentUrl;
             if (!string.IsNullOrEmpty(dto.Filename)) entity.Filename = dto.Filename;
             if (!string.IsNullOrEmpty(dto.ContentType)) entity.ContentType = dto.ContentType;
+            if (!string.IsNullOrEmpty(dto.DocumentType)) entity.DocumentType = dto.DocumentType;
+            if (dto.IssueDate.HasValue) entity.IssueDate = dto.IssueDate;
+            if (dto.ExpirationDate.HasValue) entity.ExpirationDate = dto.ExpirationDate;
+            if (dto.DateReceived.HasValue) entity.DateReceived = dto.DateReceived;
+            if (!string.IsNullOrEmpty(dto.ReviewComment)) entity.ReviewComment = dto.ReviewComment;
+            if (dto.LastReviewDate.HasValue) entity.LastReviewDate = dto.LastReviewDate;
+            if (dto.ReviewedBy.HasValue) entity.ReviewedBy = dto.ReviewedBy;
             entity.UpdatedBy = int.Parse(userId);
             entity.DateUpdated = DateTime.UtcNow;
 
@@ -155,7 +197,7 @@ namespace irevlogix_backend.Controllers
         }
 
         [HttpPost("{vendorId:int}/upload")]
-        public async Task<IActionResult> UploadDocument([FromRoute] int vendorId, IFormFile file, [FromForm] string? description = null)
+        public async Task<IActionResult> UploadDocument([FromRoute] int vendorId, IFormFile file, [FromForm] string? description = null, [FromForm] string? documentType = null, [FromForm] DateTime? issueDate = null, [FromForm] DateTime? expirationDate = null, [FromForm] DateTime? dateReceived = null, [FromForm] string? reviewComment = null, [FromForm] DateTime? lastReviewDate = null, [FromForm] int? reviewedBy = null)
         {
             var clientId = User.FindFirst("ClientId")?.Value;
             var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
@@ -189,6 +231,13 @@ namespace irevlogix_backend.Controllers
                 DocumentUrl = relativePath,
                 Filename = file.FileName,
                 ContentType = file.ContentType,
+                DocumentType = documentType,
+                IssueDate = issueDate,
+                ExpirationDate = expirationDate,
+                DateReceived = dateReceived,
+                ReviewComment = reviewComment,
+                LastReviewDate = lastReviewDate,
+                ReviewedBy = reviewedBy,
                 ClientId = clientId,
                 CreatedBy = int.Parse(userId),
                 UpdatedBy = int.Parse(userId),
