@@ -81,7 +81,9 @@ namespace irevlogix_backend.Controllers
                 v.Country,
                 v.MaterialsOfInterest,
                 v.PaymentTerms,
-                v.VendorRating
+                v.VendorRating,
+                v.VendorTier,
+                v.UpstreamTierVendor
             });
         }
 
@@ -99,6 +101,8 @@ namespace irevlogix_backend.Controllers
             public string MaterialsOfInterest { get; set; }
             public string PaymentTerms { get; set; }
             public decimal? VendorRating { get; set; }
+            public string VendorTier { get; set; }
+            public int? UpstreamTierVendor { get; set; }
         }
 
         [HttpPost]
@@ -123,6 +127,8 @@ namespace irevlogix_backend.Controllers
                 MaterialsOfInterest = dto.MaterialsOfInterest,
                 PaymentTerms = dto.PaymentTerms,
                 VendorRating = dto.VendorRating,
+                VendorTier = dto.VendorTier,
+                UpstreamTierVendor = dto.UpstreamTierVendor,
                 ClientId = clientId,
                 CreatedBy = userId,
                 UpdatedBy = userId,
