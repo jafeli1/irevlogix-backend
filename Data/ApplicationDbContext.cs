@@ -421,12 +421,6 @@ namespace irevlogix_backend.Data
                 .WithMany()
                 .HasForeignKey(vd => vd.VendorId)
                 .OnDelete(DeleteBehavior.Cascade);
-
-            modelBuilder.Entity<Vendor>()
-                .HasOne(v => v.UpstreamVendor)
-                .WithMany()
-                .HasForeignKey(v => v.UpstreamTierVendor)
-                .OnDelete(DeleteBehavior.SetNull);
         }
     }
 }
