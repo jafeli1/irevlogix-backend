@@ -37,7 +37,7 @@ namespace irevlogix_backend.Controllers
             var query = _context.Shipments
                 .Where(s => s.ClientId == clientId)
                 .Include(s => s.OriginatorClient)
-                .Include(s => s.ClientContact)
+                .Include(s => s.ReverseRequest)
                 .Include(s => s.ShipmentItems)
                 .AsQueryable();
 
@@ -104,7 +104,7 @@ namespace irevlogix_backend.Controllers
             var shipment = await _context.Shipments
                 .Where(s => s.Id == id && s.ClientId == clientId)
                 .Include(s => s.OriginatorClient)
-                .Include(s => s.ClientContact)
+                .Include(s => s.ReverseRequest)
                 .Include(s => s.ShipmentItems)
                     .ThenInclude(si => si.MaterialType)
                 .Include(s => s.ShipmentItems)

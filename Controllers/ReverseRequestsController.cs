@@ -345,6 +345,31 @@ namespace irevlogix_backend.Controllers
             }
         }
 
+        [HttpGet("dropdown")]
+        public async Task<ActionResult<IEnumerable<object>>> GetReverseRequestsForDropdown()
+        {
+            try
+            {
+                var clientId = GetClientId();
+                var reverseRequests = await _context.ReverseRequests
+                    .Where(rr => rr.ClientId == clientId && rr.IsActive)
+                    .Select(rr => new
+                    {
+                        rr.Id,
+                        rr.LocationName
+                    })
+                    .OrderBy(rr => rr.LocationName)
+                    .ToListAsync();
+
+                return Ok(reverseRequests);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error retrieving reverse requests for dropdown");
+                return StatusCode(500, "Internal server error");
+            }
+        }
+
         private async Task<int> GenerateReverseJobRequestId()
         {
             var lastRequest = await _context.ReverseRequests

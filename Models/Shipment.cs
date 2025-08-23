@@ -11,8 +11,8 @@ namespace irevlogix_backend.Models
         public int? OriginatorClientId { get; set; }
         public virtual Client? OriginatorClient { get; set; }
         
-        public int? ClientContactId { get; set; }
-        public virtual ClientContact? ClientContact { get; set; }
+        public int? ReverseRequestId { get; set; }
+        public virtual ReverseRequest? ReverseRequest { get; set; }
         
         public DateTime? ScheduledPickupDate { get; set; }
         public DateTime? ActualPickupDate { get; set; }
