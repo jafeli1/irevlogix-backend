@@ -18,7 +18,7 @@ namespace irevlogix_backend.Controllers
 
         private string GetClientId()
         {
-            return User.FindFirst("ClientId")?.Value ?? string.Empty;
+            return User.FindFirst("ClientId")?.Value ?? throw new UnauthorizedAccessException("ClientId not found in token");
         }
 
         public VendorsController(ApplicationDbContext context)
