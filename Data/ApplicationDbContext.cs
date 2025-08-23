@@ -169,9 +169,9 @@ namespace irevlogix_backend.Data
                     .WithMany()
                     .HasForeignKey(e => e.OriginatorClientId)
                     .OnDelete(DeleteBehavior.SetNull);
-                entity.HasOne(e => e.ClientContact)
-                    .WithMany(cc => cc.Shipments)
-                    .HasForeignKey(e => e.ClientContactId)
+                entity.HasOne(e => e.ReverseRequest)
+                    .WithMany()
+                    .HasForeignKey(e => e.ReverseRequestId)
                     .OnDelete(DeleteBehavior.SetNull);
             });
 
