@@ -51,6 +51,7 @@ namespace irevlogix_backend.Data
         public DbSet<VendorPricing> VendorPricing { get; set; }
         public DbSet<VendorCommunications> VendorCommunications { get; set; }
         public DbSet<VendorDocuments> VendorDocuments { get; set; }
+        public DbSet<VendorFacility> VendorFacilities { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -421,6 +422,17 @@ namespace irevlogix_backend.Data
                 .WithMany()
                 .HasForeignKey(vd => vd.VendorId)
                 .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<VendorFacility>(entity =>
+            {
+                entity.HasKey(e => e.Id);
+                entity.HasOne(e => e.Vendor)
+                    .WithMany()
+                    .HasForeignKey(e => e.VendorId)
+                    .OnDelete(DeleteBehavior.Cascade);
+                entity.HasIndex(e => new { e.VendorId, e.ClientId });
+                entity.HasIndex(e => e.ClientId);
+            });
         }
     }
 }
