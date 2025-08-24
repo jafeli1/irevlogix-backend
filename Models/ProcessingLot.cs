@@ -42,6 +42,15 @@ namespace irevlogix_backend.Models
         [MaxLength(200)]
         public string? CertificationNumber { get; set; }
         
+        [MaxLength(1000)]
+        public string? ProcessingNotes { get; set; }
+        
+        [MaxLength(100)]
+        public string? ProcessingMethod { get; set; }
+        
+        public int? SourceShipmentId { get; set; }
+        public virtual Shipment? SourceShipment { get; set; }
+        
         public virtual ICollection<ProcessingStep> ProcessingSteps { get; set; } = new List<ProcessingStep>();
         public virtual ICollection<ProcessedMaterial> ProcessedMaterials { get; set; } = new List<ProcessedMaterial>();
         public virtual ICollection<ShipmentItem> IncomingShipmentItems { get; set; } = new List<ShipmentItem>();

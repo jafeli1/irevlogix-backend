@@ -122,6 +122,21 @@ namespace irevlogix_backend.Controllers
                     Description = request.Description,
                     OperatorUserId = request.OperatorUserId,
                     ProcessingCost = request.ProcessingCost,
+                    StartDate = request.StartDate,
+                    CompletionDate = request.CompletionDate,
+                    TotalIncomingWeight = request.TotalIncomingWeight,
+                    TotalProcessedWeight = request.TotalProcessedWeight,
+                    IncomingMaterialCost = request.IncomingMaterialCost,
+                    ExpectedRevenue = request.ExpectedRevenue,
+                    ActualRevenue = request.ActualRevenue,
+                    IncomingMaterialNotes = request.IncomingMaterialNotes,
+                    ContaminationPercentage = request.ContaminationPercentage,
+                    QualityControlNotes = request.QualityControlNotes,
+                    CertificationStatus = request.CertificationStatus,
+                    CertificationNumber = request.CertificationNumber,
+                    ProcessingNotes = request.ProcessingNotes,
+                    ProcessingMethod = request.ProcessingMethod,
+                    SourceShipmentId = request.SourceShipmentId,
                     Status = "Created",
                     ClientId = clientId,
                     CreatedBy = userId,
@@ -161,8 +176,21 @@ namespace irevlogix_backend.Controllers
                 lot.Status = request.Status ?? lot.Status;
                 lot.OperatorUserId = request.OperatorUserId ?? lot.OperatorUserId;
                 lot.ProcessingCost = request.ProcessingCost ?? lot.ProcessingCost;
+                lot.StartDate = request.StartDate ?? lot.StartDate;
+                lot.CompletionDate = request.CompletionDate ?? lot.CompletionDate;
+                lot.TotalIncomingWeight = request.TotalIncomingWeight ?? lot.TotalIncomingWeight;
+                lot.TotalProcessedWeight = request.TotalProcessedWeight ?? lot.TotalProcessedWeight;
+                lot.IncomingMaterialCost = request.IncomingMaterialCost ?? lot.IncomingMaterialCost;
+                lot.ExpectedRevenue = request.ExpectedRevenue ?? lot.ExpectedRevenue;
+                lot.ActualRevenue = request.ActualRevenue ?? lot.ActualRevenue;
                 lot.IncomingMaterialNotes = request.IncomingMaterialNotes ?? lot.IncomingMaterialNotes;
                 lot.ContaminationPercentage = request.ContaminationPercentage ?? lot.ContaminationPercentage;
+                lot.QualityControlNotes = request.QualityControlNotes ?? lot.QualityControlNotes;
+                lot.CertificationStatus = request.CertificationStatus ?? lot.CertificationStatus;
+                lot.CertificationNumber = request.CertificationNumber ?? lot.CertificationNumber;
+                lot.ProcessingNotes = request.ProcessingNotes ?? lot.ProcessingNotes;
+                lot.ProcessingMethod = request.ProcessingMethod ?? lot.ProcessingMethod;
+                lot.SourceShipmentId = request.SourceShipmentId ?? lot.SourceShipmentId;
                 lot.UpdatedBy = userId;
                 lot.DateUpdated = DateTime.UtcNow;
 
@@ -212,6 +240,21 @@ namespace irevlogix_backend.Controllers
         public string? Description { get; set; }
         public int? OperatorUserId { get; set; }
         public decimal? ProcessingCost { get; set; }
+        public DateTime? StartDate { get; set; }
+        public DateTime? CompletionDate { get; set; }
+        public decimal? TotalIncomingWeight { get; set; }
+        public decimal? TotalProcessedWeight { get; set; }
+        public decimal? IncomingMaterialCost { get; set; }
+        public decimal? ExpectedRevenue { get; set; }
+        public decimal? ActualRevenue { get; set; }
+        public string? IncomingMaterialNotes { get; set; }
+        public decimal? ContaminationPercentage { get; set; }
+        public string? QualityControlNotes { get; set; }
+        public string? CertificationStatus { get; set; }
+        public string? CertificationNumber { get; set; }
+        public string? ProcessingNotes { get; set; }
+        public string? ProcessingMethod { get; set; }
+        public int? SourceShipmentId { get; set; }
     }
 
     public class UpdateProcessingLotRequest
@@ -220,7 +263,20 @@ namespace irevlogix_backend.Controllers
         public string? Status { get; set; }
         public int? OperatorUserId { get; set; }
         public decimal? ProcessingCost { get; set; }
+        public DateTime? StartDate { get; set; }
+        public DateTime? CompletionDate { get; set; }
+        public decimal? TotalIncomingWeight { get; set; }
+        public decimal? TotalProcessedWeight { get; set; }
+        public decimal? IncomingMaterialCost { get; set; }
+        public decimal? ExpectedRevenue { get; set; }
+        public decimal? ActualRevenue { get; set; }
         public string? IncomingMaterialNotes { get; set; }
         public decimal? ContaminationPercentage { get; set; }
+        public string? QualityControlNotes { get; set; }
+        public string? CertificationStatus { get; set; }
+        public string? CertificationNumber { get; set; }
+        public string? ProcessingNotes { get; set; }
+        public string? ProcessingMethod { get; set; }
+        public int? SourceShipmentId { get; set; }
     }
 }
