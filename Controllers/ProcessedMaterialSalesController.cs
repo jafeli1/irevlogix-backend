@@ -190,7 +190,7 @@ namespace irevlogix_backend.Controllers
             var entity = await _context.ProcessedMaterialSales.FirstOrDefaultAsync(x => x.Id == id && x.ClientId == clientId);
             if (entity == null) return NotFound();
 
-            if (dto.VendorId.HasValue) entity.VendorId = dto.VendorId;
+            entity.VendorId = dto.VendorId;
             if (dto.SalesQuantity.HasValue) entity.SalesQuantity = dto.SalesQuantity;
             if (dto.AgreedPricePerUnit.HasValue) entity.AgreedPricePerUnit = dto.AgreedPricePerUnit;
             if (dto.ShipmentDate.HasValue) entity.ShipmentDate = dto.ShipmentDate;
