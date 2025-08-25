@@ -114,7 +114,7 @@ namespace irevlogix_backend.Controllers
         public class CreateProcessedMaterialSalesDto
         {
             public int ProcessedMaterialId { get; set; }
-            public int? VendorId { get; set; }
+            public int VendorId { get; set; }
             public decimal? SalesQuantity { get; set; }
             public decimal? AgreedPricePerUnit { get; set; }
             public DateTime? ShipmentDate { get; set; }
@@ -166,7 +166,7 @@ namespace irevlogix_backend.Controllers
 
         public class UpdateProcessedMaterialSalesDto
         {
-            public int? VendorId { get; set; }
+            public int VendorId { get; set; }
             public decimal? SalesQuantity { get; set; }
             public decimal? AgreedPricePerUnit { get; set; }
             public DateTime? ShipmentDate { get; set; }
