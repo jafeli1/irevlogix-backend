@@ -114,7 +114,7 @@ namespace irevlogix_backend.Controllers
         public class CreateProcessedMaterialSalesDto
         {
             public int ProcessedMaterialId { get; set; }
-            public int? VendorId { get; set; }
+            public int VendorId { get; set; }
             public decimal? SalesQuantity { get; set; }
             public decimal? AgreedPricePerUnit { get; set; }
             public DateTime? ShipmentDate { get; set; }
@@ -166,7 +166,7 @@ namespace irevlogix_backend.Controllers
 
         public class UpdateProcessedMaterialSalesDto
         {
-            public int? VendorId { get; set; }
+            public int VendorId { get; set; }
             public decimal? SalesQuantity { get; set; }
             public decimal? AgreedPricePerUnit { get; set; }
             public DateTime? ShipmentDate { get; set; }
@@ -190,7 +190,7 @@ namespace irevlogix_backend.Controllers
             var entity = await _context.ProcessedMaterialSales.FirstOrDefaultAsync(x => x.Id == id && x.ClientId == clientId);
             if (entity == null) return NotFound();
 
-            if (dto.VendorId.HasValue) entity.VendorId = dto.VendorId;
+            entity.VendorId = dto.VendorId;
             if (dto.SalesQuantity.HasValue) entity.SalesQuantity = dto.SalesQuantity;
             if (dto.AgreedPricePerUnit.HasValue) entity.AgreedPricePerUnit = dto.AgreedPricePerUnit;
             if (dto.ShipmentDate.HasValue) entity.ShipmentDate = dto.ShipmentDate;

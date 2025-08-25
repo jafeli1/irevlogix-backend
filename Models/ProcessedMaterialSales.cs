@@ -7,8 +7,8 @@ namespace irevlogix_backend.Models
         public int ProcessedMaterialId { get; set; }
         public ProcessedMaterial ProcessedMaterial { get; set; }
         
-        public int? VendorId { get; set; }
-        public Vendor? Vendor { get; set; }
+        public int VendorId { get; set; }
+        public Vendor Vendor { get; set; }
         
         public decimal? SalesQuantity { get; set; }
         public decimal? AgreedPricePerUnit { get; set; }
