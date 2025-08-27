@@ -294,6 +294,10 @@ namespace irevlogix_backend.Data
                     .WithMany()
                     .HasForeignKey(e => e.UserId)
                     .OnDelete(DeleteBehavior.Restrict);
+                entity.HasOne(e => e.Vendor)
+                    .WithMany()
+                    .HasForeignKey(e => e.VendorId)
+                    .OnDelete(DeleteBehavior.Restrict);
             });
 
             modelBuilder.Entity<ShipmentStatusHistory>(entity =>
