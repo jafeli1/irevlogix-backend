@@ -261,6 +261,90 @@ namespace irevlogix_backend.Controllers
             }
         }
 
+        [HttpPost("bulk")]
+        public async Task<ActionResult<Asset>> CreateAssetBulk(CreateAssetRequest request)
+        {
+            try
+            {
+                var clientId = GetClientId();
+                var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+                var userId = 1;
+                if (!string.IsNullOrEmpty(userIdClaim) && int.TryParse(userIdClaim, out var parsedUserId)) userId = parsedUserId;
+
+                var existingAsset = await _context.Assets
+                    .Where(a => a.AssetID == request.AssetID && a.ClientId == clientId)
+                    .FirstOrDefaultAsync();
+
+                if (existingAsset != null)
+                    return BadRequest($"Asset with ID '{request.AssetID}' already exists");
+
+                int? effectiveStatusId = request.CurrentStatusId;
+                if (!effectiveStatusId.HasValue)
+                {
+                    effectiveStatusId = await _context.AssetTrackingStatuses
+                        .Where(s => s.ClientId == clientId && s.IsActive && s.StatusName == "Received")
+                        .Select(s => (int?)s.Id)
+                        .FirstOrDefaultAsync();
+                }
+
+                var asset = new Asset
+                {
+                    AssetID = request.AssetID,
+                    AssetCategoryId = request.AssetCategoryId,
+                    Manufacturer = request.Manufacturer,
+                    Model = request.Model,
+                    SerialNumber = request.SerialNumber,
+                    Description = request.Description ?? string.Empty,
+                    Condition = request.Condition ?? "Unknown",
+                    EstimatedValue = request.EstimatedValue,
+                    IsDataBearing = request.IsDataBearing,
+                    StorageDeviceType = request.StorageDeviceType,
+                    DataSanitizationStatus = request.DataSanitizationStatus,
+                    CurrentLocation = request.CurrentLocation,
+                    CurrentStatusId = effectiveStatusId,
+                    Notes = request.Notes,
+                    ClientId = clientId,
+                    CreatedBy = userId,
+                    UpdatedBy = userId
+                };
+
+                _context.Assets.Add(asset);
+                await _context.SaveChangesAsync();
+
+                if (effectiveStatusId.HasValue)
+                {
+                    var statusName = await _context.AssetTrackingStatuses
+                        .Where(s => s.Id == effectiveStatusId.Value && s.ClientId == clientId)
+                        .Select(s => s.StatusName)
+                        .FirstOrDefaultAsync();
+
+                    var chainOfCustody = new ChainOfCustody
+                    {
+                        AssetId = asset.Id,
+                        Timestamp = DateTime.UtcNow,
+                        Location = request.CurrentLocation,
+                        UserId = userId,
+                        StatusChangeId = effectiveStatusId.Value,
+                        StatusChange = string.IsNullOrWhiteSpace(statusName) ? "Asset created via bulk upload" : statusName,
+                        Notes = "Asset created via bulk upload",
+                        ClientId = clientId,
+                        CreatedBy = userId,
+                        UpdatedBy = userId
+                    };
+
+                    _context.ChainOfCustodyRecords.Add(chainOfCustody);
+                    await _context.SaveChangesAsync();
+                }
+
+                return CreatedAtAction(nameof(GetAsset), new { id = asset.Id }, asset);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error creating asset via bulk upload");
+                return StatusCode(500, "Internal server error");
+            }
+        }
+
         [HttpPut("{id}")]
         public async Task<IActionResult> UpdateAsset(int id, UpdateAssetRequest request)
         {
