@@ -15,6 +15,9 @@ namespace irevlogix_backend.Models
         public int? UserId { get; set; }
         public virtual User? User { get; set; }
         
+        public int VendorId { get; set; }
+        public virtual Vendor Vendor { get; set; } = null!;
+        
         public int? StatusChangeId { get; set; }
         
         [Required]

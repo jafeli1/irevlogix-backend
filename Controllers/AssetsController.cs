@@ -240,6 +240,7 @@ namespace irevlogix_backend.Controllers
                         Timestamp = DateTime.UtcNow,
                         Location = request.CurrentLocation,
                         UserId = userId,
+                        VendorId = request.VendorId ?? 1,
                         StatusChangeId = effectiveStatusId.Value,
                         StatusChange = string.IsNullOrWhiteSpace(statusName) ? "Asset created" : statusName,
                         Notes = "Asset created",
@@ -324,6 +325,7 @@ namespace irevlogix_backend.Controllers
                         Timestamp = DateTime.UtcNow,
                         Location = request.CurrentLocation,
                         UserId = userId,
+                        VendorId = request.VendorId ?? 1,
                         StatusChangeId = effectiveStatusId.Value,
                         StatusChange = string.IsNullOrWhiteSpace(statusName) ? "Asset created via bulk upload" : statusName,
                         Notes = "Asset created via bulk upload",
@@ -624,6 +626,7 @@ namespace irevlogix_backend.Controllers
         public string? CurrentLocation { get; set; }
         public int? CurrentStatusId { get; set; }
         public string? Notes { get; set; }
+        public int? VendorId { get; set; }
     }
 
     public class UpdateAssetRequest
@@ -641,6 +644,7 @@ namespace irevlogix_backend.Controllers
         public string? CurrentLocation { get; set; }
         public int? CurrentStatusId { get; set; }
         public string? Notes { get; set; }
+        public int? VendorId { get; set; }
     }
 
     public class CategorizeAssetRequest
