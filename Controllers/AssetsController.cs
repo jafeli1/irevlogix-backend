@@ -378,6 +378,10 @@ namespace irevlogix_backend.Controllers
                 asset.IsDataBearing = request.IsDataBearing ?? asset.IsDataBearing;
                 asset.StorageDeviceType = request.StorageDeviceType ?? asset.StorageDeviceType;
                 asset.DataSanitizationStatus = request.DataSanitizationStatus ?? asset.DataSanitizationStatus;
+                asset.DataSanitizationMethod = request.DataSanitizationMethod ?? asset.DataSanitizationMethod;
+                asset.DataSanitizationDate = request.DataSanitizationDate ?? asset.DataSanitizationDate;
+                asset.DataDestructionCost = request.DataDestructionCost ?? asset.DataDestructionCost;
+                asset.DataSanitizationCertificate = request.DataSanitizationCertificate ?? asset.DataSanitizationCertificate;
                 asset.CurrentLocation = request.CurrentLocation ?? asset.CurrentLocation;
                 asset.CurrentStatusId = request.CurrentStatusId ?? asset.CurrentStatusId;
                 asset.Notes = request.Notes ?? asset.Notes;
@@ -666,6 +670,10 @@ namespace irevlogix_backend.Controllers
         public bool? IsDataBearing { get; set; }
         public string? StorageDeviceType { get; set; }
         public string? DataSanitizationStatus { get; set; }
+        public string? DataSanitizationMethod { get; set; }
+        public DateTime? DataSanitizationDate { get; set; }
+        public decimal? DataDestructionCost { get; set; }
+        public string? DataSanitizationCertificate { get; set; }
         public string? CurrentLocation { get; set; }
         public int? CurrentStatusId { get; set; }
         public string? Notes { get; set; }
