@@ -219,6 +219,7 @@ namespace irevlogix_backend.Controllers
                     CurrentLocation = request.CurrentLocation,
                     CurrentStatusId = effectiveStatusId,
                     Notes = request.Notes,
+                    RecyclingVendorId = request.RecyclingVendorId,
                     ClientId = clientId,
                     CreatedBy = userId,
                     UpdatedBy = userId
@@ -380,6 +381,7 @@ namespace irevlogix_backend.Controllers
                 asset.CurrentLocation = request.CurrentLocation ?? asset.CurrentLocation;
                 asset.CurrentStatusId = request.CurrentStatusId ?? asset.CurrentStatusId;
                 asset.Notes = request.Notes ?? asset.Notes;
+                asset.RecyclingVendorId = request.RecyclingVendorId ?? asset.RecyclingVendorId;
                 asset.UpdatedBy = userId;
                 asset.DateUpdated = DateTime.UtcNow;
 
@@ -627,6 +629,7 @@ namespace irevlogix_backend.Controllers
         public int? CurrentStatusId { get; set; }
         public string? Notes { get; set; }
         public int? VendorId { get; set; }
+        public int? RecyclingVendorId { get; set; }
     }
 
     public class UpdateAssetRequest
@@ -645,6 +648,7 @@ namespace irevlogix_backend.Controllers
         public int? CurrentStatusId { get; set; }
         public string? Notes { get; set; }
         public int? VendorId { get; set; }
+        public int? RecyclingVendorId { get; set; }
     }
 
     public class CategorizeAssetRequest
