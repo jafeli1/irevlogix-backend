@@ -100,8 +100,8 @@ namespace irevlogix_backend.Models
         [MaxLength(200)]
         public string? SalesInvoice { get; set; }
         
-        [MaxLength(200)]
-        public string? RecyclingVendor { get; set; }
+        public int? RecyclingVendorId { get; set; }
+        public virtual Vendor? RecyclingVendor { get; set; }
         
         public DateTime? RecyclingDate { get; set; }
         public decimal? RecyclingCost { get; set; }
