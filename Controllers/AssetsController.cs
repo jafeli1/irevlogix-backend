@@ -382,6 +382,28 @@ namespace irevlogix_backend.Controllers
                 asset.CurrentStatusId = request.CurrentStatusId ?? asset.CurrentStatusId;
                 asset.Notes = request.Notes ?? asset.Notes;
                 asset.RecyclingVendorId = request.RecyclingVendorId ?? asset.RecyclingVendorId;
+                
+                asset.SourceShipmentId = request.SourceShipmentId ?? asset.SourceShipmentId;
+                asset.OriginalPurchaseDate = request.OriginalPurchaseDate ?? asset.OriginalPurchaseDate;
+                asset.OriginalCost = request.OriginalCost ?? asset.OriginalCost;
+                asset.ActualSalePrice = request.ActualSalePrice ?? asset.ActualSalePrice;
+                asset.CostOfRecovery = request.CostOfRecovery ?? asset.CostOfRecovery;
+                asset.CurrentResponsibleUserId = request.CurrentResponsibleUserId ?? asset.CurrentResponsibleUserId;
+                asset.ReuseDisposition = request.ReuseDisposition ?? asset.ReuseDisposition;
+                asset.ResaleDisposition = request.ResaleDisposition ?? asset.ResaleDisposition;
+                asset.ReuseRecipient = request.ReuseRecipient ?? asset.ReuseRecipient;
+                asset.ReusePurpose = request.ReusePurpose ?? asset.ReusePurpose;
+                asset.ReuseDate = request.ReuseDate ?? asset.ReuseDate;
+                asset.FairMarketValue = request.FairMarketValue ?? asset.FairMarketValue;
+                asset.Buyer = request.Buyer ?? asset.Buyer;
+                asset.SaleDate = request.SaleDate ?? asset.SaleDate;
+                asset.ResalePlatform = request.ResalePlatform ?? asset.ResalePlatform;
+                asset.CostOfSale = request.CostOfSale ?? asset.CostOfSale;
+                asset.SalesInvoice = request.SalesInvoice ?? asset.SalesInvoice;
+                asset.RecyclingDate = request.RecyclingDate ?? asset.RecyclingDate;
+                asset.RecyclingCost = request.RecyclingCost ?? asset.RecyclingCost;
+                asset.CertificateOfRecycling = request.CertificateOfRecycling ?? asset.CertificateOfRecycling;
+                asset.ProcessingLotId = request.ProcessingLotId ?? asset.ProcessingLotId;
                 asset.UpdatedBy = userId;
                 asset.DateUpdated = DateTime.UtcNow;
 
@@ -649,6 +671,28 @@ namespace irevlogix_backend.Controllers
         public string? Notes { get; set; }
         public int? VendorId { get; set; }
         public int? RecyclingVendorId { get; set; }
+        
+        public int? SourceShipmentId { get; set; }
+        public DateTime? OriginalPurchaseDate { get; set; }
+        public decimal? OriginalCost { get; set; }
+        public decimal? ActualSalePrice { get; set; }
+        public decimal? CostOfRecovery { get; set; }
+        public int? CurrentResponsibleUserId { get; set; }
+        public bool? ReuseDisposition { get; set; }
+        public bool? ResaleDisposition { get; set; }
+        public string? ReuseRecipient { get; set; }
+        public string? ReusePurpose { get; set; }
+        public DateTime? ReuseDate { get; set; }
+        public decimal? FairMarketValue { get; set; }
+        public string? Buyer { get; set; }
+        public DateTime? SaleDate { get; set; }
+        public string? ResalePlatform { get; set; }
+        public decimal? CostOfSale { get; set; }
+        public string? SalesInvoice { get; set; }
+        public DateTime? RecyclingDate { get; set; }
+        public decimal? RecyclingCost { get; set; }
+        public string? CertificateOfRecycling { get; set; }
+        public int? ProcessingLotId { get; set; }
     }
 
     public class CategorizeAssetRequest
