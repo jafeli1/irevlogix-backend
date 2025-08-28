@@ -480,6 +480,7 @@ namespace irevlogix_backend.Controllers
                 var chainOfCustody = await _context.ChainOfCustodyRecords
                     .Where(c => c.AssetId == id && c.ClientId == clientId)
                     .Include(c => c.User)
+                    .Include(c => c.Vendor)
                     .OrderByDescending(c => c.Timestamp)
                     .ToListAsync();
 
@@ -488,6 +489,72 @@ namespace irevlogix_backend.Controllers
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error retrieving chain of custody for asset {Id}", id);
+                return StatusCode(500, "Internal server error");
+            }
+        }
+
+        [HttpPost("{id}/chain-of-custody")]
+        public async Task<ActionResult<ChainOfCustody>> CreateChainOfCustodyEntry(int id, CreateChainOfCustodyRequest request)
+        {
+            try
+            {
+                var clientId = GetClientId();
+                var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+                int userId = 1;
+                if (!string.IsNullOrEmpty(userIdClaim) && int.TryParse(userIdClaim, out var parsedUserId)) userId = parsedUserId;
+
+                var asset = await _context.Assets
+                    .Where(a => a.Id == id && a.ClientId == clientId)
+                    .FirstOrDefaultAsync();
+
+                if (asset == null)
+                    return NotFound("Asset not found");
+
+                var vendor = await _context.Vendors
+                    .Where(v => v.Id == request.VendorId && v.ClientId == clientId)
+                    .FirstOrDefaultAsync();
+
+                if (vendor == null)
+                    return BadRequest("Invalid vendor");
+
+                if (request.UserId.HasValue)
+                {
+                    var user = await _context.Users
+                        .Where(u => u.Id == request.UserId.Value && u.ClientId == clientId)
+                        .FirstOrDefaultAsync();
+
+                    if (user == null)
+                        return BadRequest("Invalid user");
+                }
+
+                var chainOfCustody = new ChainOfCustody
+                {
+                    AssetId = id,
+                    Timestamp = DateTime.UtcNow,
+                    Location = request.Location,
+                    UserId = request.UserId,
+                    VendorId = request.VendorId,
+                    StatusChange = request.StatusChange,
+                    Notes = request.Notes,
+                    ClientId = clientId,
+                    CreatedBy = userId,
+                    UpdatedBy = userId
+                };
+
+                _context.ChainOfCustodyRecords.Add(chainOfCustody);
+                await _context.SaveChangesAsync();
+
+                var createdEntry = await _context.ChainOfCustodyRecords
+                    .Where(c => c.Id == chainOfCustody.Id)
+                    .Include(c => c.User)
+                    .Include(c => c.Vendor)
+                    .FirstOrDefaultAsync();
+
+                return Ok(createdEntry);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error creating chain of custody entry for asset {Id}", id);
                 return StatusCode(500, "Internal server error");
             }
         }
@@ -708,5 +775,14 @@ namespace irevlogix_backend.Controllers
         public string? Manufacturer { get; set; }
         public string? Model { get; set; }
         public string? Description { get; set; }
+    }
+
+    public class CreateChainOfCustodyRequest
+    {
+        public string? Location { get; set; }
+        public int? UserId { get; set; }
+        public int VendorId { get; set; }
+        public string StatusChange { get; set; } = string.Empty;
+        public string? Notes { get; set; }
     }
 }
