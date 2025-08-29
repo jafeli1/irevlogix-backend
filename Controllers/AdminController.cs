@@ -29,6 +29,11 @@ namespace irevlogix_backend.Controllers
             return User.FindFirst("ClientId")?.Value ?? throw new UnauthorizedAccessException("ClientId not found in token");
         }
 
+        private bool IsAdministrator()
+        {
+            return User.IsInRole("Administrator");
+        }
+
         [HttpGet("settings")]
         public async Task<ActionResult<IEnumerable<ApplicationSettings>>> GetSettings([FromQuery] string? category = null)
         {
@@ -280,8 +285,12 @@ namespace irevlogix_backend.Controllers
                 var query = _context.Users
                     .Include(u => u.UserRoles)
                         .ThenInclude(ur => ur.Role)
-                    .Where(u => u.ClientId == currentClientId)
                     .AsQueryable();
+                
+                if (!IsAdministrator())
+                {
+                    query = query.Where(u => u.ClientId == currentClientId);
+                }
 
                 if (!string.IsNullOrEmpty(firstName))
                     query = query.Where(u => u.FirstName.Contains(firstName));
@@ -333,8 +342,12 @@ namespace irevlogix_backend.Controllers
                 var clientId = GetClientId();
                 var query = _context.Roles
                     .Include(r => r.UserRoles)
-                    .Where(r => r.ClientId == clientId)
                     .AsQueryable();
+                
+                if (!IsAdministrator())
+                {
+                    query = query.Where(r => r.ClientId == clientId);
+                }
 
                 if (!string.IsNullOrEmpty(name))
                     query = query.Where(r => r.Name.Contains(name));
