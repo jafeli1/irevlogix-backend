@@ -13,7 +13,7 @@ namespace irevlogix_backend.Models
         
         public bool IsActive { get; set; } = true;
         
-        public int SortOrder { get; set; } = 0;
+        public int? SortOrder { get; set; } = 0;
         
         [MaxLength(20)]
         public string? ColorCode { get; set; }
