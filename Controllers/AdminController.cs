@@ -284,14 +284,13 @@ namespace irevlogix_backend.Controllers
                 var currentClientId = GetClientId();
                 var query = _context.Users
                     .Include(u => u.UserRoles)
-                        .ThenInclude(ur => ur.Role);
+                        .ThenInclude(ur => ur.Role)
+                    .AsQueryable();
                 
                 if (!IsAdministrator())
                 {
                     query = query.Where(u => u.ClientId == currentClientId);
                 }
-                
-                query = query.AsQueryable();
 
                 if (!string.IsNullOrEmpty(firstName))
                     query = query.Where(u => u.FirstName.Contains(firstName));
@@ -342,14 +341,13 @@ namespace irevlogix_backend.Controllers
             {
                 var clientId = GetClientId();
                 var query = _context.Roles
-                    .Include(r => r.UserRoles);
+                    .Include(r => r.UserRoles)
+                    .AsQueryable();
                 
                 if (!IsAdministrator())
                 {
                     query = query.Where(r => r.ClientId == clientId);
                 }
-                
-                query = query.AsQueryable();
 
                 if (!string.IsNullOrEmpty(name))
                     query = query.Where(r => r.Name.Contains(name));
