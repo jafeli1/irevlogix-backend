@@ -14,7 +14,7 @@ namespace irevlogix_backend.Models
         [MaxLength(500)]
         public string? Description { get; set; }
         
-        public int StepOrder { get; set; }
+        public int? StepOrder { get; set; }
         
         public DateTime? StartTime { get; set; }
         public DateTime? EndTime { get; set; }

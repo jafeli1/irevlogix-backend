@@ -19,7 +19,7 @@ namespace irevlogix_backend.Models
         
         public bool IsPublished { get; set; } = false;
         
-        public int ViewCount { get; set; } = 0;
+        public int? ViewCount { get; set; } = 0;
         
         public int? AuthorUserId { get; set; }
         public virtual User? Author { get; set; }
@@ -29,6 +29,6 @@ namespace irevlogix_backend.Models
         [MaxLength(500)]
         public string? Summary { get; set; }
         
-        public int SortOrder { get; set; } = 0;
+        public int? SortOrder { get; set; } = 0;
     }
 }
