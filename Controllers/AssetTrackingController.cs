@@ -197,7 +197,8 @@ namespace irevlogix_backend.Controllers
                     Timestamp = DateTime.UtcNow,
                     Location = request.Location,
                     UserId = userId,
-                    StatusChangeId = request.StatusId,
+                    VendorId = 1, // Default vendor
+                    StatusChange = status.StatusName,
                     Notes = request.Notes,
                     ClientId = clientId,
                     CreatedBy = userId,
