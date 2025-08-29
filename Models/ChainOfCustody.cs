@@ -18,8 +18,6 @@ namespace irevlogix_backend.Models
         public int VendorId { get; set; }
         public virtual Vendor Vendor { get; set; } = null!;
         
-        public int? StatusChangeId { get; set; }
-        
         [Required]
         [MaxLength(200)]
         public string StatusChange { get; set; } = string.Empty;
