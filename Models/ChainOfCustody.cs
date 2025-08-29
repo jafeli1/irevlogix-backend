@@ -29,8 +29,5 @@ namespace irevlogix_backend.Models
         
         [MaxLength(50)]
         public string? ActionType { get; set; }
-        
-        [MaxLength(200)]
-        public string? DocumentReference { get; set; }
     }
 }
