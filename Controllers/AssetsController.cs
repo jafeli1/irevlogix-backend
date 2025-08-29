@@ -417,7 +417,7 @@ namespace irevlogix_backend.Controllers
                         Timestamp = DateTime.UtcNow,
                         Location = asset.CurrentLocation,
                         UserId = userId,
-                        VendorId = asset.VendorId ?? 1, // Default vendor if none specified
+                        VendorId = 1, // Default vendor for chain of custody
                         StatusChange = "Asset updated",
                         Notes = request.Notes ?? "Asset updated",
                         ClientId = clientId,
