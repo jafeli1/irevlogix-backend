@@ -415,11 +415,17 @@ namespace irevlogix_backend.Controllers
             try
             {
                 var clientId = GetClientId();
-                var user = await _context.Users
+                var query = _context.Users
                     .Include(u => u.UserRoles)
                         .ThenInclude(ur => ur.Role)
-                    .Where(u => u.Id == id && u.ClientId == clientId)
-                    .FirstOrDefaultAsync();
+                    .Where(u => u.Id == id);
+                
+                if (!IsAdministrator())
+                {
+                    query = query.Where(u => u.ClientId == clientId);
+                }
+                
+                var user = await query.FirstOrDefaultAsync();
 
                 if (user == null)
                     return NotFound();
@@ -579,13 +585,19 @@ namespace irevlogix_backend.Controllers
             try
             {
                 var clientId = GetClientId();
-                var role = await _context.Roles
+                var query = _context.Roles
                     .Include(r => r.RolePermissions)
                         .ThenInclude(rp => rp.Permission)
                     .Include(r => r.UserRoles)
                         .ThenInclude(ur => ur.User)
-                    .Where(r => r.Id == id && r.ClientId == clientId)
-                    .FirstOrDefaultAsync();
+                    .Where(r => r.Id == id);
+                
+                if (!IsAdministrator())
+                {
+                    query = query.Where(r => r.ClientId == clientId);
+                }
+                
+                var role = await query.FirstOrDefaultAsync();
 
                 if (role == null)
                     return NotFound();
@@ -672,9 +684,14 @@ namespace irevlogix_backend.Controllers
                 var clientId = GetClientId();
                 var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? "0");
 
-                var role = await _context.Roles
-                    .Where(r => r.Id == id && r.ClientId == clientId)
-                    .FirstOrDefaultAsync();
+                var query = _context.Roles.Where(r => r.Id == id);
+                
+                if (!IsAdministrator())
+                {
+                    query = query.Where(r => r.ClientId == clientId);
+                }
+                
+                var role = await query.FirstOrDefaultAsync();
 
                 if (role == null)
                     return NotFound();
@@ -712,11 +729,17 @@ namespace irevlogix_backend.Controllers
             try
             {
                 var clientId = GetClientId();
-                var role = await _context.Roles
+                var query = _context.Roles
                     .Include(r => r.UserRoles)
                     .Include(r => r.RolePermissions)
-                    .Where(r => r.Id == id && r.ClientId == clientId)
-                    .FirstOrDefaultAsync();
+                    .Where(r => r.Id == id);
+                
+                if (!IsAdministrator())
+                {
+                    query = query.Where(r => r.ClientId == clientId);
+                }
+                
+                var role = await query.FirstOrDefaultAsync();
 
                 if (role == null)
                     return NotFound();
@@ -746,16 +769,28 @@ namespace irevlogix_backend.Controllers
             try
             {
                 var clientId = GetClientId();
-                var role = await _context.Roles
-                    .Where(r => r.Id == id && r.ClientId == clientId)
-                    .FirstOrDefaultAsync();
+                var roleQuery = _context.Roles.Where(r => r.Id == id);
+                
+                if (!IsAdministrator())
+                {
+                    roleQuery = roleQuery.Where(r => r.ClientId == clientId);
+                }
+                
+                var role = await roleQuery.FirstOrDefaultAsync();
 
                 if (role == null)
                     return NotFound();
 
-                var users = await _context.UserRoles
+                var userQuery = _context.UserRoles
                     .Include(ur => ur.User)
-                    .Where(ur => ur.RoleId == id && ur.User.ClientId == clientId)
+                    .Where(ur => ur.RoleId == id);
+                
+                if (!IsAdministrator())
+                {
+                    userQuery = userQuery.Where(ur => ur.User.ClientId == clientId);
+                }
+                
+                var users = await userQuery
                     .Select(ur => new {
                         ur.User.Id,
                         ur.User.FirstName,
@@ -784,16 +819,26 @@ namespace irevlogix_backend.Controllers
                 var clientId = GetClientId();
                 var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? "0");
 
-                var role = await _context.Roles
-                    .Where(r => r.Id == id && r.ClientId == clientId)
-                    .FirstOrDefaultAsync();
+                var roleQuery = _context.Roles.Where(r => r.Id == id);
+                
+                if (!IsAdministrator())
+                {
+                    roleQuery = roleQuery.Where(r => r.ClientId == clientId);
+                }
+                
+                var role = await roleQuery.FirstOrDefaultAsync();
 
                 if (role == null)
                     return NotFound("Role not found");
 
-                var user = await _context.Users
-                    .Where(u => u.Id == request.UserId && u.ClientId == clientId)
-                    .FirstOrDefaultAsync();
+                var userQuery = _context.Users.Where(u => u.Id == request.UserId);
+                
+                if (!IsAdministrator())
+                {
+                    userQuery = userQuery.Where(u => u.ClientId == clientId);
+                }
+                
+                var user = await userQuery.FirstOrDefaultAsync();
 
                 if (user == null)
                     return NotFound("User not found");
@@ -832,12 +877,17 @@ namespace irevlogix_backend.Controllers
             {
                 var clientId = GetClientId();
 
-                var userRole = await _context.UserRoles
+                var query = _context.UserRoles
                     .Include(ur => ur.User)
                     .Include(ur => ur.Role)
-                    .Where(ur => ur.UserId == userId && ur.RoleId == id && 
-                                ur.User.ClientId == clientId && ur.Role.ClientId == clientId)
-                    .FirstOrDefaultAsync();
+                    .Where(ur => ur.UserId == userId && ur.RoleId == id);
+                
+                if (!IsAdministrator())
+                {
+                    query = query.Where(ur => ur.User.ClientId == clientId && ur.Role.ClientId == clientId);
+                }
+                
+                var userRole = await query.FirstOrDefaultAsync();
 
                 if (userRole == null)
                     return NotFound();
@@ -862,10 +912,16 @@ namespace irevlogix_backend.Controllers
                 var clientId = GetClientId();
                 var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? "0");
 
-                var role = await _context.Roles
+                var query = _context.Roles
                     .Include(r => r.RolePermissions)
-                    .Where(r => r.Id == id && r.ClientId == clientId)
-                    .FirstOrDefaultAsync();
+                    .Where(r => r.Id == id);
+                
+                if (!IsAdministrator())
+                {
+                    query = query.Where(r => r.ClientId == clientId);
+                }
+                
+                var role = await query.FirstOrDefaultAsync();
 
                 if (role == null)
                     return NotFound();
