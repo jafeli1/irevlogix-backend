@@ -472,18 +472,40 @@ namespace irevlogix_backend.Controllers
 
                 if (!string.IsNullOrEmpty(request.Username))
                 {
-                    var existingUser = await _context.Users
-                        .Where(u => u.Username == request.Username && u.ClientId == request.ClientId)
-                        .FirstOrDefaultAsync();
+                    var usernameQuery = _context.Users
+                        .Where(u => u.Username == request.Username);
+                    
+                    if (!IsAdministrator())
+                    {
+                        usernameQuery = usernameQuery.Where(u => u.ClientId == request.ClientId);
+                    }
+                    
+                    var existingUser = await usernameQuery.FirstOrDefaultAsync();
                     if (existingUser != null)
-                        return BadRequest("Username already exists for this client");
+                    {
+                        var errorMessage = IsAdministrator() ? 
+                            "Username already exists in the system" : 
+                            "Username already exists for this client";
+                        return BadRequest(errorMessage);
+                    }
                 }
 
-                var existingEmail = await _context.Users
-                    .Where(u => u.Email == request.Email && u.ClientId == request.ClientId)
-                    .FirstOrDefaultAsync();
+                var emailQuery = _context.Users
+                    .Where(u => u.Email == request.Email);
+                
+                if (!IsAdministrator())
+                {
+                    emailQuery = emailQuery.Where(u => u.ClientId == request.ClientId);
+                }
+                
+                var existingEmail = await emailQuery.FirstOrDefaultAsync();
                 if (existingEmail != null)
-                    return BadRequest("Email already exists for this client");
+                {
+                    var errorMessage = IsAdministrator() ? 
+                        "Email already exists in the system" : 
+                        "Email already exists for this client";
+                    return BadRequest(errorMessage);
+                }
 
                 var passwordHash = HashPassword(request.Password);
 
@@ -531,7 +553,7 @@ namespace irevlogix_backend.Controllers
                 var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? "0");
 
                 var user = await _context.Users
-                    .Where(u => u.Id == id && u.ClientId == clientId)
+                    .Where(u => u.Id == id && (IsAdministrator() || u.ClientId == clientId))
                     .FirstOrDefaultAsync();
 
                 if (user == null)
