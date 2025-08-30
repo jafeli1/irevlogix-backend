@@ -531,7 +531,7 @@ namespace irevlogix_backend.Controllers
                 var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? "0");
 
                 var user = await _context.Users
-                    .Where(u => u.Id == id && u.ClientId == clientId)
+                    .Where(u => u.Id == id && (IsAdministrator() || u.ClientId == clientId))
                     .FirstOrDefaultAsync();
 
                 if (user == null)
