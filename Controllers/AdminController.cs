@@ -583,6 +583,12 @@ namespace irevlogix_backend.Controllers
                 user.Country = request.Country;
                 user.TwoFactorAuthEnabled = request.TwoFactorAuthEnabled;
                 user.IsActive = request.IsActive;
+                
+                if (IsAdministrator() && !string.IsNullOrEmpty(request.ClientId))
+                {
+                    user.ClientId = request.ClientId;
+                }
+                
                 user.UpdatedBy = userId;
                 user.DateUpdated = DateTime.UtcNow;
 
@@ -1083,6 +1089,7 @@ namespace irevlogix_backend.Controllers
         public string? Country { get; set; }
         public bool TwoFactorAuthEnabled { get; set; }
         public bool IsActive { get; set; }
+        public string? ClientId { get; set; }
     }
 
     public class CreateRoleRequest
