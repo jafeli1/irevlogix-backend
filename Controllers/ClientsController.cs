@@ -24,15 +24,17 @@ namespace irevlogix_backend.Controllers
         [Authorize(Roles = "Administrator")]
         public async Task<ActionResult<IEnumerable<object>>> GetClients(
             [FromQuery] string? search = null,
+            [FromQuery] string? companyName = null,
             [FromQuery] bool? isActive = null,
             [FromQuery] int page = 1,
             [FromQuery] int pageSize = 50)
         {
             var query = _context.Clients.AsQueryable();
 
-            if (!string.IsNullOrEmpty(search))
+            var searchTerm = !string.IsNullOrEmpty(companyName) ? companyName : search;
+            if (!string.IsNullOrEmpty(searchTerm))
             {
-                query = query.Where(c => c.CompanyName.Contains(search));
+                query = query.Where(c => c.CompanyName.Contains(searchTerm));
             }
 
             if (isActive.HasValue)
@@ -52,7 +54,7 @@ namespace irevlogix_backend.Controllers
                     c.ContactFirstName,
                     c.ContactLastName,
                     c.IsActive,
-                    LastLoginDate = c.DateUpdated > c.DateCreated ? c.DateUpdated : c.DateCreated
+                    DateCreated = c.DateCreated
                 })
                 .ToListAsync();
 
