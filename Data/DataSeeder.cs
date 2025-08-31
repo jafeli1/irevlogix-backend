@@ -30,6 +30,7 @@ namespace irevlogix_backend.Data
             var clientId = "ADMIN_CLIENT_001";
 
             Role adminRole;
+            Role projectManagerRole;
             try
             {
                 adminRole = await context.Roles.FirstOrDefaultAsync(r => r.Name == "Administrator");
@@ -56,10 +57,35 @@ namespace irevlogix_backend.Data
                 {
                     Console.WriteLine($"DataSeeder: Using existing Administrator role with ID {adminRole.Id}");
                 }
+
+                projectManagerRole = await context.Roles.FirstOrDefaultAsync(r => r.Name == "Project Manager");
+                
+                if (projectManagerRole == null)
+                {
+                    projectManagerRole = new Role
+                    {
+                        Name = "Project Manager",
+                        Description = "Project Manager with access to project management, reverse logistics, processing, and reporting modules",
+                        IsSystemRole = false,
+                        ClientId = clientId,
+                        CreatedBy = 1,
+                        UpdatedBy = 1,
+                        DateCreated = DateTime.UtcNow,
+                        DateUpdated = DateTime.UtcNow
+                    };
+
+                    context.Roles.Add(projectManagerRole);
+                    await context.SaveChangesAsync();
+                    Console.WriteLine($"DataSeeder: Created Project Manager role with ID {projectManagerRole.Id}");
+                }
+                else
+                {
+                    Console.WriteLine($"DataSeeder: Using existing Project Manager role with ID {projectManagerRole.Id}");
+                }
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"DataSeeder: Error handling Administrator role - {ex.Message}");
+                Console.WriteLine($"DataSeeder: Error handling roles - {ex.Message}");
                 throw;
             }
 
@@ -147,26 +173,15 @@ namespace irevlogix_backend.Data
                 throw;
             }
 
-            var rolePermissions = permissions.Select(p => new RolePermission
-            {
-                RoleId = adminRole.Id,
-                PermissionId = p.Id,
-                ClientId = clientId,
-                CreatedBy = 1,
-                UpdatedBy = 1,
-                DateCreated = DateTime.UtcNow,
-                DateUpdated = DateTime.UtcNow
-            }).ToList();
-
             try
             {
-                var existingRolePermissions = await context.RolePermissions
+                var existingAdminRolePermissions = await context.RolePermissions
                     .Where(rp => rp.RoleId == adminRole.Id)
                     .Select(rp => rp.PermissionId)
                     .ToListAsync();
                 
-                var newRolePermissions = permissions
-                    .Where(p => !existingRolePermissions.Contains(p.Id))
+                var newAdminRolePermissions = permissions
+                    .Where(p => !existingAdminRolePermissions.Contains(p.Id))
                     .Select(p => new RolePermission
                     {
                         RoleId = adminRole.Id,
@@ -178,20 +193,62 @@ namespace irevlogix_backend.Data
                         DateUpdated = DateTime.UtcNow
                     }).ToList();
                 
-                if (newRolePermissions.Any())
+                if (newAdminRolePermissions.Any())
                 {
-                    context.RolePermissions.AddRange(newRolePermissions);
+                    context.RolePermissions.AddRange(newAdminRolePermissions);
                     await context.SaveChangesAsync();
-                    Console.WriteLine($"DataSeeder: Created {newRolePermissions.Count} new role permissions");
+                    Console.WriteLine($"DataSeeder: Created {newAdminRolePermissions.Count} new admin role permissions");
                 }
                 else
                 {
-                    Console.WriteLine("DataSeeder: All role permissions already exist");
+                    Console.WriteLine("DataSeeder: All admin role permissions already exist");
                 }
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"DataSeeder: Error creating role permissions - {ex.Message}");
+                Console.WriteLine($"DataSeeder: Error creating admin role permissions - {ex.Message}");
+                throw;
+            }
+
+            try
+            {
+                var projectManagerPermissions = permissions.Where(p => 
+                    p.Module != "Administration" &&
+                    p.Module != "Authentication"
+                ).ToList();
+
+                var existingPMRolePermissions = await context.RolePermissions
+                    .Where(rp => rp.RoleId == projectManagerRole.Id)
+                    .Select(rp => rp.PermissionId)
+                    .ToListAsync();
+                
+                var newPMRolePermissions = projectManagerPermissions
+                    .Where(p => !existingPMRolePermissions.Contains(p.Id))
+                    .Select(p => new RolePermission
+                    {
+                        RoleId = projectManagerRole.Id,
+                        PermissionId = p.Id,
+                        ClientId = clientId,
+                        CreatedBy = 1,
+                        UpdatedBy = 1,
+                        DateCreated = DateTime.UtcNow,
+                        DateUpdated = DateTime.UtcNow
+                    }).ToList();
+                
+                if (newPMRolePermissions.Any())
+                {
+                    context.RolePermissions.AddRange(newPMRolePermissions);
+                    await context.SaveChangesAsync();
+                    Console.WriteLine($"DataSeeder: Created {newPMRolePermissions.Count} new project manager role permissions");
+                }
+                else
+                {
+                    Console.WriteLine("DataSeeder: All project manager role permissions already exist");
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"DataSeeder: Error creating project manager role permissions - {ex.Message}");
                 throw;
             }
 
