@@ -213,10 +213,8 @@ namespace irevlogix_backend.Data
             try
             {
                 var projectManagerPermissions = permissions.Where(p => 
-                    p.Module == "ProjectManagement" ||
-                    p.Module == "ReverseLogistics" ||
-                    p.Module == "Processing" ||
-                    p.Module == "Reporting"
+                    p.Module != "Administration" &&
+                    p.Module != "Authentication"
                 ).ToList();
 
                 var existingPMRolePermissions = await context.RolePermissions
