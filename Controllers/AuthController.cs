@@ -67,9 +67,7 @@ namespace irevlogix_backend.Controllers
                 return Unauthorized(new { message = "Invalid credentials" });
             }
 
-            var passwordAge = user.PasswordCreatedDate.HasValue 
-                ? (DateTime.UtcNow - user.PasswordCreatedDate.Value).Days 
-                : (DateTime.UtcNow - user.DateCreated).Days;
+            var passwordAge = (DateTime.UtcNow - user.DateCreated).Days;
 
             var isPasswordExpired = passwordAge >= passwordExpiryDays;
             var isPasswordExpiringSoon = passwordAge >= (passwordExpiryDays - 7); // Warning 7 days before expiry
@@ -134,7 +132,6 @@ namespace irevlogix_backend.Controllers
                 Email = request.Email,
                 PasswordHash = HashPassword(request.Password),
                 ClientId = request.ClientId,
-                PasswordCreatedDate = DateTime.UtcNow,
                 CreatedBy = 1,
                 UpdatedBy = 1
             };
@@ -238,7 +235,6 @@ namespace irevlogix_backend.Controllers
             }
 
             user.PasswordHash = HashPassword(request.NewPassword);
-            user.PasswordCreatedDate = DateTime.UtcNow;
             user.UpdatedBy = user.Id;
             user.DateUpdated = DateTime.UtcNow;
 
