@@ -592,7 +592,7 @@ namespace irevlogix_backend.Controllers
                 if (asset == null) return NotFound();
                 if (file == null || file.Length == 0) return BadRequest("No file uploaded");
 
-                var uploadsPath = Path.Combine("uploads", "assets", clientId, id.ToString());
+                var uploadsPath = Path.Combine("upload", clientId, "Assets", id.ToString());
                 Directory.CreateDirectory(uploadsPath);
                 var fileName = $"{Guid.NewGuid()}_{file.FileName}";
                 var filePath = Path.Combine(uploadsPath, fileName);

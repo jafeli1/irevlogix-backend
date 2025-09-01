@@ -212,7 +212,7 @@ namespace irevlogix_backend.Controllers
             if (!allowedExtensions.Contains(fileExtension))
                 return BadRequest("File type not allowed");
 
-            var uploadsPath = Path.Combine(Directory.GetCurrentDirectory(), "uploads", "vendor-documents");
+            var uploadsPath = Path.Combine("upload", clientId, "VendorDocuments");
             Directory.CreateDirectory(uploadsPath);
 
             var fileName = $"{Guid.NewGuid()}{fileExtension}";
@@ -223,7 +223,7 @@ namespace irevlogix_backend.Controllers
                 await file.CopyToAsync(stream);
             }
 
-            var relativePath = Path.Combine("uploads", "vendor-documents", fileName).Replace("\\", "/");
+            var relativePath = Path.Combine("upload", clientId, "VendorDocuments", fileName).Replace("\\", "/");
 
             var document = new VendorDocuments
             {

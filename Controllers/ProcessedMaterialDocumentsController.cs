@@ -194,13 +194,16 @@ namespace irevlogix_backend.Controllers
             if (file == null || file.Length == 0)
                 return BadRequest("No file uploaded");
 
+            var clientId = User.FindFirst("ClientId")?.Value;
+            if (string.IsNullOrEmpty(clientId)) return Unauthorized();
+
             var allowedExtensions = new[] { ".pdf", ".doc", ".docx", ".jpg", ".jpeg", ".png" };
             var fileExtension = Path.GetExtension(file.FileName).ToLowerInvariant();
             
             if (!allowedExtensions.Contains(fileExtension))
                 return BadRequest("Invalid file type. Allowed types: PDF, DOC, DOCX, JPG, JPEG, PNG");
 
-            var uploadsPath = Path.Combine(Directory.GetCurrentDirectory(), "uploads", "processed-material-documents");
+            var uploadsPath = Path.Combine("upload", clientId, "ProcessedMaterialDocuments");
             Directory.CreateDirectory(uploadsPath);
 
             var fileName = $"{Guid.NewGuid()}{fileExtension}";
@@ -211,7 +214,7 @@ namespace irevlogix_backend.Controllers
                 await file.CopyToAsync(stream);
             }
 
-            var relativePath = Path.Combine("uploads", "processed-material-documents", fileName).Replace("\\", "/");
+            var relativePath = Path.Combine("upload", clientId, "ProcessedMaterialDocuments", fileName).Replace("\\", "/");
             return Ok(new { 
                 filePath = relativePath,
                 fileName = file.FileName,

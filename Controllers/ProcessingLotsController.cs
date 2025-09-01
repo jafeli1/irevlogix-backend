@@ -228,6 +228,62 @@ namespace irevlogix_backend.Controllers
             }
         }
 
+        [HttpPost("{id}/upload")]
+        public async Task<ActionResult<object>> UploadCertificate(int id, IFormFile file, [FromForm] string documentType = "certificate", [FromForm] string? description = null)
+        {
+            try
+            {
+                var clientId = GetClientId();
+                var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+                int userId = 1;
+                if (!string.IsNullOrEmpty(userIdClaim) && int.TryParse(userIdClaim, out var parsed)) userId = parsed;
+
+                var lot = await _context.ProcessingLots
+                    .Where(pl => pl.Id == id && pl.ClientId == clientId)
+                    .FirstOrDefaultAsync();
+
+                if (lot == null)
+                    return NotFound();
+
+                if (file == null || file.Length == 0)
+                    return BadRequest("No file uploaded");
+
+                var allowedExtensions = new[] { ".pdf", ".doc", ".docx", ".jpg", ".jpeg", ".png", ".txt" };
+                var fileExtension = Path.GetExtension(file.FileName).ToLowerInvariant();
+                
+                if (!allowedExtensions.Contains(fileExtension))
+                    return BadRequest("Invalid file type. Allowed types: PDF, DOC, DOCX, JPG, JPEG, PNG, TXT");
+
+                var uploadsPath = Path.Combine("upload", clientId, "ProcessingLots", id.ToString());
+                Directory.CreateDirectory(uploadsPath);
+
+                var fileName = $"{Guid.NewGuid()}_{file.FileName}";
+                var filePath = Path.Combine(uploadsPath, fileName);
+
+                using (var stream = new FileStream(filePath, FileMode.Create))
+                {
+                    await file.CopyToAsync(stream);
+                }
+
+                var relativePath = Path.Combine("upload", clientId, "ProcessingLots", id.ToString(), fileName);
+
+                if (documentType.ToLower() == "certificate")
+                {
+                    lot.CertificationStatus = "Uploaded";
+                    lot.UpdatedBy = userId;
+                    lot.DateUpdated = DateTime.UtcNow;
+                    await _context.SaveChangesAsync();
+                }
+
+                return Ok(new { id = lot.Id, fileName = file.FileName, filePath = relativePath, documentType });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error uploading certificate for processing lot {Id}", id);
+                return StatusCode(500, "Internal server error");
+            }
+        }
+
         private string GenerateLotId()
         {
             return $"LOT-{DateTime.UtcNow:yyyyMMdd}-{Guid.NewGuid().ToString("N")[..8].ToUpper()}";

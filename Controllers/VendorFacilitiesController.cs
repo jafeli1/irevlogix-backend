@@ -475,7 +475,7 @@ namespace irevlogix_backend.Controllers
                 if (file == null || file.Length == 0)
                     return BadRequest("No file uploaded");
 
-                var uploadsPath = Path.Combine(Directory.GetCurrentDirectory(), "uploads", "vendor-facilities", clientId, id.ToString());
+                var uploadsPath = Path.Combine("upload", clientId, "VendorFacilities", id.ToString());
                 Directory.CreateDirectory(uploadsPath);
 
                 var fileName = $"{Guid.NewGuid()}_{file.FileName}";
@@ -486,7 +486,7 @@ namespace irevlogix_backend.Controllers
                     await file.CopyToAsync(stream);
                 }
 
-                var relativePath = Path.Combine("uploads", "vendor-facilities", clientId, id.ToString(), fileName);
+                var relativePath = Path.Combine("upload", clientId, "VendorFacilities", id.ToString(), fileName);
 
                 switch (documentType.ToLower())
                 {

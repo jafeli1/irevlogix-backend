@@ -247,7 +247,7 @@ namespace irevlogix_backend.Controllers
                 var clientId = GetClientId();
                 var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? "0");
 
-                var uploadsPath = Path.Combine("uploads", clientId, "logos");
+                var uploadsPath = Path.Combine("upload", clientId, "Admin", "settings");
                 Directory.CreateDirectory(uploadsPath);
 
                 var fileName = $"logo_{DateTime.UtcNow:yyyyMMddHHmmss}{Path.GetExtension(file.FileName)}";
