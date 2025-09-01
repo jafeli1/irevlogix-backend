@@ -457,6 +457,54 @@ namespace irevlogix_backend.Controllers
             }
         }
 
+        [HttpGet("{id}/files")]
+        public async Task<ActionResult<IEnumerable<object>>> GetUploadedFiles(int id)
+        {
+            try
+            {
+                var clientId = GetClientId();
+                var facility = await _context.VendorFacilities
+                    .Where(vf => vf.Id == id && vf.ClientId == clientId)
+                    .FirstOrDefaultAsync();
+
+                if (facility == null)
+                    return NotFound();
+
+                var uploadsPath = Path.Combine("upload", clientId, "VendorFacilities", id.ToString());
+                
+                if (!Directory.Exists(uploadsPath))
+                    return Ok(new List<object>());
+
+                var files = Directory.GetFiles(uploadsPath)
+                    .Select(filePath => 
+                    {
+                        var fileName = Path.GetFileName(filePath);
+                        var originalFileName = fileName.Contains('_') ? fileName.Substring(fileName.IndexOf('_') + 1) : fileName;
+                        var fileInfo = new FileInfo(filePath);
+                        var relativePath = Path.Combine("upload", clientId, "VendorFacilities", id.ToString(), fileName).Replace("\\", "/");
+                        
+                        return new
+                        {
+                            fileName = originalFileName,
+                            fullFileName = fileName,
+                            filePath = "/" + relativePath,
+                            fileSize = fileInfo.Length,
+                            uploadDate = fileInfo.CreationTime,
+                            documentType = "facility_document"
+                        };
+                    })
+                    .OrderByDescending(f => f.uploadDate)
+                    .ToList();
+
+                return Ok(files);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error retrieving uploaded files for vendor facility {Id}", id);
+                return StatusCode(500, "Internal server error");
+            }
+        }
+
         [HttpPost("{id}/upload")]
         public async Task<ActionResult<object>> UploadDocument(int id, IFormFile file, [FromForm] string documentType, [FromForm] string? description = null)
         {

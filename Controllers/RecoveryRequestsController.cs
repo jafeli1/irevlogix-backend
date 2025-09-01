@@ -269,6 +269,54 @@ namespace irevlogix_backend.Controllers
             }
         }
 
+        [HttpGet("{id}/files")]
+        public async Task<ActionResult<IEnumerable<object>>> GetUploadedFiles(int id)
+        {
+            try
+            {
+                var clientId = GetClientId();
+                var recoveryRequest = await _context.RecoveryRequests
+                    .Where(rr => rr.Id == id && rr.ClientId == clientId)
+                    .FirstOrDefaultAsync();
+
+                if (recoveryRequest == null)
+                    return NotFound();
+
+                var uploadsPath = Path.Combine("upload", clientId, "RecoveryRequests");
+                
+                if (!Directory.Exists(uploadsPath))
+                    return Ok(new List<object>());
+
+                var files = Directory.GetFiles(uploadsPath)
+                    .Select(filePath => 
+                    {
+                        var fileName = Path.GetFileName(filePath);
+                        var originalFileName = fileName.Contains('_') ? fileName.Substring(fileName.IndexOf('_') + 1) : fileName;
+                        var fileInfo = new FileInfo(filePath);
+                        var relativePath = Path.Combine("upload", clientId, "RecoveryRequests", fileName).Replace("\\", "/");
+                        
+                        return new
+                        {
+                            fileName = originalFileName,
+                            fullFileName = fileName,
+                            filePath = "/" + relativePath,
+                            fileSize = fileInfo.Length,
+                            uploadDate = fileInfo.CreationTime,
+                            documentType = "recovery_document"
+                        };
+                    })
+                    .OrderByDescending(f => f.uploadDate)
+                    .ToList();
+
+                return Ok(files);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error retrieving uploaded files for recovery request {Id}", id);
+                return StatusCode(500, "Internal server error");
+            }
+        }
+
         [HttpPost("{id}/upload")]
         public async Task<ActionResult<object>> UploadDocument(int id, IFormFile file, [FromForm] string documentType, [FromForm] string? description = null)
         {

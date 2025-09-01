@@ -236,6 +236,46 @@ namespace irevlogix_backend.Controllers
             }
         }
 
+        [HttpGet("settings/files")]
+        public async Task<ActionResult<IEnumerable<object>>> GetUploadedFiles()
+        {
+            try
+            {
+                var clientId = GetClientId();
+                var uploadsPath = Path.Combine("upload", clientId, "Admin", "settings");
+                
+                if (!Directory.Exists(uploadsPath))
+                    return Ok(new List<object>());
+
+                var files = Directory.GetFiles(uploadsPath)
+                    .Select(filePath => 
+                    {
+                        var fileName = Path.GetFileName(filePath);
+                        var fileInfo = new FileInfo(filePath);
+                        var relativePath = Path.Combine("upload", clientId, "Admin", "settings", fileName).Replace("\\", "/");
+                        
+                        return new
+                        {
+                            fileName = fileName,
+                            fullFileName = fileName,
+                            filePath = "/" + relativePath,
+                            fileSize = fileInfo.Length,
+                            uploadDate = fileInfo.CreationTime,
+                            documentType = "logo"
+                        };
+                    })
+                    .OrderByDescending(f => f.uploadDate)
+                    .ToList();
+
+                return Ok(files);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error retrieving uploaded files for admin settings");
+                return StatusCode(500, "Internal server error");
+            }
+        }
+
         [HttpPost("settings/upload-logo")]
         public async Task<IActionResult> UploadApplicationLogo(IFormFile file)
         {
@@ -1114,3 +1154,4 @@ namespace irevlogix_backend.Controllers
         public List<int> PermissionIds { get; set; } = new();
     }
 }
+// Force CI rebuild

@@ -332,6 +332,54 @@ namespace irevlogix_backend.Controllers
                 return StatusCode(500, "Internal server error");
             }
         }
+
+        [HttpGet("{id}/files")]
+        public async Task<ActionResult<IEnumerable<object>>> GetUploadedFiles(int id)
+        {
+            try
+            {
+                var clientId = GetClientId();
+                var contractor = await _context.ContractorTechnicians
+                    .Where(ct => ct.Id == id && ct.ClientId == clientId)
+                    .FirstOrDefaultAsync();
+
+                if (contractor == null)
+                    return NotFound();
+
+                var uploadsPath = Path.Combine("upload", clientId, "ContractorTechnicians");
+                
+                if (!Directory.Exists(uploadsPath))
+                    return Ok(new List<object>());
+
+                var files = Directory.GetFiles(uploadsPath)
+                    .Select(filePath => 
+                    {
+                        var fileName = Path.GetFileName(filePath);
+                        var originalFileName = fileName.Contains('_') ? fileName.Substring(fileName.IndexOf('_') + 1) : fileName;
+                        var fileInfo = new FileInfo(filePath);
+                        var relativePath = Path.Combine("upload", clientId, "ContractorTechnicians", fileName).Replace("\\", "/");
+                        
+                        return new
+                        {
+                            fileName = originalFileName,
+                            fullFileName = fileName,
+                            filePath = "/" + relativePath,
+                            fileSize = fileInfo.Length,
+                            uploadDate = fileInfo.CreationTime,
+                            documentType = "contractor_document"
+                        };
+                    })
+                    .OrderByDescending(f => f.uploadDate)
+                    .ToList();
+
+                return Ok(files);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error retrieving uploaded files for contractor technician {Id}", id);
+                return StatusCode(500, "Internal server error");
+            }
+        }
     }
 
     public class ContractorTechnicianRequest
