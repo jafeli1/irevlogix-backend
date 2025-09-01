@@ -4,6 +4,7 @@ using Microsoft.IdentityModel.Tokens;
 using System.Text;
 using irevlogix_backend.Data;
 using irevlogix_backend.Services;
+using irevlogix_backend.Middleware;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -18,6 +19,8 @@ builder.Services.AddHttpClient();
 
 builder.Services.AddScoped<OpenAIService>();
 builder.Services.AddScoped<AIRecommendationService>();
+builder.Services.AddScoped<IApplicationSettingsService, ApplicationSettingsService>();
+builder.Services.AddScoped<IPasswordValidationService, PasswordValidationService>();
 
 // Configure JWT Authentication
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
@@ -85,6 +88,7 @@ app.UseHttpsRedirection();
 app.UseCors("AllowFrontend");
 
 app.UseAuthentication();
+app.UseMiddleware<SessionTimeoutMiddleware>();
 app.UseAuthorization();
 
 app.MapControllers();

@@ -68,6 +68,8 @@ namespace irevlogix_backend.Models
         
         public DateTime? PasswordResetTokenExpiry { get; set; }
         
+        public DateTime? PasswordCreatedDate { get; set; }
+        
         public virtual ICollection<UserRole> UserRoles { get; set; } = new List<UserRole>();
     }
 }
