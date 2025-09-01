@@ -391,7 +391,6 @@ namespace irevlogix_backend.Data
             if (!adminExists)
             {
                 User adminUser;
-            {
                 try
                 {
                     adminUser = new User
