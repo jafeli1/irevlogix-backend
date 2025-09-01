@@ -208,7 +208,6 @@ namespace irevlogix_backend.Controllers
             }
             return true;
         }
-    }
 
         [HttpPost("change-password")]
         public async Task<ActionResult<object>> ChangePassword([FromBody] ChangePasswordRequest request)
