@@ -1154,3 +1154,4 @@ namespace irevlogix_backend.Controllers
         public List<int> PermissionIds { get; set; } = new();
     }
 }
+// Force CI rebuild
