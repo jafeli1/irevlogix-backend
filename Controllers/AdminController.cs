@@ -1152,47 +1152,5 @@ namespace irevlogix_backend.Controllers
     public class UpdateRolePermissionsRequest
     {
         public List<int> PermissionIds { get; set; } = new();
-        }
-
-        [HttpGet("settings/files")]
-        public async Task<ActionResult<IEnumerable<object>>> GetUploadedFiles()
-        {
-            try
-            {
-                var clientId = GetClientId();
-                var uploadsPath = Path.Combine("upload", clientId, "Admin", "settings");
-                
-                if (!Directory.Exists(uploadsPath))
-                    return Ok(new List<object>());
-
-                var files = Directory.GetFiles(uploadsPath)
-                    .Select(filePath => 
-                    {
-                        var fileName = Path.GetFileName(filePath);
-                        var originalFileName = fileName.Contains('_') ? fileName.Substring(fileName.IndexOf('_') + 1) : fileName;
-                        var fileInfo = new FileInfo(filePath);
-                        var relativePath = Path.Combine("upload", clientId, "Admin", "settings", fileName).Replace("\\", "/");
-                        
-                        return new
-                        {
-                            fileName = originalFileName,
-                            fullFileName = fileName,
-                            filePath = "/" + relativePath,
-                            fileSize = fileInfo.Length,
-                            uploadDate = fileInfo.CreationTime,
-                            documentType = "admin_logo"
-                        };
-                    })
-                    .OrderByDescending(f => f.uploadDate)
-                    .ToList();
-
-                return Ok(files);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error retrieving uploaded admin files");
-                return StatusCode(500, "Internal server error");
-            }
-        }
     }
 }
