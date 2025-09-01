@@ -9,11 +9,13 @@ namespace irevlogix_backend.Data
     {
         public static async Task SeedAsync(ApplicationDbContext context)
         {
+            bool adminExists = false;
+            
             try
             {
                 await context.Database.EnsureCreatedAsync();
 
-                var adminExists = await context.Users.AnyAsync(u => u.Email == "admin@irevlogix.ai");
+                adminExists = await context.Users.AnyAsync(u => u.Email == "admin@irevlogix.ai");
                 if (adminExists)
                 {
                     Console.WriteLine("DataSeeder: Admin user already exists, skipping admin user creation but continuing with roles and permissions seeding.");
