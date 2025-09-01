@@ -388,8 +388,9 @@ namespace irevlogix_backend.Data
                 throw;
             }
 
-            User adminUser;
             if (!adminExists)
+            {
+                User adminUser;
             {
                 try
                 {
