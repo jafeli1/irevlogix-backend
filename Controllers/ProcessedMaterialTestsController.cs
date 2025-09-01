@@ -259,44 +259,4 @@ namespace irevlogix_backend.Controllers
         }
     }
 
-    [HttpGet("files")]
-    public async Task<ActionResult<IEnumerable<object>>> GetUploadedFiles()
-    {
-        try
-        {
-            var clientId = GetClientId();
-            var uploadsPath = Path.Combine("upload", clientId, "ProcessedMaterialTests");
-            
-            if (!Directory.Exists(uploadsPath))
-                return Ok(new List<object>());
-
-            var files = Directory.GetFiles(uploadsPath)
-                .Select(filePath => 
-                {
-                    var fileName = Path.GetFileName(filePath);
-                    var originalFileName = fileName.Contains('_') ? fileName.Substring(fileName.IndexOf('_') + 1) : fileName;
-                    var fileInfo = new FileInfo(filePath);
-                    var relativePath = Path.Combine("upload", clientId, "ProcessedMaterialTests", fileName).Replace("\\", "/");
-                    
-                    return new
-                    {
-                        fileName = originalFileName,
-                        fullFileName = fileName,
-                        filePath = "/" + relativePath,
-                        fileSize = fileInfo.Length,
-                        uploadDate = fileInfo.CreationTime,
-                        documentType = "processed_material_test"
-                    };
-                })
-                .OrderByDescending(f => f.uploadDate)
-                .ToList();
-
-            return Ok(files);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error retrieving uploaded test files");
-            return StatusCode(500, "Internal server error");
-        }
-    }
 }

@@ -447,53 +447,54 @@ namespace irevlogix_backend.Controllers
         public bool IsActive { get; set; } = true;
         public DateTime? DateClosed { get; set; }
         public string? ClosureComments { get; set; }
-    }
-
-    [HttpGet("{id}/files")]
-    public async Task<ActionResult<IEnumerable<object>>> GetUploadedFiles(int id)
-    {
-        try
-        {
-            var clientId = GetClientId();
-            var request = await _context.RecoveryRequests
-                .Where(rr => rr.Id == id && rr.ClientId == clientId)
-                .FirstOrDefaultAsync();
-
-            if (request == null)
-                return NotFound();
-
-            var uploadsPath = Path.Combine("upload", clientId, "RecoveryRequests");
-            
-            if (!Directory.Exists(uploadsPath))
-                return Ok(new List<object>());
-
-            var files = Directory.GetFiles(uploadsPath)
-                .Select(filePath => 
-                {
-                    var fileName = Path.GetFileName(filePath);
-                    var originalFileName = fileName.Contains('_') ? fileName.Substring(fileName.IndexOf('_') + 1) : fileName;
-                    var fileInfo = new FileInfo(filePath);
-                    var relativePath = Path.Combine("upload", clientId, "RecoveryRequests", fileName).Replace("\\", "/");
-                    
-                    return new
-                    {
-                        fileName = originalFileName,
-                        fullFileName = fileName,
-                        filePath = "/" + relativePath,
-                        fileSize = fileInfo.Length,
-                        uploadDate = fileInfo.CreationTime,
-                        documentType = "recovery_request_document"
-                    };
-                })
-                .OrderByDescending(f => f.uploadDate)
-                .ToList();
-
-            return Ok(files);
         }
-        catch (Exception ex)
+
+        [HttpGet("{id}/files")]
+        public async Task<ActionResult<IEnumerable<object>>> GetUploadedFiles(int id)
         {
-            _logger.LogError(ex, "Error retrieving uploaded files for recovery request {Id}", id);
-            return StatusCode(500, "Internal server error");
+            try
+            {
+                var clientId = GetClientId();
+                var request = await _context.RecoveryRequests
+                    .Where(rr => rr.Id == id && rr.ClientId == clientId)
+                    .FirstOrDefaultAsync();
+
+                if (request == null)
+                    return NotFound();
+
+                var uploadsPath = Path.Combine("upload", clientId, "RecoveryRequests");
+                
+                if (!Directory.Exists(uploadsPath))
+                    return Ok(new List<object>());
+
+                var files = Directory.GetFiles(uploadsPath)
+                    .Select(filePath => 
+                    {
+                        var fileName = Path.GetFileName(filePath);
+                        var originalFileName = fileName.Contains('_') ? fileName.Substring(fileName.IndexOf('_') + 1) : fileName;
+                        var fileInfo = new FileInfo(filePath);
+                        var relativePath = Path.Combine("upload", clientId, "RecoveryRequests", fileName).Replace("\\", "/");
+                        
+                        return new
+                        {
+                            fileName = originalFileName,
+                            fullFileName = fileName,
+                            filePath = "/" + relativePath,
+                            fileSize = fileInfo.Length,
+                            uploadDate = fileInfo.CreationTime,
+                            documentType = "recovery_request_document"
+                        };
+                    })
+                    .OrderByDescending(f => f.uploadDate)
+                    .ToList();
+
+                return Ok(files);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error retrieving uploaded files for recovery request {Id}", id);
+                return StatusCode(500, "Internal server error");
+            }
         }
     }
 }
