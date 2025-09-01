@@ -228,6 +228,54 @@ namespace irevlogix_backend.Controllers
             }
         }
 
+        [HttpGet("{id}/files")]
+        public async Task<ActionResult<IEnumerable<object>>> GetUploadedFiles(int id)
+        {
+            try
+            {
+                var clientId = GetClientId();
+                var lot = await _context.ProcessingLots
+                    .Where(pl => pl.Id == id && pl.ClientId == clientId)
+                    .FirstOrDefaultAsync();
+
+                if (lot == null)
+                    return NotFound();
+
+                var uploadsPath = Path.Combine("upload", clientId, "ProcessingLots", id.ToString());
+                
+                if (!Directory.Exists(uploadsPath))
+                    return Ok(new List<object>());
+
+                var files = Directory.GetFiles(uploadsPath)
+                    .Select(filePath => 
+                    {
+                        var fileName = Path.GetFileName(filePath);
+                        var originalFileName = fileName.Contains('_') ? fileName.Substring(fileName.IndexOf('_') + 1) : fileName;
+                        var fileInfo = new FileInfo(filePath);
+                        var relativePath = Path.Combine("upload", clientId, "ProcessingLots", id.ToString(), fileName).Replace("\\", "/");
+                        
+                        return new
+                        {
+                            fileName = originalFileName,
+                            fullFileName = fileName,
+                            filePath = "/" + relativePath,
+                            fileSize = fileInfo.Length,
+                            uploadDate = fileInfo.CreationTime,
+                            documentType = "certificate"
+                        };
+                    })
+                    .OrderByDescending(f => f.uploadDate)
+                    .ToList();
+
+                return Ok(files);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error retrieving uploaded files for processing lot {Id}", id);
+                return StatusCode(500, "Internal server error");
+            }
+        }
+
         [HttpPost("{id}/upload")]
         public async Task<ActionResult<object>> UploadCertificate(int id, IFormFile file, [FromForm] string documentType = "certificate", [FromForm] string? description = null)
         {
