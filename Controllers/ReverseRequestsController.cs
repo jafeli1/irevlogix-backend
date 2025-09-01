@@ -269,6 +269,54 @@ namespace irevlogix_backend.Controllers
             }
         }
 
+        [HttpGet("{id}/files")]
+        public async Task<ActionResult<IEnumerable<object>>> GetUploadedFiles(int id)
+        {
+            try
+            {
+                var clientId = GetClientId();
+                var reverseRequest = await _context.ReverseRequests
+                    .Where(rr => rr.Id == id && rr.ClientId == clientId)
+                    .FirstOrDefaultAsync();
+
+                if (reverseRequest == null)
+                    return NotFound();
+
+                var uploadsPath = Path.Combine("upload", clientId, "ReverseRequests");
+                
+                if (!Directory.Exists(uploadsPath))
+                    return Ok(new List<object>());
+
+                var files = Directory.GetFiles(uploadsPath)
+                    .Select(filePath => 
+                    {
+                        var fileName = Path.GetFileName(filePath);
+                        var originalFileName = fileName.Contains('_') ? fileName.Substring(fileName.IndexOf('_') + 1) : fileName;
+                        var fileInfo = new FileInfo(filePath);
+                        var relativePath = Path.Combine("upload", clientId, "ReverseRequests", fileName).Replace("\\", "/");
+                        
+                        return new
+                        {
+                            fileName = originalFileName,
+                            fullFileName = fileName,
+                            filePath = "/" + relativePath,
+                            fileSize = fileInfo.Length,
+                            uploadDate = fileInfo.CreationTime,
+                            documentType = "reverse_document"
+                        };
+                    })
+                    .OrderByDescending(f => f.uploadDate)
+                    .ToList();
+
+                return Ok(files);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error retrieving uploaded files for reverse request {Id}", id);
+                return StatusCode(500, "Internal server error");
+            }
+        }
+
         [HttpPost("{id}/upload")]
         public async Task<ActionResult<object>> UploadDocument(int id, IFormFile file, [FromForm] string documentType, [FromForm] string? description = null)
         {
@@ -424,5 +472,53 @@ namespace irevlogix_backend.Controllers
         public bool IsActive { get; set; } = true;
         public DateTime? DateClosed { get; set; }
         public string? ClosureComments { get; set; }
+    }
+
+    [HttpGet("{id}/files")]
+    public async Task<ActionResult<IEnumerable<object>>> GetUploadedFiles(int id)
+    {
+        try
+        {
+            var clientId = GetClientId();
+            var request = await _context.ReverseRequests
+                .Where(rr => rr.Id == id && rr.ClientId == clientId)
+                .FirstOrDefaultAsync();
+
+            if (request == null)
+                return NotFound();
+
+            var uploadsPath = Path.Combine("upload", clientId, "ReverseRequests");
+            
+            if (!Directory.Exists(uploadsPath))
+                return Ok(new List<object>());
+
+            var files = Directory.GetFiles(uploadsPath)
+                .Select(filePath => 
+                {
+                    var fileName = Path.GetFileName(filePath);
+                    var originalFileName = fileName.Contains('_') ? fileName.Substring(fileName.IndexOf('_') + 1) : fileName;
+                    var fileInfo = new FileInfo(filePath);
+                    var relativePath = Path.Combine("upload", clientId, "ReverseRequests", fileName).Replace("\\", "/");
+                    
+                    return new
+                    {
+                        fileName = originalFileName,
+                        fullFileName = fileName,
+                        filePath = "/" + relativePath,
+                        fileSize = fileInfo.Length,
+                        uploadDate = fileInfo.CreationTime,
+                        documentType = "reverse_request_document"
+                    };
+                })
+                .OrderByDescending(f => f.uploadDate)
+                .ToList();
+
+            return Ok(files);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error retrieving uploaded files for reverse request {Id}", id);
+            return StatusCode(500, "Internal server error");
+        }
     }
 }

@@ -186,6 +186,48 @@ namespace irevlogix_backend.Controllers
             return NoContent();
         }
 
+        [HttpGet("files")]
+        public async Task<ActionResult<IEnumerable<object>>> GetUploadedFiles()
+        {
+            try
+            {
+                var clientId = User.FindFirst("ClientId")?.Value;
+                if (string.IsNullOrEmpty(clientId)) return Unauthorized();
+
+                var uploadsPath = Path.Combine("upload", clientId, "ProcessedMaterialTests");
+                
+                if (!Directory.Exists(uploadsPath))
+                    return Ok(new List<object>());
+
+                var files = Directory.GetFiles(uploadsPath)
+                    .Select(filePath => 
+                    {
+                        var fileName = Path.GetFileName(filePath);
+                        var originalFileName = fileName.Contains('_') ? fileName.Substring(fileName.IndexOf('_') + 1) : fileName;
+                        var fileInfo = new FileInfo(filePath);
+                        var relativePath = Path.Combine("upload", clientId, "ProcessedMaterialTests", fileName).Replace("\\", "/");
+                        
+                        return new
+                        {
+                            fileName = originalFileName,
+                            fullFileName = fileName,
+                            filePath = "/" + relativePath,
+                            fileSize = fileInfo.Length,
+                            uploadDate = fileInfo.CreationTime,
+                            documentType = "test_document"
+                        };
+                    })
+                    .OrderByDescending(f => f.uploadDate)
+                    .ToList();
+
+                return Ok(files);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, "Internal server error");
+            }
+        }
+
         [HttpPost("upload")]
         public async Task<IActionResult> UploadFile(IFormFile file)
         {
@@ -204,7 +246,7 @@ namespace irevlogix_backend.Controllers
             var uploadsPath = Path.Combine("upload", clientId, "ProcessedMaterialTests");
             Directory.CreateDirectory(uploadsPath);
 
-            var fileName = $"{Guid.NewGuid()}{fileExtension}";
+            var fileName = $"{Guid.NewGuid()}_{file.FileName}";
             var filePath = Path.Combine(uploadsPath, fileName);
 
             using (var stream = new FileStream(filePath, FileMode.Create))
@@ -214,6 +256,47 @@ namespace irevlogix_backend.Controllers
 
             var relativePath = Path.Combine("upload", clientId, "ProcessedMaterialTests", fileName).Replace("\\", "/");
             return Ok(new { filePath = relativePath });
+        }
+    }
+
+    [HttpGet("files")]
+    public async Task<ActionResult<IEnumerable<object>>> GetUploadedFiles()
+    {
+        try
+        {
+            var clientId = GetClientId();
+            var uploadsPath = Path.Combine("upload", clientId, "ProcessedMaterialTests");
+            
+            if (!Directory.Exists(uploadsPath))
+                return Ok(new List<object>());
+
+            var files = Directory.GetFiles(uploadsPath)
+                .Select(filePath => 
+                {
+                    var fileName = Path.GetFileName(filePath);
+                    var originalFileName = fileName.Contains('_') ? fileName.Substring(fileName.IndexOf('_') + 1) : fileName;
+                    var fileInfo = new FileInfo(filePath);
+                    var relativePath = Path.Combine("upload", clientId, "ProcessedMaterialTests", fileName).Replace("\\", "/");
+                    
+                    return new
+                    {
+                        fileName = originalFileName,
+                        fullFileName = fileName,
+                        filePath = "/" + relativePath,
+                        fileSize = fileInfo.Length,
+                        uploadDate = fileInfo.CreationTime,
+                        documentType = "processed_material_test"
+                    };
+                })
+                .OrderByDescending(f => f.uploadDate)
+                .ToList();
+
+            return Ok(files);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error retrieving uploaded test files");
+            return StatusCode(500, "Internal server error");
         }
     }
 }
