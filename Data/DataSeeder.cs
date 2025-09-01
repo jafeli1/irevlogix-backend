@@ -31,6 +31,8 @@ namespace irevlogix_backend.Data
 
             Role adminRole;
             Role projectManagerRole;
+            Role logisticsAnalystRole;
+            Role logisticsManagerRole;
             try
             {
                 adminRole = await context.Roles.FirstOrDefaultAsync(r => r.Name == "Administrator");
@@ -81,6 +83,56 @@ namespace irevlogix_backend.Data
                 else
                 {
                     Console.WriteLine($"DataSeeder: Using existing Project Manager role with ID {projectManagerRole.Id}");
+                }
+
+                logisticsAnalystRole = await context.Roles.FirstOrDefaultAsync(r => r.Name == "Logistics Analyst");
+                
+                if (logisticsAnalystRole == null)
+                {
+                    logisticsAnalystRole = new Role
+                    {
+                        Name = "Logistics Analyst",
+                        Description = "Logistics Analyst with access to project management, reverse logistics, processing, and reporting modules",
+                        IsSystemRole = false,
+                        ClientId = clientId,
+                        CreatedBy = 1,
+                        UpdatedBy = 1,
+                        DateCreated = DateTime.UtcNow,
+                        DateUpdated = DateTime.UtcNow
+                    };
+
+                    context.Roles.Add(logisticsAnalystRole);
+                    await context.SaveChangesAsync();
+                    Console.WriteLine($"DataSeeder: Created Logistics Analyst role with ID {logisticsAnalystRole.Id}");
+                }
+                else
+                {
+                    Console.WriteLine($"DataSeeder: Using existing Logistics Analyst role with ID {logisticsAnalystRole.Id}");
+                }
+
+                logisticsManagerRole = await context.Roles.FirstOrDefaultAsync(r => r.Name == "Logistics Manager");
+                
+                if (logisticsManagerRole == null)
+                {
+                    logisticsManagerRole = new Role
+                    {
+                        Name = "Logistics Manager",
+                        Description = "Logistics Manager with access to project management, reverse logistics, processing, and reporting modules",
+                        IsSystemRole = false,
+                        ClientId = clientId,
+                        CreatedBy = 1,
+                        UpdatedBy = 1,
+                        DateCreated = DateTime.UtcNow,
+                        DateUpdated = DateTime.UtcNow
+                    };
+
+                    context.Roles.Add(logisticsManagerRole);
+                    await context.SaveChangesAsync();
+                    Console.WriteLine($"DataSeeder: Created Logistics Manager role with ID {logisticsManagerRole.Id}");
+                }
+                else
+                {
+                    Console.WriteLine($"DataSeeder: Using existing Logistics Manager role with ID {logisticsManagerRole.Id}");
                 }
             }
             catch (Exception ex)
@@ -249,6 +301,90 @@ namespace irevlogix_backend.Data
             catch (Exception ex)
             {
                 Console.WriteLine($"DataSeeder: Error creating project manager role permissions - {ex.Message}");
+                throw;
+            }
+
+            try
+            {
+                var logisticsAnalystPermissions = permissions.Where(p => 
+                    p.Module != "Administration" &&
+                    p.Module != "Authentication"
+                ).ToList();
+
+                var existingLARolePermissions = await context.RolePermissions
+                    .Where(rp => rp.RoleId == logisticsAnalystRole.Id)
+                    .Select(rp => rp.PermissionId)
+                    .ToListAsync();
+                
+                var newLARolePermissions = logisticsAnalystPermissions
+                    .Where(p => !existingLARolePermissions.Contains(p.Id))
+                    .Select(p => new RolePermission
+                    {
+                        RoleId = logisticsAnalystRole.Id,
+                        PermissionId = p.Id,
+                        ClientId = clientId,
+                        CreatedBy = 1,
+                        UpdatedBy = 1,
+                        DateCreated = DateTime.UtcNow,
+                        DateUpdated = DateTime.UtcNow
+                    }).ToList();
+                
+                if (newLARolePermissions.Any())
+                {
+                    context.RolePermissions.AddRange(newLARolePermissions);
+                    await context.SaveChangesAsync();
+                    Console.WriteLine($"DataSeeder: Created {newLARolePermissions.Count} new logistics analyst role permissions");
+                }
+                else
+                {
+                    Console.WriteLine("DataSeeder: All logistics analyst role permissions already exist");
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"DataSeeder: Error creating logistics analyst role permissions - {ex.Message}");
+                throw;
+            }
+
+            try
+            {
+                var logisticsManagerPermissions = permissions.Where(p => 
+                    p.Module != "Administration" &&
+                    p.Module != "Authentication"
+                ).ToList();
+
+                var existingLMRolePermissions = await context.RolePermissions
+                    .Where(rp => rp.RoleId == logisticsManagerRole.Id)
+                    .Select(rp => rp.PermissionId)
+                    .ToListAsync();
+                
+                var newLMRolePermissions = logisticsManagerPermissions
+                    .Where(p => !existingLMRolePermissions.Contains(p.Id))
+                    .Select(p => new RolePermission
+                    {
+                        RoleId = logisticsManagerRole.Id,
+                        PermissionId = p.Id,
+                        ClientId = clientId,
+                        CreatedBy = 1,
+                        UpdatedBy = 1,
+                        DateCreated = DateTime.UtcNow,
+                        DateUpdated = DateTime.UtcNow
+                    }).ToList();
+                
+                if (newLMRolePermissions.Any())
+                {
+                    context.RolePermissions.AddRange(newLMRolePermissions);
+                    await context.SaveChangesAsync();
+                    Console.WriteLine($"DataSeeder: Created {newLMRolePermissions.Count} new logistics manager role permissions");
+                }
+                else
+                {
+                    Console.WriteLine("DataSeeder: All logistics manager role permissions already exist");
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"DataSeeder: Error creating logistics manager role permissions - {ex.Message}");
                 throw;
             }
 
