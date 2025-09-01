@@ -287,7 +287,7 @@ namespace irevlogix_backend.Controllers
                 if (file == null || file.Length == 0)
                     return BadRequest("No file uploaded");
 
-                var uploadsPath = Path.Combine(Directory.GetCurrentDirectory(), "uploads", "recovery-requests");
+                var uploadsPath = Path.Combine("upload", clientId, "RecoveryRequests");
                 Directory.CreateDirectory(uploadsPath);
 
                 var fileName = $"{Guid.NewGuid()}_{file.FileName}";
