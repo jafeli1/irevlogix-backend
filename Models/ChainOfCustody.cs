@@ -12,8 +12,8 @@ namespace irevlogix_backend.Models
         [MaxLength(100)]
         public string? Location { get; set; }
         
-        public int? UserId { get; set; }
-        public virtual User? User { get; set; }
+        public int UserId { get; set; }
+        public virtual User User { get; set; } = null!;
         
         public int VendorId { get; set; }
         public virtual Vendor Vendor { get; set; } = null!;
