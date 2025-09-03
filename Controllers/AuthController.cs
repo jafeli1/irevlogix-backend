@@ -19,14 +19,17 @@ namespace irevlogix_backend.Controllers
         private readonly IConfiguration _configuration;
         private readonly IApplicationSettingsService _settingsService;
         private readonly IPasswordValidationService _passwordValidationService;
+        private readonly IEmailService _emailService;
 
         public AuthController(ApplicationDbContext context, IConfiguration configuration, 
-            IApplicationSettingsService settingsService, IPasswordValidationService passwordValidationService)
+            IApplicationSettingsService settingsService, IPasswordValidationService passwordValidationService,
+            IEmailService emailService)
         {
             _context = context;
             _configuration = configuration;
             _settingsService = settingsService;
             _passwordValidationService = passwordValidationService;
+            _emailService = emailService;
         }
 
         [HttpPost("login")]
@@ -45,6 +48,11 @@ namespace irevlogix_backend.Controllers
             if (user == null)
             {
                 return Unauthorized(new { message = "Invalid credentials" });
+            }
+
+            if (!user.IsEmailConfirmed)
+            {
+                return Unauthorized(new { message = "Please confirm your email address before logging in." });
             }
 
             var maxAttempts = await _settingsService.GetUnsuccessfulLoginAttemptsBeforeLockout(user.ClientId);
@@ -125,6 +133,8 @@ namespace irevlogix_backend.Controllers
                 return BadRequest(new { message = "Password does not meet complexity requirements", errors = errors });
             }
 
+            var confirmationToken = GenerateEmailConfirmationToken();
+
             var user = new User
             {
                 FirstName = request.FirstName,
@@ -132,6 +142,8 @@ namespace irevlogix_backend.Controllers
                 Email = request.Email,
                 PasswordHash = HashPassword(request.Password),
                 ClientId = request.ClientId,
+                IsEmailConfirmed = false,
+                EmailConfirmationToken = confirmationToken,
                 CreatedBy = 1,
                 UpdatedBy = 1
             };
@@ -139,7 +151,17 @@ namespace irevlogix_backend.Controllers
             _context.Users.Add(user);
             await _context.SaveChangesAsync();
 
-            return Ok(new { message = "User registered successfully" });
+            var baseUrl = Environment.GetEnvironmentVariable("FRONTEND_URL") ?? "https://irevlogix.ai";
+            var emailSent = await _emailService.SendEmailConfirmationAsync(user.Email, user.FirstName, confirmationToken, baseUrl);
+
+            if (!emailSent)
+            {
+                _context.Users.Remove(user);
+                await _context.SaveChangesAsync();
+                return StatusCode(500, new { message = "Failed to send confirmation email. Please try again." });
+            }
+
+            return Ok(new { message = "Registration successful! Please check your email to confirm your account." });
         }
 
         private string GenerateJwtToken(User user, int timeoutMinutes = 5)
@@ -242,6 +264,48 @@ namespace irevlogix_backend.Controllers
 
             return Ok(new { message = "Password changed successfully" });
         }
+
+        [HttpPost("confirm-email")]
+        public async Task<ActionResult<object>> ConfirmEmail([FromBody] EmailConfirmationRequest request)
+        {
+            if (string.IsNullOrEmpty(request.Email) || string.IsNullOrEmpty(request.Token))
+            {
+                return BadRequest(new { message = "Email and token are required" });
+            }
+
+            var user = await _context.Users.FirstOrDefaultAsync(u => u.Email == request.Email);
+            if (user == null)
+            {
+                return BadRequest(new { message = "Invalid confirmation link" });
+            }
+
+            if (user.IsEmailConfirmed)
+            {
+                return Ok(new { message = "Email is already confirmed" });
+            }
+
+            if (user.EmailConfirmationToken != request.Token)
+            {
+                return BadRequest(new { message = "Invalid confirmation link" });
+            }
+
+            user.IsEmailConfirmed = true;
+            user.EmailConfirmationToken = null;
+            user.UpdatedBy = user.Id;
+            user.DateUpdated = DateTime.UtcNow;
+
+            await _context.SaveChangesAsync();
+
+            return Ok(new { message = "Email confirmed successfully! You can now log in." });
+        }
+
+        private string GenerateEmailConfirmationToken()
+        {
+            using var rng = RandomNumberGenerator.Create();
+            var tokenBytes = new byte[32];
+            rng.GetBytes(tokenBytes);
+            return Convert.ToBase64String(tokenBytes).Replace("+", "-").Replace("/", "_").Replace("=", "");
+        }
     }
 
     public class LoginRequest
@@ -263,5 +327,11 @@ namespace irevlogix_backend.Controllers
     {
         public string CurrentPassword { get; set; } = string.Empty;
         public string NewPassword { get; set; } = string.Empty;
+    }
+
+    public class EmailConfirmationRequest
+    {
+        public string Email { get; set; } = string.Empty;
+        public string Token { get; set; } = string.Empty;
     }
 }
