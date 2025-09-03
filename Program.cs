@@ -33,7 +33,7 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             IssuerSigningKey = new SymmetricSecurityKey(Encoding.ASCII.GetBytes(
                 Environment.GetEnvironmentVariable("JWT_SECRET") ?? 
                 builder.Configuration["Jwt:Key"] ?? 
-                "your-secret-key-here-make-it-long-enough")),
+                "development-jwt-secret-key-that-is-long-enough-for-security-requirements")),
             ValidateIssuer = false,
             ValidateAudience = false,
             ClockSkew = TimeSpan.Zero
