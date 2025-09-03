@@ -21,6 +21,7 @@ builder.Services.AddScoped<OpenAIService>();
 builder.Services.AddScoped<AIRecommendationService>();
 builder.Services.AddScoped<IApplicationSettingsService, ApplicationSettingsService>();
 builder.Services.AddScoped<IPasswordValidationService, PasswordValidationService>();
+builder.Services.AddScoped<IEmailService, EmailService>();
 
 // Configure JWT Authentication
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
