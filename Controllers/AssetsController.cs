@@ -516,15 +516,12 @@ namespace irevlogix_backend.Controllers
                 if (vendor == null)
                     return BadRequest("Invalid vendor");
 
-                if (request.UserId.HasValue)
-                {
-                    var user = await _context.Users
-                        .Where(u => u.Id == request.UserId.Value && u.ClientId == clientId)
-                        .FirstOrDefaultAsync();
+                var user = await _context.Users
+                    .Where(u => u.Id == request.UserId && u.ClientId == clientId)
+                    .FirstOrDefaultAsync();
 
-                    if (user == null)
-                        return BadRequest("Invalid user");
-                }
+                if (user == null)
+                    return BadRequest("Invalid user");
 
                 var chainOfCustody = new ChainOfCustody
                 {
@@ -779,7 +776,7 @@ namespace irevlogix_backend.Controllers
     public class CreateChainOfCustodyRequest
     {
         public string? Location { get; set; }
-        public int? UserId { get; set; }
+        public int UserId { get; set; }
         public int VendorId { get; set; }
         public string StatusChange { get; set; } = string.Empty;
         public string? Notes { get; set; }
