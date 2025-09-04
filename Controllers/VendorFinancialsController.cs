@@ -18,15 +18,26 @@ namespace irevlogix_backend.Controllers
             _context = context;
         }
 
+        private bool IsAdministrator()
+        {
+            return User.IsInRole("Administrator");
+        }
+
         [HttpGet("{vendorId:int}")]
         public async Task<IActionResult> GetVendorFinancialSummary([FromRoute] int vendorId)
         {
             var clientId = User.FindFirst("ClientId")?.Value;
-            if (string.IsNullOrEmpty(clientId)) return Unauthorized();
+            if (string.IsNullOrEmpty(clientId) && !IsAdministrator()) return Unauthorized();
 
-            var salesData = await _context.ProcessedMaterialSales
-                .Where(x => x.VendorId == vendorId && x.ClientId == clientId)
-                .ToListAsync();
+            var query = _context.ProcessedMaterialSales
+                .Where(x => x.VendorId == vendorId);
+
+            if (!IsAdministrator())
+            {
+                query = query.Where(x => x.ClientId == clientId);
+            }
+
+            var salesData = await query.ToListAsync();
 
             if (!salesData.Any())
             {

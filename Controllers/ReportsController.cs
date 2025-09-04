@@ -28,13 +28,23 @@ namespace irevlogix_backend.Controllers
             return User.FindFirst("ClientId")?.Value ?? throw new UnauthorizedAccessException("ClientId not found in token");
         }
 
+        private bool IsAdministrator()
+        {
+            return User.IsInRole("Administrator");
+        }
+
         [HttpGet("esg-summary")]
         public async Task<ActionResult<EsgSummaryDto>> GetEsgSummary([FromQuery] DateTime? from = null, [FromQuery] DateTime? to = null)
         {
             try
             {
                 var clientId = GetClientId();
-                var lots = _context.ProcessingLots.Where(pl => pl.ClientId == clientId);
+                var lots = _context.ProcessingLots.AsQueryable();
+                
+                if (!IsAdministrator())
+                {
+                    lots = lots.Where(pl => pl.ClientId == clientId);
+                }
 
                 if (from.HasValue) lots = lots.Where(pl => pl.StartDate >= from.Value);
                 if (to.HasValue) lots = lots.Where(pl => pl.StartDate <= to.Value);
@@ -82,7 +92,12 @@ namespace irevlogix_backend.Controllers
             try
             {
                 var clientId = GetClientId();
-                var lots = _context.ProcessingLots.Where(pl => pl.ClientId == clientId);
+                var lots = _context.ProcessingLots.AsQueryable();
+                
+                if (!IsAdministrator())
+                {
+                    lots = lots.Where(pl => pl.ClientId == clientId);
+                }
 
                 if (from.HasValue) lots = lots.Where(pl => pl.StartDate >= from.Value);
                 if (to.HasValue) lots = lots.Where(pl => pl.StartDate <= to.Value);
@@ -127,7 +142,12 @@ namespace irevlogix_backend.Controllers
                 var clientId = GetClientId();
                 var now = asOf ?? DateTime.UtcNow;
 
-                var lots = _context.ProcessingLots.Where(pl => pl.ClientId == clientId);
+                var lots = _context.ProcessingLots.AsQueryable();
+                
+                if (!IsAdministrator())
+                {
+                    lots = lots.Where(pl => pl.ClientId == clientId);
+                }
 
                 var list = await lots.Select(pl => new
                 {
@@ -179,9 +199,13 @@ namespace irevlogix_backend.Controllers
                 if (string.Equals(type, "processedmaterials", StringComparison.OrdinalIgnoreCase))
                 {
                     var q = _context.ProcessedMaterials
-                        .Where(pm => pm.ClientId == clientId)
                         .Include(pm => pm.MaterialType)
                         .AsQueryable();
+                    
+                    if (!IsAdministrator())
+                    {
+                        q = q.Where(pm => pm.ClientId == clientId);
+                    }
 
                     if (!string.IsNullOrWhiteSpace(status)) q = q.Where(pm => pm.Status == status);
                     if (from.HasValue) q = q.Where(pm => pm.DateCreated >= from.Value);
@@ -207,8 +231,12 @@ namespace irevlogix_backend.Controllers
                 else
                 {
                     var q = _context.ProcessingLots
-                        .Where(pl => pl.ClientId == clientId)
                         .AsQueryable();
+                    
+                    if (!IsAdministrator())
+                    {
+                        q = q.Where(pl => pl.ClientId == clientId);
+                    }
 
                     if (!string.IsNullOrWhiteSpace(status)) q = q.Where(pl => pl.Status == status);
                     if (from.HasValue) q = q.Where(pl => pl.StartDate >= from.Value);

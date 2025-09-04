@@ -26,6 +26,11 @@ namespace irevlogix_backend.Controllers
             return User.FindFirst("ClientId")?.Value ?? throw new UnauthorizedAccessException("ClientId not found in token");
         }
 
+        private bool IsAdministrator()
+        {
+            return User.IsInRole("Administrator");
+        }
+
         [HttpGet]
         public async Task<ActionResult<IEnumerable<object>>> GetVendorFacilities(
             [FromQuery] string? vendorName = null,
@@ -37,7 +42,12 @@ namespace irevlogix_backend.Controllers
                 var clientId = GetClientId();
                 var query = _context.VendorFacilities
                     .Include(vf => vf.Vendor)
-                    .Where(vf => vf.ClientId == clientId);
+                    .AsQueryable();
+
+                if (!IsAdministrator())
+                {
+                    query = query.Where(vf => vf.ClientId == clientId);
+                }
 
                 if (!string.IsNullOrEmpty(vendorName))
                     query = query.Where(vf => vf.Vendor.VendorName.Contains(vendorName));
@@ -75,9 +85,16 @@ namespace irevlogix_backend.Controllers
             try
             {
                 var clientId = GetClientId();
-                var facility = await _context.VendorFacilities
+                var query = _context.VendorFacilities
                     .Include(vf => vf.Vendor)
-                    .Where(vf => vf.Id == id && vf.ClientId == clientId)
+                    .Where(vf => vf.Id == id);
+
+                if (!IsAdministrator())
+                {
+                    query = query.Where(vf => vf.ClientId == clientId);
+                }
+
+                var facility = await query
                     .Select(vf => new
                     {
                         vf.Id,
@@ -321,9 +338,15 @@ namespace irevlogix_backend.Controllers
                 var clientId = GetClientId();
                 var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? "0");
 
-                var facility = await _context.VendorFacilities
-                    .Where(vf => vf.Id == id && vf.ClientId == clientId)
-                    .FirstOrDefaultAsync();
+                var query = _context.VendorFacilities
+                    .Where(vf => vf.Id == id);
+
+                if (!IsAdministrator())
+                {
+                    query = query.Where(vf => vf.ClientId == clientId);
+                }
+
+                var facility = await query.FirstOrDefaultAsync();
 
                 if (facility == null)
                     return NotFound();
@@ -439,9 +462,15 @@ namespace irevlogix_backend.Controllers
             try
             {
                 var clientId = GetClientId();
-                var facility = await _context.VendorFacilities
-                    .Where(vf => vf.Id == id && vf.ClientId == clientId)
-                    .FirstOrDefaultAsync();
+                var query = _context.VendorFacilities
+                    .Where(vf => vf.Id == id);
+
+                if (!IsAdministrator())
+                {
+                    query = query.Where(vf => vf.ClientId == clientId);
+                }
+
+                var facility = await query.FirstOrDefaultAsync();
 
                 if (facility == null)
                     return NotFound();
@@ -463,9 +492,15 @@ namespace irevlogix_backend.Controllers
             try
             {
                 var clientId = GetClientId();
-                var facility = await _context.VendorFacilities
-                    .Where(vf => vf.Id == id && vf.ClientId == clientId)
-                    .FirstOrDefaultAsync();
+                var query = _context.VendorFacilities
+                    .Where(vf => vf.Id == id);
+
+                if (!IsAdministrator())
+                {
+                    query = query.Where(vf => vf.ClientId == clientId);
+                }
+
+                var facility = await query.FirstOrDefaultAsync();
 
                 if (facility == null)
                     return NotFound();
@@ -513,9 +548,15 @@ namespace irevlogix_backend.Controllers
                 var clientId = GetClientId();
                 var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? "0");
 
-                var facility = await _context.VendorFacilities
-                    .Where(vf => vf.Id == id && vf.ClientId == clientId)
-                    .FirstOrDefaultAsync();
+                var query = _context.VendorFacilities
+                    .Where(vf => vf.Id == id);
+
+                if (!IsAdministrator())
+                {
+                    query = query.Where(vf => vf.ClientId == clientId);
+                }
+
+                var facility = await query.FirstOrDefaultAsync();
 
                 if (facility == null)
                     return NotFound();

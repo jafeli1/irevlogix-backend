@@ -31,6 +31,11 @@ namespace irevlogix_backend.Controllers
             return User.FindFirst("ClientId")?.Value ?? "ADMIN_CLIENT_001";
         }
 
+        private bool IsAdministrator()
+        {
+            return User.IsInRole("Administrator");
+        }
+
         private static string EscapeCsv(string input)
         {
             if (string.IsNullOrEmpty(input)) return "";
@@ -55,9 +60,12 @@ namespace irevlogix_backend.Controllers
             try
             {
                 var clientId = GetClientId();
-                var query = _context.Assets
-                    .Where(a => a.ClientId == clientId)
-                    .AsQueryable();
+                var query = _context.Assets.AsQueryable();
+
+                if (!IsAdministrator())
+                {
+                    query = query.Where(a => a.ClientId == clientId);
+                }
 
                 if (!string.IsNullOrEmpty(search))
                     query = query.Where(a => a.AssetID.Contains(search) || a.Manufacturer!.Contains(search) || a.Model!.Contains(search) || a.SerialNumber!.Contains(search));

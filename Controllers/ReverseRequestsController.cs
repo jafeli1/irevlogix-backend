@@ -26,6 +26,11 @@ namespace irevlogix_backend.Controllers
             return User.FindFirst("ClientId")?.Value ?? throw new UnauthorizedAccessException("ClientId not found in token");
         }
 
+        private bool IsAdministrator()
+        {
+            return User.IsInRole("Administrator");
+        }
+
         [HttpGet]
         public async Task<ActionResult<IEnumerable<object>>> GetReverseRequests(
             [FromQuery] string? primaryContactFirstName = null,
@@ -38,8 +43,12 @@ namespace irevlogix_backend.Controllers
             try
             {
                 var clientId = GetClientId();
-                var query = _context.ReverseRequests
-                    .Where(rr => rr.ClientId == clientId);
+                var query = _context.ReverseRequests.AsQueryable();
+
+                if (!IsAdministrator())
+                {
+                    query = query.Where(rr => rr.ClientId == clientId);
+                }
 
                 if (!string.IsNullOrEmpty(primaryContactFirstName))
                     query = query.Where(rr => rr.PrimaryContactFirstName != null && rr.PrimaryContactFirstName.Contains(primaryContactFirstName));
@@ -89,9 +98,15 @@ namespace irevlogix_backend.Controllers
             try
             {
                 var clientId = GetClientId();
-                var reverseRequest = await _context.ReverseRequests
-                    .Where(rr => rr.Id == id && rr.ClientId == clientId)
-                    .FirstOrDefaultAsync();
+                var query = _context.ReverseRequests
+                    .Where(rr => rr.Id == id);
+
+                if (!IsAdministrator())
+                {
+                    query = query.Where(rr => rr.ClientId == clientId);
+                }
+
+                var reverseRequest = await query.FirstOrDefaultAsync();
 
                 if (reverseRequest == null)
                     return NotFound();
@@ -183,9 +198,15 @@ namespace irevlogix_backend.Controllers
                 var clientId = GetClientId();
                 var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? "0");
 
-                var reverseRequest = await _context.ReverseRequests
-                    .Where(rr => rr.Id == id && rr.ClientId == clientId)
-                    .FirstOrDefaultAsync();
+                var query = _context.ReverseRequests
+                    .Where(rr => rr.Id == id);
+
+                if (!IsAdministrator())
+                {
+                    query = query.Where(rr => rr.ClientId == clientId);
+                }
+
+                var reverseRequest = await query.FirstOrDefaultAsync();
 
                 if (reverseRequest == null)
                     return NotFound();
@@ -251,9 +272,15 @@ namespace irevlogix_backend.Controllers
             try
             {
                 var clientId = GetClientId();
-                var reverseRequest = await _context.ReverseRequests
-                    .Where(rr => rr.Id == id && rr.ClientId == clientId)
-                    .FirstOrDefaultAsync();
+                var query = _context.ReverseRequests
+                    .Where(rr => rr.Id == id);
+
+                if (!IsAdministrator())
+                {
+                    query = query.Where(rr => rr.ClientId == clientId);
+                }
+
+                var reverseRequest = await query.FirstOrDefaultAsync();
 
                 if (reverseRequest == null)
                     return NotFound();
@@ -275,9 +302,15 @@ namespace irevlogix_backend.Controllers
             try
             {
                 var clientId = GetClientId();
-                var reverseRequest = await _context.ReverseRequests
-                    .Where(rr => rr.Id == id && rr.ClientId == clientId)
-                    .FirstOrDefaultAsync();
+                var query = _context.ReverseRequests
+                    .Where(rr => rr.Id == id);
+
+                if (!IsAdministrator())
+                {
+                    query = query.Where(rr => rr.ClientId == clientId);
+                }
+
+                var reverseRequest = await query.FirstOrDefaultAsync();
 
                 if (reverseRequest == null)
                     return NotFound();
@@ -325,9 +358,15 @@ namespace irevlogix_backend.Controllers
                 var clientId = GetClientId();
                 var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? "0");
 
-                var reverseRequest = await _context.ReverseRequests
-                    .Where(rr => rr.Id == id && rr.ClientId == clientId)
-                    .FirstOrDefaultAsync();
+                var query = _context.ReverseRequests
+                    .Where(rr => rr.Id == id);
+
+                if (!IsAdministrator())
+                {
+                    query = query.Where(rr => rr.ClientId == clientId);
+                }
+
+                var reverseRequest = await query.FirstOrDefaultAsync();
 
                 if (reverseRequest == null)
                     return NotFound();
@@ -399,8 +438,15 @@ namespace irevlogix_backend.Controllers
             try
             {
                 var clientId = GetClientId();
-                var reverseRequests = await _context.ReverseRequests
-                    .Where(rr => rr.ClientId == clientId && rr.IsActive)
+                var query = _context.ReverseRequests
+                    .Where(rr => rr.IsActive);
+
+                if (!IsAdministrator())
+                {
+                    query = query.Where(rr => rr.ClientId == clientId);
+                }
+
+                var reverseRequests = await query
                     .Select(rr => new
                     {
                         rr.Id,

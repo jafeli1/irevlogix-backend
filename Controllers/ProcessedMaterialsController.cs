@@ -26,6 +26,11 @@ namespace irevlogix_backend.Controllers
             return User.FindFirst("ClientId")?.Value ?? throw new UnauthorizedAccessException("ClientId not found in token");
         }
 
+        private bool IsAdministrator()
+        {
+            return User.IsInRole("Administrator");
+        }
+
         [HttpGet]
         public async Task<IActionResult> GetList([FromQuery] int? materialTypeId, [FromQuery] string? qualityGrade, [FromQuery] string? location, [FromQuery] string? status, [FromQuery] int page = 1, [FromQuery] int pageSize = 10)
         {
@@ -35,7 +40,10 @@ namespace irevlogix_backend.Controllers
                 .Include(p => p.MaterialType)
                 .AsQueryable();
 
-            q = q.Where(x => x.ClientId == clientId);
+            if (!IsAdministrator())
+            {
+                q = q.Where(x => x.ClientId == clientId);
+            }
 
             if (materialTypeId.HasValue) q = q.Where(x => x.MaterialTypeId == materialTypeId.Value);
             if (!string.IsNullOrWhiteSpace(qualityGrade)) q = q.Where(x => x.QualityGrade != null && x.QualityGrade.Contains(qualityGrade));
@@ -70,12 +78,18 @@ namespace irevlogix_backend.Controllers
         {
             var clientId = GetClientId();
 
-            var item = await _context.ProcessedMaterials
+            var query = _context.ProcessedMaterials
                 .Include(p => p.MaterialType)
-                .FirstOrDefaultAsync(x => x.Id == id);
+                .Where(x => x.Id == id);
+
+            if (!IsAdministrator())
+            {
+                query = query.Where(x => x.ClientId == clientId);
+            }
+
+            var item = await query.FirstOrDefaultAsync();
 
             if (item == null) return NotFound();
-            if (!string.IsNullOrEmpty(clientId) && item.ClientId != clientId) return NotFound();
 
             return Ok(new
             {
@@ -152,9 +166,15 @@ namespace irevlogix_backend.Controllers
         public async Task<IActionResult> Patch([FromRoute] int id, [FromBody] UpdateProcessedMaterialDto dto)
         {
             var clientId = GetClientId();
-            var entity = await _context.ProcessedMaterials.FirstOrDefaultAsync(x => x.Id == id);
+            var query = _context.ProcessedMaterials.Where(x => x.Id == id);
+
+            if (!IsAdministrator())
+            {
+                query = query.Where(x => x.ClientId == clientId);
+            }
+
+            var entity = await query.FirstOrDefaultAsync();
             if (entity == null) return NotFound();
-            if (!string.IsNullOrEmpty(clientId) && entity.ClientId != clientId) return NotFound();
 
             if (!string.IsNullOrWhiteSpace(dto.Status)) entity.Status = dto.Status;
             if (dto.ProcessingCostPerUnit.HasValue) entity.ProcessingCostPerUnit = dto.ProcessingCostPerUnit.Value;
