@@ -26,6 +26,11 @@ namespace irevlogix_backend.Controllers
             return User.FindFirst("ClientId")?.Value ?? throw new UnauthorizedAccessException("ClientId not found in token");
         }
 
+        private bool IsAdministrator()
+        {
+            return User.IsInRole("Administrator");
+        }
+
         [HttpGet]
         public async Task<ActionResult<IEnumerable<object>>> GetVendorFacilities(
             [FromQuery] string? vendorName = null,

@@ -26,6 +26,16 @@ namespace irevlogix_backend.Controllers
             return User.FindFirst("ClientId")?.Value ?? throw new UnauthorizedAccessException("ClientId not found in token");
         }
 
+        private bool IsAdministrator()
+        {
+            return User.IsInRole("Administrator");
+        }
+
+        private bool IsAdministrator()
+        {
+            return User.IsInRole("Administrator");
+        }
+
         [HttpGet]
         public async Task<ActionResult<IEnumerable<object>>> GetContractorTechnicians(
             [FromQuery] string? firstName = null,
@@ -40,7 +50,12 @@ namespace irevlogix_backend.Controllers
                 var clientId = GetClientId();
                 var query = _context.ContractorTechnicians
                     .Include(ct => ct.User)
-                    .Where(ct => ct.ClientId == clientId);
+                    .AsQueryable();
+
+                if (!IsAdministrator())
+                {
+                    query = query.Where(ct => ct.ClientId == clientId);
+                }
 
                 if (!string.IsNullOrEmpty(firstName))
                     query = query.Where(ct => ct.FirstName.Contains(firstName));
@@ -92,9 +107,16 @@ namespace irevlogix_backend.Controllers
             try
             {
                 var clientId = GetClientId();
-                var contractor = await _context.ContractorTechnicians
+                var query = _context.ContractorTechnicians
                     .Include(ct => ct.User)
-                    .Where(ct => ct.Id == id && ct.ClientId == clientId)
+                    .Where(ct => ct.Id == id);
+
+                if (!IsAdministrator())
+                {
+                    query = query.Where(ct => ct.ClientId == clientId);
+                }
+
+                var contractor = await query
                     .Select(ct => new
                     {
                         ct.Id,

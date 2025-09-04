@@ -21,6 +21,16 @@ namespace irevlogix_backend.Controllers
             return User.FindFirst("ClientId")?.Value ?? throw new UnauthorizedAccessException("ClientId not found in token");
         }
 
+        private bool IsAdministrator()
+        {
+            return User.IsInRole("Administrator");
+        }
+
+        private bool IsAdministrator()
+        {
+            return User.IsInRole("Administrator");
+        }
+
         public VendorsController(ApplicationDbContext context)
         {
             _context = context;
@@ -31,7 +41,12 @@ namespace irevlogix_backend.Controllers
         {
             var clientId = GetClientId();
 
-            var q = _context.Vendors.Where(x => x.ClientId == clientId).AsQueryable();
+            var q = _context.Vendors.AsQueryable();
+
+            if (!IsAdministrator())
+            {
+                q = q.Where(x => x.ClientId == clientId);
+            }
 
             if (!string.IsNullOrWhiteSpace(name))
             {
@@ -64,7 +79,14 @@ namespace irevlogix_backend.Controllers
         {
             var clientId = GetClientId();
 
-            var v = await _context.Vendors.FirstOrDefaultAsync(x => x.Id == id && (string.IsNullOrEmpty(clientId) || x.ClientId == clientId));
+            var query = _context.Vendors.Where(x => x.Id == id);
+
+            if (!IsAdministrator())
+            {
+                query = query.Where(x => x.ClientId == clientId);
+            }
+
+            var v = await query.FirstOrDefaultAsync();
             if (v == null) return NotFound();
 
             return Ok(new

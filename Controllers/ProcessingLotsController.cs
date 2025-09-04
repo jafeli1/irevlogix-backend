@@ -29,6 +29,11 @@ namespace irevlogix_backend.Controllers
             return User.FindFirst("ClientId")?.Value ?? throw new UnauthorizedAccessException("ClientId not found in token");
         }
 
+        private bool IsAdministrator()
+        {
+            return User.IsInRole("Administrator");
+        }
+
         [HttpGet]
         public async Task<ActionResult<IEnumerable<ProcessingLot>>> GetProcessingLots(
             [FromQuery] string? status = null,
@@ -42,11 +47,15 @@ namespace irevlogix_backend.Controllers
             {
                 var clientId = GetClientId();
                 var query = _context.ProcessingLots
-                    .Where(pl => pl.ClientId == clientId)
                     .Include(pl => pl.Operator)
                     .Include(pl => pl.ProcessingSteps)
                     .Include(pl => pl.ProcessedMaterials)
                     .AsQueryable();
+
+                if (!IsAdministrator())
+                {
+                    query = query.Where(pl => pl.ClientId == clientId);
+                }
 
                 if (!string.IsNullOrEmpty(status))
                     query = query.Where(pl => pl.Status == status);
@@ -83,8 +92,15 @@ namespace irevlogix_backend.Controllers
             try
             {
                 var clientId = GetClientId();
-                var lot = await _context.ProcessingLots
-                    .Where(pl => pl.Id == id && pl.ClientId == clientId)
+                var query = _context.ProcessingLots
+                    .Where(pl => pl.Id == id);
+
+                if (!IsAdministrator())
+                {
+                    query = query.Where(pl => pl.ClientId == clientId);
+                }
+
+                var lot = await query
                     .Include(pl => pl.Operator)
                     .Include(pl => pl.ProcessingSteps.OrderBy(ps => ps.StepOrder))
                         .ThenInclude(ps => ps.ResponsibleUser)
@@ -165,9 +181,15 @@ namespace irevlogix_backend.Controllers
                 int userId = 1;
                 if (!string.IsNullOrEmpty(userIdClaim) && int.TryParse(userIdClaim, out var parsed)) userId = parsed;
 
-                var lot = await _context.ProcessingLots
-                    .Where(pl => pl.Id == id && pl.ClientId == clientId)
-                    .FirstOrDefaultAsync();
+                var query = _context.ProcessingLots
+                    .Where(pl => pl.Id == id);
+
+                if (!IsAdministrator())
+                {
+                    query = query.Where(pl => pl.ClientId == clientId);
+                }
+
+                var lot = await query.FirstOrDefaultAsync();
 
                 if (lot == null)
                     return NotFound();
@@ -210,10 +232,16 @@ namespace irevlogix_backend.Controllers
             try
             {
                 var clientId = GetClientId();
-                var lot = await _context.ProcessingLots
-                    .Where(pl => pl.Id == id && pl.ClientId == clientId)
-                    .Include(pl => pl.ProcessingSteps)
-                    .FirstOrDefaultAsync();
+                var query = _context.ProcessingLots
+                    .Where(pl => pl.Id == id)
+                    .Include(pl => pl.ProcessingSteps);
+
+                if (!IsAdministrator())
+                {
+                    query = query.Where(pl => pl.ClientId == clientId);
+                }
+
+                var lot = await query.FirstOrDefaultAsync();
 
                 if (lot == null)
                     return NotFound();
@@ -234,9 +262,15 @@ namespace irevlogix_backend.Controllers
             try
             {
                 var clientId = GetClientId();
-                var lot = await _context.ProcessingLots
-                    .Where(pl => pl.Id == id && pl.ClientId == clientId)
-                    .FirstOrDefaultAsync();
+                var query = _context.ProcessingLots
+                    .Where(pl => pl.Id == id);
+
+                if (!IsAdministrator())
+                {
+                    query = query.Where(pl => pl.ClientId == clientId);
+                }
+
+                var lot = await query.FirstOrDefaultAsync();
 
                 if (lot == null)
                     return NotFound();
@@ -286,9 +320,15 @@ namespace irevlogix_backend.Controllers
                 int userId = 1;
                 if (!string.IsNullOrEmpty(userIdClaim) && int.TryParse(userIdClaim, out var parsed)) userId = parsed;
 
-                var lot = await _context.ProcessingLots
-                    .Where(pl => pl.Id == id && pl.ClientId == clientId)
-                    .FirstOrDefaultAsync();
+                var query = _context.ProcessingLots
+                    .Where(pl => pl.Id == id);
+
+                if (!IsAdministrator())
+                {
+                    query = query.Where(pl => pl.ClientId == clientId);
+                }
+
+                var lot = await query.FirstOrDefaultAsync();
 
                 if (lot == null)
                     return NotFound();

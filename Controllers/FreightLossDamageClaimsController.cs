@@ -26,6 +26,16 @@ namespace irevlogix_backend.Controllers
             return User.FindFirst("ClientId")?.Value ?? throw new UnauthorizedAccessException("ClientId not found in token");
         }
 
+        private bool IsAdministrator()
+        {
+            return User.IsInRole("Administrator");
+        }
+
+        private bool IsAdministrator()
+        {
+            return User.IsInRole("Administrator");
+        }
+
         [HttpGet]
         public async Task<ActionResult<IEnumerable<object>>> GetFreightLossDamageClaims(
             [FromQuery] DateTime? dateOfShipment = null,
@@ -38,8 +48,12 @@ namespace irevlogix_backend.Controllers
             try
             {
                 var clientId = GetClientId();
-                var query = _context.FreightLossDamageClaims
-                    .Where(fldc => fldc.ClientId == clientId);
+                var query = _context.FreightLossDamageClaims.AsQueryable();
+
+                if (!IsAdministrator())
+                {
+                    query = query.Where(fldc => fldc.ClientId == clientId);
+                }
 
                 if (dateOfShipment.HasValue)
                     query = query.Where(fldc => fldc.DateOfShipment.HasValue && fldc.DateOfShipment.Value.Date == dateOfShipment.Value.Date);
@@ -90,8 +104,15 @@ namespace irevlogix_backend.Controllers
             try
             {
                 var clientId = GetClientId();
-                var claim = await _context.FreightLossDamageClaims
-                    .Where(fldc => fldc.Id == id && fldc.ClientId == clientId)
+                var query = _context.FreightLossDamageClaims
+                    .Where(fldc => fldc.Id == id);
+
+                if (!IsAdministrator())
+                {
+                    query = query.Where(fldc => fldc.ClientId == clientId);
+                }
+
+                var claim = await query
                     .Select(fldc => new
                     {
                         fldc.Id,
@@ -266,9 +287,15 @@ namespace irevlogix_backend.Controllers
             try
             {
                 var clientId = GetClientId();
-                var claim = await _context.FreightLossDamageClaims
-                    .Where(fldc => fldc.Id == id && fldc.ClientId == clientId)
-                    .FirstOrDefaultAsync();
+                var query = _context.FreightLossDamageClaims
+                    .Where(fldc => fldc.Id == id);
+
+                if (!IsAdministrator())
+                {
+                    query = query.Where(fldc => fldc.ClientId == clientId);
+                }
+
+                var claim = await query.FirstOrDefaultAsync();
 
                 if (claim == null)
                     return NotFound();
@@ -350,9 +377,15 @@ namespace irevlogix_backend.Controllers
             try
             {
                 var clientId = GetClientId();
-                var claim = await _context.FreightLossDamageClaims
-                    .Where(c => c.Id == id && c.ClientId == clientId)
-                    .FirstOrDefaultAsync();
+                var query = _context.FreightLossDamageClaims
+                    .Where(c => c.Id == id);
+
+                if (!IsAdministrator())
+                {
+                    query = query.Where(c => c.ClientId == clientId);
+                }
+
+                var claim = await query.FirstOrDefaultAsync();
 
                 if (claim == null)
                     return NotFound();

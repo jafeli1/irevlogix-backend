@@ -26,6 +26,16 @@ namespace irevlogix_backend.Controllers
             return User.FindFirst("ClientId")?.Value ?? throw new UnauthorizedAccessException("ClientId not found in token");
         }
 
+        private bool IsAdministrator()
+        {
+            return User.IsInRole("Administrator");
+        }
+
+        private bool IsAdministrator()
+        {
+            return User.IsInRole("Administrator");
+        }
+
         [HttpGet]
         public async Task<ActionResult<IEnumerable<object>>> GetRecoveryRequests(
             [FromQuery] string? primaryContactFirstName = null,
@@ -38,8 +48,12 @@ namespace irevlogix_backend.Controllers
             try
             {
                 var clientId = GetClientId();
-                var query = _context.RecoveryRequests
-                    .Where(rr => rr.ClientId == clientId);
+                var query = _context.RecoveryRequests.AsQueryable();
+
+                if (!IsAdministrator())
+                {
+                    query = query.Where(rr => rr.ClientId == clientId);
+                }
 
                 if (!string.IsNullOrEmpty(primaryContactFirstName))
                     query = query.Where(rr => rr.PrimaryContactFirstName != null && rr.PrimaryContactFirstName.Contains(primaryContactFirstName));

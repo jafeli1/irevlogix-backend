@@ -26,6 +26,16 @@ namespace irevlogix_backend.Controllers
             return User.FindFirst("ClientId")?.Value ?? throw new UnauthorizedAccessException("ClientId not found in token");
         }
 
+        private bool IsAdministrator()
+        {
+            return User.IsInRole("Administrator");
+        }
+
+        private bool IsAdministrator()
+        {
+            return User.IsInRole("Administrator");
+        }
+
         [HttpGet]
         public async Task<ActionResult<IEnumerable<KnowledgeBaseArticle>>> GetArticles(
             [FromQuery] string? search = null,
@@ -38,9 +48,13 @@ namespace irevlogix_backend.Controllers
             {
                 var clientId = GetClientId();
                 var query = _context.KnowledgeBaseArticles
-                    .Where(kb => kb.ClientId == clientId)
                     .Include(kb => kb.Author)
                     .AsQueryable();
+
+                if (!IsAdministrator())
+                {
+                    query = query.Where(kb => kb.ClientId == clientId);
+                }
 
                 if (publishedOnly)
                     query = query.Where(kb => kb.IsPublished);
@@ -75,10 +89,16 @@ namespace irevlogix_backend.Controllers
             try
             {
                 var clientId = GetClientId();
-                var article = await _context.KnowledgeBaseArticles
-                    .Where(kb => kb.Id == id && kb.ClientId == clientId)
-                    .Include(kb => kb.Author)
-                    .FirstOrDefaultAsync();
+                var query = _context.KnowledgeBaseArticles
+                    .Where(kb => kb.Id == id)
+                    .Include(kb => kb.Author);
+
+                if (!IsAdministrator())
+                {
+                    query = query.Where(kb => kb.ClientId == clientId);
+                }
+
+                var article = await query.FirstOrDefaultAsync();
 
                 if (article == null)
                     return NotFound();
@@ -143,9 +163,15 @@ namespace irevlogix_backend.Controllers
                 int userId = 1;
                 if (!string.IsNullOrEmpty(userIdClaim) && int.TryParse(userIdClaim, out var parsed)) userId = parsed;
 
-                var article = await _context.KnowledgeBaseArticles
-                    .Where(kb => kb.Id == id && kb.ClientId == clientId)
-                    .FirstOrDefaultAsync();
+                var query = _context.KnowledgeBaseArticles
+                    .Where(kb => kb.Id == id);
+
+                if (!IsAdministrator())
+                {
+                    query = query.Where(kb => kb.ClientId == clientId);
+                }
+
+                var article = await query.FirstOrDefaultAsync();
 
                 if (article == null)
                     return NotFound();
@@ -181,9 +207,15 @@ namespace irevlogix_backend.Controllers
             try
             {
                 var clientId = GetClientId();
-                var article = await _context.KnowledgeBaseArticles
-                    .Where(kb => kb.Id == id && kb.ClientId == clientId)
-                    .FirstOrDefaultAsync();
+                var query = _context.KnowledgeBaseArticles
+                    .Where(kb => kb.Id == id);
+
+                if (!IsAdministrator())
+                {
+                    query = query.Where(kb => kb.ClientId == clientId);
+                }
+
+                var article = await query.FirstOrDefaultAsync();
 
                 if (article == null)
                     return NotFound();
@@ -206,8 +238,15 @@ namespace irevlogix_backend.Controllers
             try
             {
                 var clientId = GetClientId();
-                var categories = await _context.KnowledgeBaseArticles
-                    .Where(kb => kb.ClientId == clientId && !string.IsNullOrEmpty(kb.Category))
+                var query = _context.KnowledgeBaseArticles
+                    .Where(kb => !string.IsNullOrEmpty(kb.Category));
+
+                if (!IsAdministrator())
+                {
+                    query = query.Where(kb => kb.ClientId == clientId);
+                }
+
+                var categories = await query
                     .Select(kb => kb.Category!)
                     .Distinct()
                     .OrderBy(c => c)
