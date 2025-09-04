@@ -33,11 +33,6 @@ namespace irevlogix_backend.Controllers
             return User.IsInRole("Administrator");
         }
 
-        private bool IsAdministrator()
-        {
-            return User.IsInRole("Administrator");
-        }
-
         [HttpGet("esg-summary")]
         public async Task<ActionResult<EsgSummaryDto>> GetEsgSummary([FromQuery] DateTime? from = null, [FromQuery] DateTime? to = null)
         {

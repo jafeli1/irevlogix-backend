@@ -19,16 +19,26 @@ namespace irevlogix_backend.Controllers
             _context = context;
         }
 
+        private bool IsAdministrator()
+        {
+            return User.IsInRole("Administrator");
+        }
+
         [HttpGet]
         public async Task<IActionResult> GetList([FromQuery] int page = 1, [FromQuery] int pageSize = 25)
         {
             var clientId = User.FindFirst("ClientId")?.Value;
-            if (string.IsNullOrEmpty(clientId)) return Unauthorized();
+            if (string.IsNullOrEmpty(clientId) && !IsAdministrator()) return Unauthorized();
 
             var query = _context.ProcessedMaterialSales
                 .Include(x => x.ProcessedMaterial)
                 .ThenInclude(x => x.MaterialType)
-                .Where(x => x.ClientId == clientId);
+                .AsQueryable();
+
+            if (!IsAdministrator())
+            {
+                query = query.Where(x => x.ClientId == clientId);
+            }
 
             var totalCount = await query.CountAsync();
             var items = await query
@@ -72,12 +82,19 @@ namespace irevlogix_backend.Controllers
         public async Task<IActionResult> GetById([FromRoute] int id)
         {
             var clientId = User.FindFirst("ClientId")?.Value;
-            if (string.IsNullOrEmpty(clientId)) return Unauthorized();
+            if (string.IsNullOrEmpty(clientId) && !IsAdministrator()) return Unauthorized();
 
-            var item = await _context.ProcessedMaterialSales
+            var query = _context.ProcessedMaterialSales
                 .Include(x => x.ProcessedMaterial)
                 .ThenInclude(x => x.MaterialType)
-                .FirstOrDefaultAsync(x => x.Id == id && x.ClientId == clientId);
+                .Where(x => x.Id == id);
+
+            if (!IsAdministrator())
+            {
+                query = query.Where(x => x.ClientId == clientId);
+            }
+
+            var item = await query.FirstOrDefaultAsync();
 
             if (item == null) return NotFound();
 
@@ -134,7 +151,7 @@ namespace irevlogix_backend.Controllers
         {
             var clientId = User.FindFirst("ClientId")?.Value;
             var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-            if (string.IsNullOrEmpty(clientId) || string.IsNullOrEmpty(userId)) return Unauthorized();
+            if ((string.IsNullOrEmpty(clientId) && !IsAdministrator()) || string.IsNullOrEmpty(userId)) return Unauthorized();
 
             var entity = new ProcessedMaterialSales
             {
@@ -185,9 +202,16 @@ namespace irevlogix_backend.Controllers
         public async Task<IActionResult> Patch([FromRoute] int id, [FromBody] UpdateProcessedMaterialSalesDto dto)
         {
             var clientId = User.FindFirst("ClientId")?.Value;
-            if (string.IsNullOrEmpty(clientId)) return Unauthorized();
+            if (string.IsNullOrEmpty(clientId) && !IsAdministrator()) return Unauthorized();
 
-            var entity = await _context.ProcessedMaterialSales.FirstOrDefaultAsync(x => x.Id == id && x.ClientId == clientId);
+            var query = _context.ProcessedMaterialSales.Where(x => x.Id == id);
+
+            if (!IsAdministrator())
+            {
+                query = query.Where(x => x.ClientId == clientId);
+            }
+
+            var entity = await query.FirstOrDefaultAsync();
             if (entity == null) return NotFound();
 
             entity.VendorId = dto.VendorId;
@@ -213,9 +237,16 @@ namespace irevlogix_backend.Controllers
         public async Task<IActionResult> Delete([FromRoute] int id)
         {
             var clientId = User.FindFirst("ClientId")?.Value;
-            if (string.IsNullOrEmpty(clientId)) return Unauthorized();
+            if (string.IsNullOrEmpty(clientId) && !IsAdministrator()) return Unauthorized();
 
-            var entity = await _context.ProcessedMaterialSales.FirstOrDefaultAsync(x => x.Id == id && x.ClientId == clientId);
+            var query = _context.ProcessedMaterialSales.Where(x => x.Id == id);
+
+            if (!IsAdministrator())
+            {
+                query = query.Where(x => x.ClientId == clientId);
+            }
+
+            var entity = await query.FirstOrDefaultAsync();
             if (entity == null) return NotFound();
 
             _context.ProcessedMaterialSales.Remove(entity);

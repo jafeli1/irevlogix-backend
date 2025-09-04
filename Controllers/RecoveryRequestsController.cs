@@ -31,11 +31,6 @@ namespace irevlogix_backend.Controllers
             return User.IsInRole("Administrator");
         }
 
-        private bool IsAdministrator()
-        {
-            return User.IsInRole("Administrator");
-        }
-
         [HttpGet]
         public async Task<ActionResult<IEnumerable<object>>> GetRecoveryRequests(
             [FromQuery] string? primaryContactFirstName = null,
@@ -103,9 +98,15 @@ namespace irevlogix_backend.Controllers
             try
             {
                 var clientId = GetClientId();
-                var recoveryRequest = await _context.RecoveryRequests
-                    .Where(rr => rr.Id == id && rr.ClientId == clientId)
-                    .FirstOrDefaultAsync();
+                var query = _context.RecoveryRequests
+                    .Where(rr => rr.Id == id);
+
+                if (!IsAdministrator())
+                {
+                    query = query.Where(rr => rr.ClientId == clientId);
+                }
+
+                var recoveryRequest = await query.FirstOrDefaultAsync();
 
                 if (recoveryRequest == null)
                     return NotFound();
@@ -197,9 +198,15 @@ namespace irevlogix_backend.Controllers
                 var clientId = GetClientId();
                 var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? "0");
 
-                var recoveryRequest = await _context.RecoveryRequests
-                    .Where(rr => rr.Id == id && rr.ClientId == clientId)
-                    .FirstOrDefaultAsync();
+                var query = _context.RecoveryRequests
+                    .Where(rr => rr.Id == id);
+
+                if (!IsAdministrator())
+                {
+                    query = query.Where(rr => rr.ClientId == clientId);
+                }
+
+                var recoveryRequest = await query.FirstOrDefaultAsync();
 
                 if (recoveryRequest == null)
                     return NotFound();
@@ -265,9 +272,15 @@ namespace irevlogix_backend.Controllers
             try
             {
                 var clientId = GetClientId();
-                var recoveryRequest = await _context.RecoveryRequests
-                    .Where(rr => rr.Id == id && rr.ClientId == clientId)
-                    .FirstOrDefaultAsync();
+                var query = _context.RecoveryRequests
+                    .Where(rr => rr.Id == id);
+
+                if (!IsAdministrator())
+                {
+                    query = query.Where(rr => rr.ClientId == clientId);
+                }
+
+                var recoveryRequest = await query.FirstOrDefaultAsync();
 
                 if (recoveryRequest == null)
                     return NotFound();
@@ -289,9 +302,15 @@ namespace irevlogix_backend.Controllers
             try
             {
                 var clientId = GetClientId();
-                var recoveryRequest = await _context.RecoveryRequests
-                    .Where(rr => rr.Id == id && rr.ClientId == clientId)
-                    .FirstOrDefaultAsync();
+                var query = _context.RecoveryRequests
+                    .Where(rr => rr.Id == id);
+
+                if (!IsAdministrator())
+                {
+                    query = query.Where(rr => rr.ClientId == clientId);
+                }
+
+                var recoveryRequest = await query.FirstOrDefaultAsync();
 
                 if (recoveryRequest == null)
                     return NotFound();
@@ -339,9 +358,15 @@ namespace irevlogix_backend.Controllers
                 var clientId = GetClientId();
                 var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? "0");
 
-                var recoveryRequest = await _context.RecoveryRequests
-                    .Where(rr => rr.Id == id && rr.ClientId == clientId)
-                    .FirstOrDefaultAsync();
+                var query = _context.RecoveryRequests
+                    .Where(rr => rr.Id == id);
+
+                if (!IsAdministrator())
+                {
+                    query = query.Where(rr => rr.ClientId == clientId);
+                }
+
+                var recoveryRequest = await query.FirstOrDefaultAsync();
 
                 if (recoveryRequest == null)
                     return NotFound();

@@ -19,15 +19,25 @@ namespace irevlogix_backend.Controllers
             _context = context;
         }
 
+        private bool IsAdministrator()
+        {
+            return User.IsInRole("Administrator");
+        }
+
         [HttpGet]
         public async Task<IActionResult> GetList([FromQuery] int page = 1, [FromQuery] int pageSize = 25, [FromQuery] int? vendorId = null)
         {
             var clientId = User.FindFirst("ClientId")?.Value;
-            if (string.IsNullOrEmpty(clientId)) return Unauthorized();
+            if (string.IsNullOrEmpty(clientId) && !IsAdministrator()) return Unauthorized();
 
             var query = _context.VendorDocuments
                 .Include(x => x.Vendor)
-                .Where(x => x.ClientId == clientId);
+                .AsQueryable();
+
+            if (!IsAdministrator())
+            {
+                query = query.Where(x => x.ClientId == clientId);
+            }
 
             if (vendorId.HasValue)
             {
@@ -66,11 +76,18 @@ namespace irevlogix_backend.Controllers
         public async Task<IActionResult> GetById([FromRoute] int id)
         {
             var clientId = User.FindFirst("ClientId")?.Value;
-            if (string.IsNullOrEmpty(clientId)) return Unauthorized();
+            if (string.IsNullOrEmpty(clientId) && !IsAdministrator()) return Unauthorized();
 
-            var item = await _context.VendorDocuments
+            var query = _context.VendorDocuments
                 .Include(x => x.Vendor)
-                .FirstOrDefaultAsync(x => x.Id == id && x.ClientId == clientId);
+                .Where(x => x.Id == id);
+
+            if (!IsAdministrator())
+            {
+                query = query.Where(x => x.ClientId == clientId);
+            }
+
+            var item = await query.FirstOrDefaultAsync();
 
             if (item == null) return NotFound();
 
@@ -114,7 +131,7 @@ namespace irevlogix_backend.Controllers
         {
             var clientId = User.FindFirst("ClientId")?.Value;
             var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-            if (string.IsNullOrEmpty(clientId) || string.IsNullOrEmpty(userId)) return Unauthorized();
+            if ((string.IsNullOrEmpty(clientId) && !IsAdministrator()) || string.IsNullOrEmpty(userId)) return Unauthorized();
 
             var entity = new VendorDocuments
             {
@@ -160,9 +177,16 @@ namespace irevlogix_backend.Controllers
         {
             var clientId = User.FindFirst("ClientId")?.Value;
             var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-            if (string.IsNullOrEmpty(clientId) || string.IsNullOrEmpty(userId)) return Unauthorized();
+            if ((string.IsNullOrEmpty(clientId) && !IsAdministrator()) || string.IsNullOrEmpty(userId)) return Unauthorized();
 
-            var entity = await _context.VendorDocuments.FirstOrDefaultAsync(x => x.Id == id && x.ClientId == clientId);
+            var query = _context.VendorDocuments.Where(x => x.Id == id);
+
+            if (!IsAdministrator())
+            {
+                query = query.Where(x => x.ClientId == clientId);
+            }
+
+            var entity = await query.FirstOrDefaultAsync();
             if (entity == null) return NotFound();
 
             if (!string.IsNullOrEmpty(dto.DocumentUrl)) entity.DocumentUrl = dto.DocumentUrl;
@@ -186,9 +210,16 @@ namespace irevlogix_backend.Controllers
         public async Task<IActionResult> Delete([FromRoute] int id)
         {
             var clientId = User.FindFirst("ClientId")?.Value;
-            if (string.IsNullOrEmpty(clientId)) return Unauthorized();
+            if (string.IsNullOrEmpty(clientId) && !IsAdministrator()) return Unauthorized();
 
-            var entity = await _context.VendorDocuments.FirstOrDefaultAsync(x => x.Id == id && x.ClientId == clientId);
+            var query = _context.VendorDocuments.Where(x => x.Id == id);
+
+            if (!IsAdministrator())
+            {
+                query = query.Where(x => x.ClientId == clientId);
+            }
+
+            var entity = await query.FirstOrDefaultAsync();
             if (entity == null) return NotFound();
 
             _context.VendorDocuments.Remove(entity);
@@ -201,7 +232,7 @@ namespace irevlogix_backend.Controllers
         {
             var clientId = User.FindFirst("ClientId")?.Value;
             var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-            if (string.IsNullOrEmpty(clientId) || string.IsNullOrEmpty(userId)) return Unauthorized();
+            if ((string.IsNullOrEmpty(clientId) && !IsAdministrator()) || string.IsNullOrEmpty(userId)) return Unauthorized();
 
             if (file == null || file.Length == 0)
                 return BadRequest("No file uploaded");

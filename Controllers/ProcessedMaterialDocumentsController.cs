@@ -19,16 +19,26 @@ namespace irevlogix_backend.Controllers
             _context = context;
         }
 
+        private bool IsAdministrator()
+        {
+            return User.IsInRole("Administrator");
+        }
+
         [HttpGet]
         public async Task<IActionResult> GetList([FromQuery] int page = 1, [FromQuery] int pageSize = 25, [FromQuery] int? processedMaterialId = null)
         {
             var clientId = User.FindFirst("ClientId")?.Value;
-            if (string.IsNullOrEmpty(clientId)) return Unauthorized();
+            if (string.IsNullOrEmpty(clientId) && !IsAdministrator()) return Unauthorized();
 
             var query = _context.ProcessedMaterialDocuments
                 .Include(x => x.ProcessedMaterial)
                 .ThenInclude(x => x.MaterialType)
-                .Where(x => x.ClientId == clientId);
+                .AsQueryable();
+
+            if (!IsAdministrator())
+            {
+                query = query.Where(x => x.ClientId == clientId);
+            }
 
             if (processedMaterialId.HasValue)
             {
@@ -71,12 +81,19 @@ namespace irevlogix_backend.Controllers
         public async Task<IActionResult> GetById([FromRoute] int id)
         {
             var clientId = User.FindFirst("ClientId")?.Value;
-            if (string.IsNullOrEmpty(clientId)) return Unauthorized();
+            if (string.IsNullOrEmpty(clientId) && !IsAdministrator()) return Unauthorized();
 
-            var item = await _context.ProcessedMaterialDocuments
+            var query = _context.ProcessedMaterialDocuments
                 .Include(x => x.ProcessedMaterial)
                 .ThenInclude(x => x.MaterialType)
-                .FirstOrDefaultAsync(x => x.Id == id && x.ClientId == clientId);
+                .Where(x => x.Id == id);
+
+            if (!IsAdministrator())
+            {
+                query = query.Where(x => x.ClientId == clientId);
+            }
+
+            var item = await query.FirstOrDefaultAsync();
 
             if (item == null) return NotFound();
 
@@ -157,9 +174,16 @@ namespace irevlogix_backend.Controllers
         public async Task<IActionResult> Patch([FromRoute] int id, [FromBody] UpdateProcessedMaterialDocumentsDto dto)
         {
             var clientId = User.FindFirst("ClientId")?.Value;
-            if (string.IsNullOrEmpty(clientId)) return Unauthorized();
+            if (string.IsNullOrEmpty(clientId) && !IsAdministrator()) return Unauthorized();
 
-            var entity = await _context.ProcessedMaterialDocuments.FirstOrDefaultAsync(x => x.Id == id && x.ClientId == clientId);
+            var query = _context.ProcessedMaterialDocuments.Where(x => x.Id == id);
+
+            if (!IsAdministrator())
+            {
+                query = query.Where(x => x.ClientId == clientId);
+            }
+
+            var entity = await query.FirstOrDefaultAsync();
             if (entity == null) return NotFound();
 
             if (!string.IsNullOrWhiteSpace(dto.FileName)) entity.FileName = dto.FileName;
@@ -178,9 +202,16 @@ namespace irevlogix_backend.Controllers
         public async Task<IActionResult> Delete([FromRoute] int id)
         {
             var clientId = User.FindFirst("ClientId")?.Value;
-            if (string.IsNullOrEmpty(clientId)) return Unauthorized();
+            if (string.IsNullOrEmpty(clientId) && !IsAdministrator()) return Unauthorized();
 
-            var entity = await _context.ProcessedMaterialDocuments.FirstOrDefaultAsync(x => x.Id == id && x.ClientId == clientId);
+            var query = _context.ProcessedMaterialDocuments.Where(x => x.Id == id);
+
+            if (!IsAdministrator())
+            {
+                query = query.Where(x => x.ClientId == clientId);
+            }
+
+            var entity = await query.FirstOrDefaultAsync();
             if (entity == null) return NotFound();
 
             _context.ProcessedMaterialDocuments.Remove(entity);
@@ -195,7 +226,7 @@ namespace irevlogix_backend.Controllers
                 return BadRequest("No file uploaded");
 
             var clientId = User.FindFirst("ClientId")?.Value;
-            if (string.IsNullOrEmpty(clientId)) return Unauthorized();
+            if (string.IsNullOrEmpty(clientId) && !IsAdministrator()) return Unauthorized();
 
             var allowedExtensions = new[] { ".pdf", ".doc", ".docx", ".jpg", ".jpeg", ".png" };
             var fileExtension = Path.GetExtension(file.FileName).ToLowerInvariant();

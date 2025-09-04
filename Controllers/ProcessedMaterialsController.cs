@@ -31,11 +31,6 @@ namespace irevlogix_backend.Controllers
             return User.IsInRole("Administrator");
         }
 
-        private bool IsAdministrator()
-        {
-            return User.IsInRole("Administrator");
-        }
-
         [HttpGet]
         public async Task<IActionResult> GetList([FromQuery] int? materialTypeId, [FromQuery] string? qualityGrade, [FromQuery] string? location, [FromQuery] string? status, [FromQuery] int page = 1, [FromQuery] int pageSize = 10)
         {

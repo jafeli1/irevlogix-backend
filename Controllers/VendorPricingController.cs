@@ -19,16 +19,26 @@ namespace irevlogix_backend.Controllers
             _context = context;
         }
 
+        private bool IsAdministrator()
+        {
+            return User.IsInRole("Administrator");
+        }
+
         [HttpGet]
         public async Task<IActionResult> GetList([FromQuery] int page = 1, [FromQuery] int pageSize = 25, [FromQuery] int? vendorId = null)
         {
             var clientId = User.FindFirst("ClientId")?.Value;
-            if (string.IsNullOrEmpty(clientId)) return Unauthorized();
+            if (string.IsNullOrEmpty(clientId) && !IsAdministrator()) return Unauthorized();
 
             var query = _context.VendorPricing
                 .Include(x => x.Vendor)
                 .Include(x => x.MaterialType)
-                .Where(x => x.ClientId == clientId);
+                .AsQueryable();
+
+            if (!IsAdministrator())
+            {
+                query = query.Where(x => x.ClientId == clientId);
+            }
 
             if (vendorId.HasValue)
             {
@@ -62,12 +72,19 @@ namespace irevlogix_backend.Controllers
         public async Task<IActionResult> GetById([FromRoute] int id)
         {
             var clientId = User.FindFirst("ClientId")?.Value;
-            if (string.IsNullOrEmpty(clientId)) return Unauthorized();
+            if (string.IsNullOrEmpty(clientId) && !IsAdministrator()) return Unauthorized();
 
-            var item = await _context.VendorPricing
+            var query = _context.VendorPricing
                 .Include(x => x.Vendor)
                 .Include(x => x.MaterialType)
-                .FirstOrDefaultAsync(x => x.Id == id && x.ClientId == clientId);
+                .Where(x => x.Id == id);
+
+            if (!IsAdministrator())
+            {
+                query = query.Where(x => x.ClientId == clientId);
+            }
+
+            var item = await query.FirstOrDefaultAsync();
 
             if (item == null) return NotFound();
 
@@ -100,7 +117,7 @@ namespace irevlogix_backend.Controllers
         {
             var clientId = User.FindFirst("ClientId")?.Value;
             var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-            if (string.IsNullOrEmpty(clientId) || string.IsNullOrEmpty(userId)) return Unauthorized();
+            if ((string.IsNullOrEmpty(clientId) && !IsAdministrator()) || string.IsNullOrEmpty(userId)) return Unauthorized();
 
             var entity = new VendorPricing
             {
@@ -134,9 +151,16 @@ namespace irevlogix_backend.Controllers
         {
             var clientId = User.FindFirst("ClientId")?.Value;
             var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-            if (string.IsNullOrEmpty(clientId) || string.IsNullOrEmpty(userId)) return Unauthorized();
+            if ((string.IsNullOrEmpty(clientId) && !IsAdministrator()) || string.IsNullOrEmpty(userId)) return Unauthorized();
 
-            var entity = await _context.VendorPricing.FirstOrDefaultAsync(x => x.Id == id && x.ClientId == clientId);
+            var query = _context.VendorPricing.Where(x => x.Id == id);
+
+            if (!IsAdministrator())
+            {
+                query = query.Where(x => x.ClientId == clientId);
+            }
+
+            var entity = await query.FirstOrDefaultAsync();
             if (entity == null) return NotFound();
 
             if (dto.MaterialTypeId.HasValue) entity.MaterialTypeId = dto.MaterialTypeId;
@@ -154,9 +178,16 @@ namespace irevlogix_backend.Controllers
         public async Task<IActionResult> Delete([FromRoute] int id)
         {
             var clientId = User.FindFirst("ClientId")?.Value;
-            if (string.IsNullOrEmpty(clientId)) return Unauthorized();
+            if (string.IsNullOrEmpty(clientId) && !IsAdministrator()) return Unauthorized();
 
-            var entity = await _context.VendorPricing.FirstOrDefaultAsync(x => x.Id == id && x.ClientId == clientId);
+            var query = _context.VendorPricing.Where(x => x.Id == id);
+
+            if (!IsAdministrator())
+            {
+                query = query.Where(x => x.ClientId == clientId);
+            }
+
+            var entity = await query.FirstOrDefaultAsync();
             if (entity == null) return NotFound();
 
             _context.VendorPricing.Remove(entity);

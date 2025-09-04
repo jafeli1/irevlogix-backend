@@ -267,12 +267,18 @@ namespace irevlogix_backend.Controllers
         public async Task<ActionResult<IEnumerable<ShipmentStatusHistory>>> GetShipmentStatusHistory(int id)
         {
             var clientId = User.FindFirst("ClientId")?.Value;
-            if (string.IsNullOrEmpty(clientId))
+            if (string.IsNullOrEmpty(clientId) && !IsAdministrator())
                 return Unauthorized();
 
-            var shipment = await _context.Shipments
-                .Where(s => s.Id == id && s.ClientId == clientId)
-                .FirstOrDefaultAsync();
+            var query = _context.Shipments
+                .Where(s => s.Id == id);
+
+            if (!IsAdministrator())
+            {
+                query = query.Where(s => s.ClientId == clientId);
+            }
+
+            var shipment = await query.FirstOrDefaultAsync();
 
             if (shipment == null)
                 return NotFound();
@@ -302,9 +308,15 @@ namespace irevlogix_backend.Controllers
             if (string.IsNullOrEmpty(clientId) || string.IsNullOrEmpty(userId))
                 return Unauthorized();
 
-            var shipment = await _context.Shipments
-                .Where(s => s.Id == id && s.ClientId == clientId)
-                .FirstOrDefaultAsync();
+            var query = _context.Shipments
+                .Where(s => s.Id == id);
+
+            if (!IsAdministrator())
+            {
+                query = query.Where(s => s.ClientId == clientId);
+            }
+
+            var shipment = await query.FirstOrDefaultAsync();
 
             if (shipment == null)
                 return NotFound();
@@ -335,12 +347,18 @@ namespace irevlogix_backend.Controllers
         public async Task<ActionResult<IEnumerable<ShipmentDocument>>> GetShipmentDocuments(int id)
         {
             var clientId = User.FindFirst("ClientId")?.Value;
-            if (string.IsNullOrEmpty(clientId))
+            if (string.IsNullOrEmpty(clientId) && !IsAdministrator())
                 return Unauthorized();
 
-            var shipment = await _context.Shipments
-                .Where(s => s.Id == id && s.ClientId == clientId)
-                .FirstOrDefaultAsync();
+            var query = _context.Shipments
+                .Where(s => s.Id == id);
+
+            if (!IsAdministrator())
+            {
+                query = query.Where(s => s.ClientId == clientId);
+            }
+
+            var shipment = await query.FirstOrDefaultAsync();
 
             if (shipment == null)
                 return NotFound();
@@ -369,9 +387,15 @@ namespace irevlogix_backend.Controllers
             if (string.IsNullOrEmpty(clientId) || string.IsNullOrEmpty(userId))
                 return Unauthorized();
 
-            var shipment = await _context.Shipments
-                .Where(s => s.Id == id && s.ClientId == clientId)
-                .FirstOrDefaultAsync();
+            var query = _context.Shipments
+                .Where(s => s.Id == id);
+
+            if (!IsAdministrator())
+            {
+                query = query.Where(s => s.ClientId == clientId);
+            }
+
+            var shipment = await query.FirstOrDefaultAsync();
 
             if (shipment == null)
                 return NotFound();

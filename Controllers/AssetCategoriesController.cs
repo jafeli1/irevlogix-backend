@@ -18,6 +18,11 @@ namespace irevlogix_backend.Controllers
             _context = context;
         }
 
+        private bool IsAdministrator()
+        {
+            return User.IsInRole("Administrator");
+        }
+
         [HttpGet]
         public async Task<ActionResult<IEnumerable<AssetCategory>>> GetAssetCategories(
             [FromQuery] string? name = null,
@@ -25,11 +30,16 @@ namespace irevlogix_backend.Controllers
             [FromQuery] int pageSize = 10)
         {
             var clientId = User.FindFirst("ClientId")?.Value;
-            if (string.IsNullOrEmpty(clientId))
+            if (string.IsNullOrEmpty(clientId) && !IsAdministrator())
                 return Unauthorized();
 
             var query = _context.AssetCategories
-                .Where(ac => ac.ClientId == clientId && ac.IsActive);
+                .Where(ac => ac.IsActive);
+
+            if (!IsAdministrator())
+            {
+                query = query.Where(ac => ac.ClientId == clientId);
+            }
 
             if (!string.IsNullOrEmpty(name))
             {
@@ -52,12 +62,18 @@ namespace irevlogix_backend.Controllers
         public async Task<ActionResult<AssetCategory>> GetAssetCategory(int id)
         {
             var clientId = User.FindFirst("ClientId")?.Value;
-            if (string.IsNullOrEmpty(clientId))
+            if (string.IsNullOrEmpty(clientId) && !IsAdministrator())
                 return Unauthorized();
 
-            var assetCategory = await _context.AssetCategories
-                .Where(ac => ac.Id == id && ac.ClientId == clientId)
-                .FirstOrDefaultAsync();
+            var query = _context.AssetCategories
+                .Where(ac => ac.Id == id);
+
+            if (!IsAdministrator())
+            {
+                query = query.Where(ac => ac.ClientId == clientId);
+            }
+
+            var assetCategory = await query.FirstOrDefaultAsync();
 
             if (assetCategory == null)
                 return NotFound();
@@ -98,9 +114,15 @@ namespace irevlogix_backend.Controllers
             if (id != assetCategory.Id)
                 return BadRequest();
 
-            var existingCategory = await _context.AssetCategories
-                .Where(ac => ac.Id == id && ac.ClientId == clientId)
-                .FirstOrDefaultAsync();
+            var query = _context.AssetCategories
+                .Where(ac => ac.Id == id);
+
+            if (!IsAdministrator())
+            {
+                query = query.Where(ac => ac.ClientId == clientId);
+            }
+
+            var existingCategory = await query.FirstOrDefaultAsync();
 
             if (existingCategory == null)
                 return NotFound();
@@ -134,12 +156,18 @@ namespace irevlogix_backend.Controllers
         public async Task<IActionResult> DeleteAssetCategory(int id)
         {
             var clientId = User.FindFirst("ClientId")?.Value;
-            if (string.IsNullOrEmpty(clientId))
+            if (string.IsNullOrEmpty(clientId) && !IsAdministrator())
                 return Unauthorized();
 
-            var assetCategory = await _context.AssetCategories
-                .Where(ac => ac.Id == id && ac.ClientId == clientId)
-                .FirstOrDefaultAsync();
+            var query = _context.AssetCategories
+                .Where(ac => ac.Id == id);
+
+            if (!IsAdministrator())
+            {
+                query = query.Where(ac => ac.ClientId == clientId);
+            }
+
+            var assetCategory = await query.FirstOrDefaultAsync();
 
             if (assetCategory == null)
                 return NotFound();
@@ -152,6 +180,10 @@ namespace irevlogix_backend.Controllers
 
         private bool AssetCategoryExists(int id, string clientId)
         {
+            if (IsAdministrator())
+            {
+                return _context.AssetCategories.Any(ac => ac.Id == id);
+            }
             return _context.AssetCategories.Any(ac => ac.Id == id && ac.ClientId == clientId);
         }
     }

@@ -18,6 +18,11 @@ namespace irevlogix_backend.Controllers
             _context = context;
         }
 
+        private bool IsAdministrator()
+        {
+            return User.IsInRole("Administrator");
+        }
+
         [HttpGet]
         public async Task<ActionResult<IEnumerable<MaterialType>>> GetMaterialTypes(
             [FromQuery] string? name = null,
@@ -25,11 +30,16 @@ namespace irevlogix_backend.Controllers
             [FromQuery] int pageSize = 10)
         {
             var clientId = User.FindFirst("ClientId")?.Value;
-            if (string.IsNullOrEmpty(clientId))
+            if (string.IsNullOrEmpty(clientId) && !IsAdministrator())
                 return Unauthorized();
 
             var query = _context.MaterialTypes
-                .Where(mt => mt.ClientId == clientId && mt.IsActive);
+                .Where(mt => mt.IsActive);
+
+            if (!IsAdministrator())
+            {
+                query = query.Where(mt => mt.ClientId == clientId);
+            }
 
             if (!string.IsNullOrEmpty(name))
             {
@@ -52,12 +62,18 @@ namespace irevlogix_backend.Controllers
         public async Task<ActionResult<MaterialType>> GetMaterialType(int id)
         {
             var clientId = User.FindFirst("ClientId")?.Value;
-            if (string.IsNullOrEmpty(clientId))
+            if (string.IsNullOrEmpty(clientId) && !IsAdministrator())
                 return Unauthorized();
 
-            var materialType = await _context.MaterialTypes
-                .Where(mt => mt.Id == id && mt.ClientId == clientId)
-                .FirstOrDefaultAsync();
+            var query = _context.MaterialTypes
+                .Where(mt => mt.Id == id);
+
+            if (!IsAdministrator())
+            {
+                query = query.Where(mt => mt.ClientId == clientId);
+            }
+
+            var materialType = await query.FirstOrDefaultAsync();
 
             if (materialType == null)
                 return NotFound();
@@ -98,9 +114,15 @@ namespace irevlogix_backend.Controllers
             if (id != materialType.Id)
                 return BadRequest();
 
-            var existingMaterialType = await _context.MaterialTypes
-                .Where(mt => mt.Id == id && mt.ClientId == clientId)
-                .FirstOrDefaultAsync();
+            var query = _context.MaterialTypes
+                .Where(mt => mt.Id == id);
+
+            if (!IsAdministrator())
+            {
+                query = query.Where(mt => mt.ClientId == clientId);
+            }
+
+            var existingMaterialType = await query.FirstOrDefaultAsync();
 
             if (existingMaterialType == null)
                 return NotFound();
@@ -131,12 +153,18 @@ namespace irevlogix_backend.Controllers
         public async Task<IActionResult> DeleteMaterialType(int id)
         {
             var clientId = User.FindFirst("ClientId")?.Value;
-            if (string.IsNullOrEmpty(clientId))
+            if (string.IsNullOrEmpty(clientId) && !IsAdministrator())
                 return Unauthorized();
 
-            var materialType = await _context.MaterialTypes
-                .Where(mt => mt.Id == id && mt.ClientId == clientId)
-                .FirstOrDefaultAsync();
+            var query = _context.MaterialTypes
+                .Where(mt => mt.Id == id);
+
+            if (!IsAdministrator())
+            {
+                query = query.Where(mt => mt.ClientId == clientId);
+            }
+
+            var materialType = await query.FirstOrDefaultAsync();
 
             if (materialType == null)
                 return NotFound();
@@ -149,6 +177,10 @@ namespace irevlogix_backend.Controllers
 
         private bool MaterialTypeExists(int id, string clientId)
         {
+            if (IsAdministrator())
+            {
+                return _context.MaterialTypes.Any(mt => mt.Id == id);
+            }
             return _context.MaterialTypes.Any(mt => mt.Id == id && mt.ClientId == clientId);
         }
     }

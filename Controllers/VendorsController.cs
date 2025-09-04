@@ -26,11 +26,6 @@ namespace irevlogix_backend.Controllers
             return User.IsInRole("Administrator");
         }
 
-        private bool IsAdministrator()
-        {
-            return User.IsInRole("Administrator");
-        }
-
         public VendorsController(ApplicationDbContext context)
         {
             _context = context;

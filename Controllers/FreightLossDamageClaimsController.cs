@@ -31,11 +31,6 @@ namespace irevlogix_backend.Controllers
             return User.IsInRole("Administrator");
         }
 
-        private bool IsAdministrator()
-        {
-            return User.IsInRole("Administrator");
-        }
-
         [HttpGet]
         public async Task<ActionResult<IEnumerable<object>>> GetFreightLossDamageClaims(
             [FromQuery] DateTime? dateOfShipment = null,

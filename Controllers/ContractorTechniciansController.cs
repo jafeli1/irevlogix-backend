@@ -31,11 +31,6 @@ namespace irevlogix_backend.Controllers
             return User.IsInRole("Administrator");
         }
 
-        private bool IsAdministrator()
-        {
-            return User.IsInRole("Administrator");
-        }
-
         [HttpGet]
         public async Task<ActionResult<IEnumerable<object>>> GetContractorTechnicians(
             [FromQuery] string? firstName = null,
@@ -229,9 +224,15 @@ namespace irevlogix_backend.Controllers
                 var clientId = GetClientId();
                 var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? "0");
 
-                var contractor = await _context.ContractorTechnicians
-                    .Where(ct => ct.Id == id && ct.ClientId == clientId)
-                    .FirstOrDefaultAsync();
+                var query = _context.ContractorTechnicians
+                    .Where(ct => ct.Id == id);
+
+                if (!IsAdministrator())
+                {
+                    query = query.Where(ct => ct.ClientId == clientId);
+                }
+
+                var contractor = await query.FirstOrDefaultAsync();
 
                 if (contractor == null)
                     return NotFound();
@@ -282,9 +283,15 @@ namespace irevlogix_backend.Controllers
             try
             {
                 var clientId = GetClientId();
-                var contractor = await _context.ContractorTechnicians
-                    .Where(ct => ct.Id == id && ct.ClientId == clientId)
-                    .FirstOrDefaultAsync();
+                var query = _context.ContractorTechnicians
+                    .Where(ct => ct.Id == id);
+
+                if (!IsAdministrator())
+                {
+                    query = query.Where(ct => ct.ClientId == clientId);
+                }
+
+                var contractor = await query.FirstOrDefaultAsync();
 
                 if (contractor == null)
                     return NotFound();
@@ -308,9 +315,15 @@ namespace irevlogix_backend.Controllers
                 var clientId = GetClientId();
                 var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? "0");
 
-                var contractor = await _context.ContractorTechnicians
-                    .Where(ct => ct.Id == id && ct.ClientId == clientId)
-                    .FirstOrDefaultAsync();
+                var query = _context.ContractorTechnicians
+                    .Where(ct => ct.Id == id);
+
+                if (!IsAdministrator())
+                {
+                    query = query.Where(ct => ct.ClientId == clientId);
+                }
+
+                var contractor = await query.FirstOrDefaultAsync();
 
                 if (contractor == null)
                     return NotFound();
@@ -361,9 +374,15 @@ namespace irevlogix_backend.Controllers
             try
             {
                 var clientId = GetClientId();
-                var contractor = await _context.ContractorTechnicians
-                    .Where(ct => ct.Id == id && ct.ClientId == clientId)
-                    .FirstOrDefaultAsync();
+                var query = _context.ContractorTechnicians
+                    .Where(ct => ct.Id == id);
+
+                if (!IsAdministrator())
+                {
+                    query = query.Where(ct => ct.ClientId == clientId);
+                }
+
+                var contractor = await query.FirstOrDefaultAsync();
 
                 if (contractor == null)
                     return NotFound();

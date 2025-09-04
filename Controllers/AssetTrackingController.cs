@@ -28,6 +28,11 @@ namespace irevlogix_backend.Controllers
             return User.FindFirst("ClientId")?.Value ?? "ADMIN_CLIENT_001";
         }
 
+        private bool IsAdministrator()
+        {
+            return User.IsInRole("Administrator");
+        }
+
         [HttpGet("statuses")]
         public async Task<ActionResult<IEnumerable<AssetTrackingStatus>>> GetStatuses(
             [FromQuery] string? statusName = null,
@@ -38,7 +43,12 @@ namespace irevlogix_backend.Controllers
             {
                 var clientId = GetClientId();
                 var query = _context.AssetTrackingStatuses
-                    .Where(s => s.ClientId == clientId && s.IsActive);
+                    .Where(s => s.IsActive);
+
+                if (!IsAdministrator())
+                {
+                    query = query.Where(s => s.ClientId == clientId);
+                }
 
                 if (!string.IsNullOrEmpty(statusName))
                 {
@@ -70,9 +80,15 @@ namespace irevlogix_backend.Controllers
             try
             {
                 var clientId = GetClientId();
-                var status = await _context.AssetTrackingStatuses
-                    .Where(s => s.Id == id && s.ClientId == clientId)
-                    .FirstOrDefaultAsync();
+                var query = _context.AssetTrackingStatuses
+                    .Where(s => s.Id == id);
+
+                if (!IsAdministrator())
+                {
+                    query = query.Where(s => s.ClientId == clientId);
+                }
+
+                var status = await query.FirstOrDefaultAsync();
 
                 if (status == null)
                     return NotFound();
@@ -96,9 +112,15 @@ namespace irevlogix_backend.Controllers
                 int userId = 1;
                 if (!string.IsNullOrEmpty(userIdClaim) && int.TryParse(userIdClaim, out var parsedUserId)) userId = parsedUserId;
 
-                var existingStatus = await _context.AssetTrackingStatuses
-                    .Where(s => s.StatusName == request.StatusName && s.ClientId == clientId)
-                    .FirstOrDefaultAsync();
+                var query = _context.AssetTrackingStatuses
+                    .Where(s => s.StatusName == request.StatusName);
+
+                if (!IsAdministrator())
+                {
+                    query = query.Where(s => s.ClientId == clientId);
+                }
+
+                var existingStatus = await query.FirstOrDefaultAsync();
 
                 if (existingStatus != null)
                     return BadRequest("Status with this name already exists");
@@ -137,9 +159,15 @@ namespace irevlogix_backend.Controllers
                 int userId = 1;
                 if (!string.IsNullOrEmpty(userIdClaim) && int.TryParse(userIdClaim, out var parsedUserId)) userId = parsedUserId;
 
-                var status = await _context.AssetTrackingStatuses
-                    .Where(s => s.Id == id && s.ClientId == clientId)
-                    .FirstOrDefaultAsync();
+                var query = _context.AssetTrackingStatuses
+                    .Where(s => s.Id == id);
+
+                if (!IsAdministrator())
+                {
+                    query = query.Where(s => s.ClientId == clientId);
+                }
+
+                var status = await query.FirstOrDefaultAsync();
 
                 if (status == null)
                     return NotFound();
@@ -172,16 +200,28 @@ namespace irevlogix_backend.Controllers
                 int userId = 1;
                 if (!string.IsNullOrEmpty(userIdClaim) && int.TryParse(userIdClaim, out var parsedUserId)) userId = parsedUserId;
 
-                var asset = await _context.Assets
-                    .Where(a => a.Id == assetId && a.ClientId == clientId)
-                    .FirstOrDefaultAsync();
+                var assetQuery = _context.Assets
+                    .Where(a => a.Id == assetId);
+
+                if (!IsAdministrator())
+                {
+                    assetQuery = assetQuery.Where(a => a.ClientId == clientId);
+                }
+
+                var asset = await assetQuery.FirstOrDefaultAsync();
 
                 if (asset == null)
                     return NotFound("Asset not found");
 
-                var status = await _context.AssetTrackingStatuses
-                    .Where(s => s.Id == request.StatusId && s.ClientId == clientId)
-                    .FirstOrDefaultAsync();
+                var statusQuery = _context.AssetTrackingStatuses
+                    .Where(s => s.Id == request.StatusId);
+
+                if (!IsAdministrator())
+                {
+                    statusQuery = statusQuery.Where(s => s.ClientId == clientId);
+                }
+
+                var status = await statusQuery.FirstOrDefaultAsync();
 
                 if (status == null)
                     return NotFound("Status not found");
@@ -224,23 +264,28 @@ namespace irevlogix_backend.Controllers
             {
                 var clientId = GetClientId();
 
-                var totalAssets = await _context.Assets
-                    .Where(a => a.ClientId == clientId)
-                    .CountAsync();
+                var assetsQuery = _context.Assets.AsQueryable();
+                var chainQuery = _context.ChainOfCustodyRecords.AsQueryable();
 
-                var assetsByStatus = await _context.Assets
-                    .Where(a => a.ClientId == clientId)
+                if (!IsAdministrator())
+                {
+                    assetsQuery = assetsQuery.Where(a => a.ClientId == clientId);
+                    chainQuery = chainQuery.Where(c => c.ClientId == clientId);
+                }
+
+                var totalAssets = await assetsQuery.CountAsync();
+
+                var assetsByStatus = await assetsQuery
                     .Include(a => a.CurrentStatus)
                     .GroupBy(a => a.CurrentStatus!.StatusName)
                     .Select(g => new { Status = g.Key, Count = g.Count() })
                     .ToListAsync();
 
-                var dataBearingAssets = await _context.Assets
-                    .Where(a => a.ClientId == clientId && a.IsDataBearing)
+                var dataBearingAssets = await assetsQuery
+                    .Where(a => a.IsDataBearing)
                     .CountAsync();
 
-                var recentActivity = await _context.ChainOfCustodyRecords
-                    .Where(c => c.ClientId == clientId)
+                var recentActivity = await chainQuery
                     .OrderByDescending(c => c.Timestamp)
                     .Take(10)
                     .Select(c => new
@@ -276,9 +321,15 @@ namespace irevlogix_backend.Controllers
             try
             {
                 var clientId = GetClientId();
-                var status = await _context.AssetTrackingStatuses
-                    .Where(s => s.Id == id && s.ClientId == clientId)
-                    .FirstOrDefaultAsync();
+                var query = _context.AssetTrackingStatuses
+                    .Where(s => s.Id == id);
+
+                if (!IsAdministrator())
+                {
+                    query = query.Where(s => s.ClientId == clientId);
+                }
+
+                var status = await query.FirstOrDefaultAsync();
 
                 if (status == null)
                     return NotFound();
