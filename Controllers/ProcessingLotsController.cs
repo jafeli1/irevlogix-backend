@@ -233,15 +233,16 @@ namespace irevlogix_backend.Controllers
             {
                 var clientId = GetClientId();
                 var query = _context.ProcessingLots
-                    .Where(pl => pl.Id == id)
-                    .Include(pl => pl.ProcessingSteps);
+                    .Where(pl => pl.Id == id);
 
                 if (!IsAdministrator())
                 {
                     query = query.Where(pl => pl.ClientId == clientId);
                 }
 
-                var lot = await query.FirstOrDefaultAsync();
+                var lot = await query
+                    .Include(pl => pl.ProcessingSteps)
+                    .FirstOrDefaultAsync();
 
                 if (lot == null)
                     return NotFound();

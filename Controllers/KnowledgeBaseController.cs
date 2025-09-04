@@ -85,15 +85,16 @@ namespace irevlogix_backend.Controllers
             {
                 var clientId = GetClientId();
                 var query = _context.KnowledgeBaseArticles
-                    .Where(kb => kb.Id == id)
-                    .Include(kb => kb.Author);
+                    .Where(kb => kb.Id == id);
 
                 if (!IsAdministrator())
                 {
                     query = query.Where(kb => kb.ClientId == clientId);
                 }
 
-                var article = await query.FirstOrDefaultAsync();
+                var article = await query
+                    .Include(kb => kb.Author)
+                    .FirstOrDefaultAsync();
 
                 if (article == null)
                     return NotFound();
