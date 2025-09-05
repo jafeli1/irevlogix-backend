@@ -50,7 +50,7 @@ namespace irevlogix_backend.Middleware
                                 _lastActivityTimes.Remove(sessionKey);
                                 context.Response.StatusCode = 401;
                                 context.Response.ContentType = "application/json";
-                                context.Response.WriteAsync("{\"message\":\"Session has expired due to inactivity\",\"sessionExpired\":true}");
+                                await context.Response.WriteAsync("{\"message\":\"Session has expired due to inactivity\",\"sessionExpired\":true}");
                                 return;
                             }
                         }
