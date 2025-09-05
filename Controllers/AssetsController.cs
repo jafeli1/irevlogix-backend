@@ -70,7 +70,7 @@ namespace irevlogix_backend.Controllers
                     .Where(a => a.ClientId == clientId)
                     .Join(_context.Clients,
                         asset => asset.ClientId,
-                        client => client.Id.ToString(),
+                        client => client.ClientId,
                         (asset, client) => new { 
                             Id = client.Id, 
                             Name = client.CompanyName 
