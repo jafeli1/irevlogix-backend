@@ -40,6 +40,8 @@ namespace irevlogix_backend.Middleware
                     
                     var timeoutMinutes = timeoutSetting?.LoginTimeoutMinutes ?? 10;
                     
+                    bool sessionExpired = false;
+                    
                     lock (_lockObject)
                     {
                         if (_lastActivityTimes.TryGetValue(sessionKey, out var lastActivity))
@@ -48,14 +50,22 @@ namespace irevlogix_backend.Middleware
                             if (timeSinceLastActivity.TotalMinutes > timeoutMinutes)
                             {
                                 _lastActivityTimes.Remove(sessionKey);
-                                context.Response.StatusCode = 401;
-                                context.Response.ContentType = "application/json";
-                                await context.Response.WriteAsync("{\"message\":\"Session has expired due to inactivity\",\"sessionExpired\":true}");
-                                return;
+                                sessionExpired = true;
                             }
                         }
                         
-                        _lastActivityTimes[sessionKey] = currentTime;
+                        if (!sessionExpired)
+                        {
+                            _lastActivityTimes[sessionKey] = currentTime;
+                        }
+                    }
+                    
+                    if (sessionExpired)
+                    {
+                        context.Response.StatusCode = 401;
+                        context.Response.ContentType = "application/json";
+                        await context.Response.WriteAsync("{\"message\":\"Session has expired due to inactivity\",\"sessionExpired\":true}");
+                        return;
                     }
                 }
             }
