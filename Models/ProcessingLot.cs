@@ -55,5 +55,7 @@ namespace irevlogix_backend.Models
         public virtual ICollection<ProcessedMaterial> ProcessedMaterials { get; set; } = new List<ProcessedMaterial>();
         public virtual ICollection<ShipmentItem> IncomingShipmentItems { get; set; } = new List<ShipmentItem>();
 
+        public decimal? NetProfit => (ActualRevenue ?? ExpectedRevenue ?? 0) - (ProcessingCost ?? 0) - (IncomingMaterialCost ?? 0);
+        public decimal? TotalWeight => (TotalIncomingWeight ?? 0) + (TotalProcessedWeight ?? 0);
     }
 }
