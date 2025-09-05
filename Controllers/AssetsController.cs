@@ -46,6 +46,43 @@ namespace irevlogix_backend.Controllers
             return input;
         }
 
+        [HttpGet("originators")]
+        public async Task<ActionResult<IEnumerable<object>>> GetOriginators()
+        {
+            var clientId = GetClientId();
+            
+            if (IsAdministrator())
+            {
+                var allClients = await _context.Clients
+                    .Where(c => c.IsActive)
+                    .Select(c => new { 
+                        Id = c.Id, 
+                        Name = c.CompanyName 
+                    })
+                    .OrderBy(c => c.Name)
+                    .ToListAsync();
+                
+                return Ok(allClients);
+            }
+            else
+            {
+                var userClients = await _context.Assets
+                    .Where(a => a.ClientId == clientId)
+                    .Join(_context.Clients,
+                        asset => asset.ClientId,
+                        client => client.ClientId,
+                        (asset, client) => new { 
+                            Id = client.Id, 
+                            Name = client.CompanyName 
+                        })
+                    .Distinct()
+                    .OrderBy(c => c.Name)
+                    .ToListAsync();
+                
+                return Ok(userClients);
+            }
+        }
+
         [HttpGet]
         public async Task<ActionResult<IEnumerable<object>>> GetAssets(
             [FromQuery] string? search = null,
