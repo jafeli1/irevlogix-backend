@@ -95,7 +95,7 @@ namespace irevlogix_backend.Controllers
             await _context.SaveChangesAsync();
 
             var loginTimeout = await _settingsService.GetLoginTimeoutMinutes(user.ClientId);
-            var token = GenerateJwtToken(user, loginTimeout);
+            var token = GenerateJwtToken(user);
 
             var response = new
             {
@@ -164,7 +164,7 @@ namespace irevlogix_backend.Controllers
             return Ok(new { message = "Registration successful! Please check your email to confirm your account." });
         }
 
-        private string GenerateJwtToken(User user, int timeoutMinutes = 5)
+        private string GenerateJwtToken(User user)
         {
             var tokenHandler = new JwtSecurityTokenHandler();
             var key = Encoding.ASCII.GetBytes(Environment.GetEnvironmentVariable("JWT_SECRET") ?? 
@@ -188,7 +188,7 @@ namespace irevlogix_backend.Controllers
             var tokenDescriptor = new SecurityTokenDescriptor
             {
                 Subject = new ClaimsIdentity(claims),
-                Expires = DateTime.UtcNow.AddMinutes(timeoutMinutes),
+                Expires = DateTime.UtcNow.AddHours(24),
                 SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(key), SecurityAlgorithms.HmacSha256Signature)
             };
             var token = tokenHandler.CreateToken(tokenDescriptor);
