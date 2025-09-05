@@ -277,7 +277,8 @@ namespace irevlogix_backend.Controllers
 
                 var assetsByStatus = await assetsQuery
                     .Include(a => a.CurrentStatus)
-                    .GroupBy(a => a.CurrentStatus!.StatusName)
+                    .Where(a => a.CurrentStatus != null)
+                    .GroupBy(a => a.CurrentStatus.StatusName)
                     .Select(g => new { Status = g.Key, Count = g.Count() })
                     .ToListAsync();
 
