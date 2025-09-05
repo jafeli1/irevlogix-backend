@@ -14,14 +14,23 @@ namespace irevlogix_backend.Services
             _httpClient = httpClient;
             _apiKey = Environment.GetEnvironmentVariable("OPENAI_API_KEY") ?? 
                      configuration["OpenAI:ApiKey"] ?? 
-                     throw new InvalidOperationException("OpenAI API key not configured");
+                     string.Empty;
             _logger = logger;
             
-            _httpClient.DefaultRequestHeaders.Add("Authorization", $"Bearer {_apiKey}");
+            if (!string.IsNullOrEmpty(_apiKey))
+            {
+                _httpClient.DefaultRequestHeaders.Add("Authorization", $"Bearer {_apiKey}");
+            }
         }
 
         public async Task<string> GetChatCompletionAsync(string prompt, string systemMessage = "You are a helpful assistant for recycling and asset recovery operations.")
         {
+            if (string.IsNullOrEmpty(_apiKey))
+            {
+                _logger.LogWarning("OpenAI API key not configured, returning fallback response");
+                return "AI recommendations are currently unavailable due to missing API configuration.";
+            }
+
             try
             {
                 var requestBody = new
@@ -60,6 +69,12 @@ namespace irevlogix_backend.Services
 
         public async Task<T?> GetStructuredResponseAsync<T>(string prompt, string systemMessage = "You are a helpful assistant. Respond only with valid JSON.")
         {
+            if (string.IsNullOrEmpty(_apiKey))
+            {
+                _logger.LogWarning("OpenAI API key not configured, returning default response");
+                return default(T);
+            }
+
             try
             {
                 var response = await GetChatCompletionAsync(prompt, systemMessage);
