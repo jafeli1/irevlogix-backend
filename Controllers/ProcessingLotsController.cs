@@ -113,7 +113,48 @@ namespace irevlogix_backend.Controllers
                 if (lot == null)
                     return NotFound();
 
-                return Ok(lot);
+                return Ok(new
+                {
+                    lot.Id,
+                    lot.LotNumber,
+                    lot.Status,
+                    lot.Description,
+                    lot.ProcessingCost,
+                    lot.ExpectedRevenue,
+                    lot.ActualRevenue,
+                    lot.IncomingMaterialCost,
+                    lot.TotalIncomingWeight,
+                    lot.TotalProcessedWeight,
+                    lot.DateCreated,
+                    lot.CreatedBy,
+                    lot.LastModified,
+                    lot.ModifiedBy,
+                    lot.ClientId,
+                    lot.SourceShipmentId,
+                    lot.CompletionDate,
+                    lot.AssignedOperator,
+                    lot.ContaminationPercentage,
+                    lot.CertificationNumber,
+                    lot.IncomingMaterialNotes,
+                    lot.QualityControlNotes,
+                    lot.ProcessingNotes,
+                    lot.ProcessingMethod,
+                    NetProfit = lot.NetProfit,
+                    Weight = lot.TotalWeight,
+                    ProcessingSteps = lot.ProcessingSteps,
+                    ProcessedMaterials = lot.ProcessedMaterials,
+                    IncomingMaterials = lot.IncomingShipmentItems.Select(si => new
+                    {
+                        si.Id,
+                        MaterialType = si.MaterialType,
+                        si.Quantity,
+                        si.Condition,
+                        SourceShipmentId = si.ShipmentId,
+                        ActualReceivedWeight = si.Weight,
+                        ContaminationPercentage = (decimal?)null,
+                        IncomingMaterialCost = si.ActualValue
+                    })
+                });
             }
             catch (Exception ex)
             {
