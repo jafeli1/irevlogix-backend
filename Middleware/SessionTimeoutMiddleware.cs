@@ -6,6 +6,8 @@ namespace irevlogix_backend.Middleware
     public class SessionTimeoutMiddleware
     {
         private readonly RequestDelegate _next;
+        private static readonly Dictionary<string, DateTime> _lastActivityTimes = new();
+        private static readonly object _lockObject = new();
 
         public SessionTimeoutMiddleware(RequestDelegate next)
         {
@@ -23,29 +25,47 @@ namespace irevlogix_backend.Middleware
 
             if (context.User.Identity?.IsAuthenticated == true)
             {
-                var loginTimeClaim = context.User.FindFirst("LoginTime")?.Value;
-                if (!string.IsNullOrEmpty(loginTimeClaim) && long.TryParse(loginTimeClaim, out var loginTime))
+                var userIdClaim = context.User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+                var clientId = context.User.FindFirst("ClientId")?.Value;
+                
+                if (!string.IsNullOrEmpty(userIdClaim) && !string.IsNullOrEmpty(clientId))
                 {
-                    var loginDateTime = DateTimeOffset.FromUnixTimeSeconds(loginTime).UtcDateTime;
-                    var clientId = context.User.FindFirst("ClientId")?.Value;
+                    var sessionKey = $"{clientId}:{userIdClaim}";
+                    var currentTime = DateTime.UtcNow;
                     
-                    if (!string.IsNullOrEmpty(clientId))
+                    var dbContext = context.RequestServices.GetRequiredService<Data.ApplicationDbContext>();
+                    var timeoutSetting = await dbContext.ApplicationSettings
+                        .Where(s => s.ClientId == clientId && s.SettingKey == "LoginTimeoutMinutes")
+                        .FirstOrDefaultAsync();
+                    
+                    var timeoutMinutes = timeoutSetting?.LoginTimeoutMinutes ?? 10;
+                    
+                    bool sessionExpired = false;
+                    
+                    lock (_lockObject)
                     {
-                        var dbContext = context.RequestServices.GetRequiredService<Data.ApplicationDbContext>();
-                        var timeoutSetting = await dbContext.ApplicationSettings
-                            .Where(s => s.ClientId == clientId)
-                            .FirstOrDefaultAsync();
-                        
-                        var timeoutMinutes = timeoutSetting?.LoginTimeoutMinutes ?? 5;
-                        var sessionExpiry = loginDateTime.AddMinutes(timeoutMinutes);
-                        
-                        if (DateTime.UtcNow > sessionExpiry)
+                        if (_lastActivityTimes.TryGetValue(sessionKey, out var lastActivity))
                         {
-                            context.Response.StatusCode = 401;
-                            context.Response.ContentType = "application/json";
-                            await context.Response.WriteAsync("{\"message\":\"Session has expired due to inactivity\",\"sessionExpired\":true}");
-                            return;
+                            var timeSinceLastActivity = currentTime - lastActivity;
+                            if (timeSinceLastActivity.TotalMinutes > timeoutMinutes)
+                            {
+                                _lastActivityTimes.Remove(sessionKey);
+                                sessionExpired = true;
+                            }
                         }
+                        
+                        if (!sessionExpired)
+                        {
+                            _lastActivityTimes[sessionKey] = currentTime;
+                        }
+                    }
+                    
+                    if (sessionExpired)
+                    {
+                        context.Response.StatusCode = 401;
+                        context.Response.ContentType = "application/json";
+                        await context.Response.WriteAsync("{\"message\":\"Session has expired due to inactivity\",\"sessionExpired\":true}");
+                        return;
                     }
                 }
             }
