@@ -231,21 +231,28 @@ namespace irevlogix_backend.Controllers
                 asset.UpdatedBy = userId;
                 asset.DateUpdated = DateTime.UtcNow;
 
-                var chainOfCustody = new ChainOfCustody
+                var defaultVendor = await _context.Vendors
+                    .Where(v => v.ClientId == clientId)
+                    .FirstOrDefaultAsync();
+                
+                if (defaultVendor != null)
                 {
-                    AssetId = assetId,
-                    Timestamp = DateTime.UtcNow,
-                    Location = request.Location,
-                    UserId = userId,
-                    VendorId = 1, // Default vendor
-                    StatusChange = status.StatusName,
-                    Notes = request.Notes,
-                    ClientId = clientId,
-                    CreatedBy = userId,
-                    UpdatedBy = userId
-                };
+                    var chainOfCustody = new ChainOfCustody
+                    {
+                        AssetId = assetId,
+                        Timestamp = DateTime.UtcNow,
+                        Location = request.Location,
+                        UserId = userId,
+                        VendorId = defaultVendor.Id,
+                        StatusChange = status.StatusName,
+                        Notes = request.Notes,
+                        ClientId = clientId,
+                        CreatedBy = userId,
+                        UpdatedBy = userId
+                    };
 
-                _context.ChainOfCustodyRecords.Add(chainOfCustody);
+                    _context.ChainOfCustodyRecords.Add(chainOfCustody);
+                }
                 await _context.SaveChangesAsync();
 
                 return NoContent();

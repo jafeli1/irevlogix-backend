@@ -280,21 +280,28 @@ namespace irevlogix_backend.Controllers
                         .Select(s => s.StatusName)
                         .FirstOrDefaultAsync();
 
-                    var chainOfCustody = new ChainOfCustody
+                    var defaultVendor = await _context.Vendors
+                        .Where(v => v.ClientId == clientId)
+                        .FirstOrDefaultAsync();
+                    
+                    if (defaultVendor != null)
                     {
-                        AssetId = asset.Id,
-                        Timestamp = DateTime.UtcNow,
-                        Location = request.CurrentLocation,
-                        UserId = userId,
-                        VendorId = request.VendorId ?? 1,
-                        StatusChange = string.IsNullOrWhiteSpace(statusName) ? "Asset created" : statusName,
-                        Notes = "Asset created",
-                        ClientId = clientId,
-                        CreatedBy = userId,
-                        UpdatedBy = userId
-                    };
+                        var chainOfCustody = new ChainOfCustody
+                        {
+                            AssetId = asset.Id,
+                            Timestamp = DateTime.UtcNow,
+                            Location = request.CurrentLocation,
+                            UserId = userId,
+                            VendorId = request.VendorId ?? defaultVendor.Id,
+                            StatusChange = string.IsNullOrWhiteSpace(statusName) ? "Asset created" : statusName,
+                            Notes = "Asset created",
+                            ClientId = clientId,
+                            CreatedBy = userId,
+                            UpdatedBy = userId
+                        };
 
-                    _context.ChainOfCustodyRecords.Add(chainOfCustody);
+                        _context.ChainOfCustodyRecords.Add(chainOfCustody);
+                    }
                     await _context.SaveChangesAsync();
                 }
 
@@ -364,21 +371,28 @@ namespace irevlogix_backend.Controllers
                         .Select(s => s.StatusName)
                         .FirstOrDefaultAsync();
 
-                    var chainOfCustody = new ChainOfCustody
+                    var defaultVendor = await _context.Vendors
+                        .Where(v => v.ClientId == clientId)
+                        .FirstOrDefaultAsync();
+                    
+                    if (defaultVendor != null)
                     {
-                        AssetId = asset.Id,
-                        Timestamp = DateTime.UtcNow,
-                        Location = request.CurrentLocation,
-                        UserId = userId,
-                        VendorId = request.VendorId ?? 1,
-                        StatusChange = string.IsNullOrWhiteSpace(statusName) ? "Asset created via bulk upload" : statusName,
-                        Notes = "Asset created via bulk upload",
-                        ClientId = clientId,
-                        CreatedBy = userId,
-                        UpdatedBy = userId
-                    };
+                        var chainOfCustody = new ChainOfCustody
+                        {
+                            AssetId = asset.Id,
+                            Timestamp = DateTime.UtcNow,
+                            Location = request.CurrentLocation,
+                            UserId = userId,
+                            VendorId = request.VendorId ?? defaultVendor.Id,
+                            StatusChange = string.IsNullOrWhiteSpace(statusName) ? "Asset created via bulk upload" : statusName,
+                            Notes = "Asset created via bulk upload",
+                            ClientId = clientId,
+                            CreatedBy = userId,
+                            UpdatedBy = userId
+                        };
 
-                    _context.ChainOfCustodyRecords.Add(chainOfCustody);
+                        _context.ChainOfCustodyRecords.Add(chainOfCustody);
+                    }
                     await _context.SaveChangesAsync();
                 }
 
@@ -456,21 +470,28 @@ namespace irevlogix_backend.Controllers
 
                 if (oldLocation != asset.CurrentLocation || oldStatusId != asset.CurrentStatusId)
                 {
-                    var chainOfCustody = new ChainOfCustody
+                    var defaultVendor = await _context.Vendors
+                        .Where(v => v.ClientId == clientId)
+                        .FirstOrDefaultAsync();
+                    
+                    if (defaultVendor != null)
                     {
-                        AssetId = asset.Id,
-                        Timestamp = DateTime.UtcNow,
-                        Location = asset.CurrentLocation,
-                        UserId = userId,
-                        VendorId = 1, // Default vendor for chain of custody
-                        StatusChange = "Asset updated",
-                        Notes = request.Notes ?? "Asset updated",
-                        ClientId = clientId,
-                        CreatedBy = userId,
-                        UpdatedBy = userId
-                    };
+                        var chainOfCustody = new ChainOfCustody
+                        {
+                            AssetId = asset.Id,
+                            Timestamp = DateTime.UtcNow,
+                            Location = asset.CurrentLocation,
+                            UserId = userId,
+                            VendorId = defaultVendor.Id,
+                            StatusChange = "Asset updated",
+                            Notes = request.Notes ?? "Asset updated",
+                            ClientId = clientId,
+                            CreatedBy = userId,
+                            UpdatedBy = userId
+                        };
 
-                    _context.ChainOfCustodyRecords.Add(chainOfCustody);
+                        _context.ChainOfCustodyRecords.Add(chainOfCustody);
+                    }
                 }
 
                 await _context.SaveChangesAsync();
