@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using System.Security.Claims;
 using irevlogix_backend.Data;
 using irevlogix_backend.Models;
 
@@ -23,6 +24,11 @@ namespace irevlogix_backend.Controllers
             return User.IsInRole("Administrator");
         }
 
+        private string GetClientId()
+        {
+            return User.FindFirst("ClientId")?.Value ?? throw new UnauthorizedAccessException("ClientId not found in token");
+        }
+
         [HttpGet]
         public async Task<ActionResult<IEnumerable<Shipment>>> GetShipments(
             [FromQuery] string? search = null,
@@ -35,7 +41,7 @@ namespace irevlogix_backend.Controllers
             [FromQuery] int page = 1,
             [FromQuery] int pageSize = 10)
         {
-            var clientId = User.FindFirst("ClientId")?.Value;
+            var clientId = GetClientId();
             if (string.IsNullOrEmpty(clientId) && !IsAdministrator())
                 return Unauthorized();
 
@@ -106,7 +112,7 @@ namespace irevlogix_backend.Controllers
         [HttpGet("{id}")]
         public async Task<ActionResult<Shipment>> GetShipment(int id)
         {
-            var clientId = User.FindFirst("ClientId")?.Value;
+            var clientId = GetClientId();
             if (string.IsNullOrEmpty(clientId) && !IsAdministrator())
                 return Unauthorized();
 
@@ -136,15 +142,15 @@ namespace irevlogix_backend.Controllers
         [HttpPost]
         public async Task<ActionResult<Shipment>> CreateShipment(Shipment shipment)
         {
-            var clientId = User.FindFirst("ClientId")?.Value;
-            var userId = User.FindFirst("UserId")?.Value;
+            var clientId = GetClientId();
+            var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? "0");
             
-            if (string.IsNullOrEmpty(clientId) || string.IsNullOrEmpty(userId))
+            if (userId == 0)
                 return Unauthorized();
 
             shipment.ClientId = clientId;
-            shipment.CreatedBy = int.Parse(userId);
-            shipment.UpdatedBy = int.Parse(userId);
+            shipment.CreatedBy = userId;
+            shipment.UpdatedBy = userId;
             shipment.DateCreated = DateTime.UtcNow;
             shipment.DateUpdated = DateTime.UtcNow;
 
@@ -172,10 +178,10 @@ namespace irevlogix_backend.Controllers
         [HttpPut("{id}")]
         public async Task<IActionResult> UpdateShipment(int id, Shipment shipment)
         {
-            var clientId = User.FindFirst("ClientId")?.Value;
-            var userId = User.FindFirst("UserId")?.Value;
+            var clientId = GetClientId();
+            var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? "0");
             
-            if (string.IsNullOrEmpty(clientId) || string.IsNullOrEmpty(userId))
+            if (userId == 0)
                 return Unauthorized();
 
             if (id != shipment.Id)
@@ -195,7 +201,7 @@ namespace irevlogix_backend.Controllers
                 return NotFound();
 
             shipment.ClientId = clientId;
-            shipment.UpdatedBy = int.Parse(userId);
+            shipment.UpdatedBy = userId;
             shipment.DateUpdated = DateTime.UtcNow;
 
             _context.Entry(existingShipment).CurrentValues.SetValues(shipment);
@@ -207,7 +213,7 @@ namespace irevlogix_backend.Controllers
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteShipment(int id)
         {
-            var clientId = User.FindFirst("ClientId")?.Value;
+            var clientId = GetClientId();
             if (string.IsNullOrEmpty(clientId) && !IsAdministrator())
                 return Unauthorized();
 
@@ -233,10 +239,10 @@ namespace irevlogix_backend.Controllers
         [HttpPut("{shipmentId}/items/{itemId}")]
         public async Task<IActionResult> UpdateShipmentItem(int shipmentId, int itemId, ShipmentItemUpdateRequest request)
         {
-            var clientId = User.FindFirst("ClientId")?.Value;
-            var userId = User.FindFirst("UserId")?.Value;
+            var clientId = GetClientId();
+            var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? "0");
             
-            if (string.IsNullOrEmpty(clientId) || string.IsNullOrEmpty(userId))
+            if (userId == 0)
                 return Unauthorized();
 
             var query = _context.ShipmentItems
@@ -266,7 +272,7 @@ namespace irevlogix_backend.Controllers
         [HttpGet("{id}/status-history")]
         public async Task<ActionResult<IEnumerable<ShipmentStatusHistory>>> GetShipmentStatusHistory(int id)
         {
-            var clientId = User.FindFirst("ClientId")?.Value;
+            var clientId = GetClientId();
             if (string.IsNullOrEmpty(clientId) && !IsAdministrator())
                 return Unauthorized();
 
@@ -302,10 +308,10 @@ namespace irevlogix_backend.Controllers
         [HttpPost("{id}/status-history")]
         public async Task<ActionResult> AddStatusHistory(int id, AddStatusHistoryRequest request)
         {
-            var clientId = User.FindFirst("ClientId")?.Value;
-            var userId = User.FindFirst("UserId")?.Value;
+            var clientId = GetClientId();
+            var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? "0");
             
-            if (string.IsNullOrEmpty(clientId) || string.IsNullOrEmpty(userId))
+            if (userId == 0)
                 return Unauthorized();
 
             var query = _context.Shipments
@@ -329,12 +335,12 @@ namespace irevlogix_backend.Controllers
                 Notes = request.Notes,
                 ActionType = request.ActionType,
                 ClientId = clientId,
-                CreatedBy = int.Parse(userId),
-                UpdatedBy = int.Parse(userId)
+                CreatedBy = userId,
+                UpdatedBy = userId
             };
 
             shipment.Status = request.ToStatus;
-            shipment.UpdatedBy = int.Parse(userId);
+            shipment.UpdatedBy = userId;
             shipment.DateUpdated = DateTime.UtcNow;
 
             _context.ShipmentStatusHistories.Add(history);
@@ -346,7 +352,7 @@ namespace irevlogix_backend.Controllers
         [HttpGet("{id}/documents")]
         public async Task<ActionResult<IEnumerable<ShipmentDocument>>> GetShipmentDocuments(int id)
         {
-            var clientId = User.FindFirst("ClientId")?.Value;
+            var clientId = GetClientId();
             if (string.IsNullOrEmpty(clientId) && !IsAdministrator())
                 return Unauthorized();
 
@@ -381,10 +387,10 @@ namespace irevlogix_backend.Controllers
         [HttpPost("{id}/documents")]
         public async Task<ActionResult> UploadDocument(int id, IFormFile file, [FromForm] string? description = null)
         {
-            var clientId = User.FindFirst("ClientId")?.Value;
-            var userId = User.FindFirst("UserId")?.Value;
+            var clientId = GetClientId();
+            var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? "0");
             
-            if (string.IsNullOrEmpty(clientId) || string.IsNullOrEmpty(userId))
+            if (string.IsNullOrEmpty(clientId))
                 return Unauthorized();
 
             var query = _context.Shipments
@@ -423,8 +429,8 @@ namespace irevlogix_backend.Controllers
                 FileSize = file.Length,
                 Description = description,
                 ClientId = clientId,
-                CreatedBy = int.Parse(userId),
-                UpdatedBy = int.Parse(userId)
+                CreatedBy = userId,
+                UpdatedBy = userId
             };
 
             _context.ShipmentDocuments.Add(document);
@@ -436,7 +442,7 @@ namespace irevlogix_backend.Controllers
         [HttpDelete("{id}/documents/{documentId}")]
         public async Task<IActionResult> DeleteDocument(int id, int documentId)
         {
-            var clientId = User.FindFirst("ClientId")?.Value;
+            var clientId = GetClientId();
             if (string.IsNullOrEmpty(clientId))
                 return Unauthorized();
 
@@ -461,7 +467,7 @@ namespace irevlogix_backend.Controllers
         [HttpGet("{id}/documents/{documentId}/download")]
         public async Task<IActionResult> DownloadDocument(int id, int documentId)
         {
-            var clientId = User.FindFirst("ClientId")?.Value;
+            var clientId = GetClientId();
             if (string.IsNullOrEmpty(clientId))
                 return Unauthorized();
 
@@ -482,7 +488,7 @@ namespace irevlogix_backend.Controllers
         [HttpGet("originators")]
         public async Task<ActionResult<IEnumerable<object>>> GetOriginators()
         {
-            var clientId = User.FindFirst("ClientId")?.Value;
+            var clientId = GetClientId();
             if (string.IsNullOrEmpty(clientId) && !IsAdministrator())
                 return Unauthorized();
 
