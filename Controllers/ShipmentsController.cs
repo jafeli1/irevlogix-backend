@@ -163,8 +163,8 @@ namespace irevlogix_backend.Controllers
             foreach (var item in shipment.ShipmentItems)
             {
                 item.ClientId = clientId;
-                item.CreatedBy = int.Parse(userId);
-                item.UpdatedBy = int.Parse(userId);
+                item.CreatedBy = userId;
+                item.UpdatedBy = userId;
                 item.DateCreated = DateTime.UtcNow;
                 item.DateUpdated = DateTime.UtcNow;
             }
@@ -262,7 +262,7 @@ namespace irevlogix_backend.Controllers
             shipmentItem.DispositionMethod = request.DispositionMethod ?? shipmentItem.DispositionMethod;
             shipmentItem.DispositionCost = request.DispositionCost ?? shipmentItem.DispositionCost;
             shipmentItem.ProcessingStatus = request.ProcessingStatus ?? shipmentItem.ProcessingStatus;
-            shipmentItem.UpdatedBy = int.Parse(userId);
+            shipmentItem.UpdatedBy = userId;
             shipmentItem.DateUpdated = DateTime.UtcNow;
 
             await _context.SaveChangesAsync();
