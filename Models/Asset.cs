@@ -23,9 +23,8 @@ namespace irevlogix_backend.Models
         [MaxLength(100)]
         public string? SerialNumber { get; set; }
         
-        [Required]
         [MaxLength(500)]
-        public string Description { get; set; } = string.Empty;
+        public string? Description { get; set; }
         
         public DateTime? OriginalPurchaseDate { get; set; }
         public decimal? OriginalCost { get; set; }
