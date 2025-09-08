@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using System.Security.Claims;
+using System.Text;
 using irevlogix_backend.Data;
 using irevlogix_backend.Models;
 
@@ -510,6 +511,84 @@ namespace irevlogix_backend.Controllers
                 .ToListAsync();
 
             return Ok(originators);
+        }
+
+        [HttpGet("export")]
+        public async Task<IActionResult> ExportShipments(
+            [FromQuery] string? search = null,
+            [FromQuery] DateTime? scheduledStartDate = null,
+            [FromQuery] DateTime? scheduledEndDate = null,
+            [FromQuery] DateTime? actualStartDate = null,
+            [FromQuery] DateTime? actualEndDate = null,
+            [FromQuery] int? materialTypeId = null,
+            [FromQuery] string export = "csv")
+        {
+            var clientId = GetClientId();
+            if (string.IsNullOrEmpty(clientId) && !IsAdministrator())
+                return Unauthorized();
+
+            var query = _context.Shipments
+                .Include(s => s.OriginatorClient)
+                .Include(s => s.ReverseRequest)
+                .AsQueryable();
+
+            if (!IsAdministrator())
+            {
+                query = query.Where(s => s.ClientId == clientId);
+            }
+
+            if (!string.IsNullOrEmpty(search))
+            {
+                query = query.Where(s => s.ShipmentNumber.Contains(search) ||
+                                       s.TrackingNumber!.Contains(search) ||
+                                       s.Carrier!.Contains(search) ||
+                                       s.Status.Contains(search));
+            }
+
+            if (scheduledStartDate.HasValue)
+            {
+                query = query.Where(s => s.ScheduledPickupDate >= scheduledStartDate.Value);
+            }
+
+            if (scheduledEndDate.HasValue)
+            {
+                query = query.Where(s => s.ScheduledPickupDate <= scheduledEndDate.Value);
+            }
+
+            if (actualStartDate.HasValue)
+            {
+                query = query.Where(s => s.ActualPickupDate >= actualStartDate.Value);
+            }
+
+            if (actualEndDate.HasValue)
+            {
+                query = query.Where(s => s.ActualPickupDate <= actualEndDate.Value);
+            }
+
+            if (materialTypeId.HasValue)
+            {
+                query = query.Where(s => s.ShipmentItems.Any(si => si.MaterialTypeId == materialTypeId.Value));
+            }
+
+            var shipments = await query
+                .OrderByDescending(s => s.DateCreated)
+                .ToListAsync();
+
+            if (export.ToLower() == "csv")
+            {
+                var csv = new StringBuilder();
+                csv.AppendLine("ShipmentNumber,Status,TrackingNumber,Carrier,Weight,WeightUnit,NumberOfBoxes,ScheduledPickupDate,ActualPickupDate,ShipmentDate,ReceivedDate,EstimatedValue,ActualValue,TransportationCost,LogisticsCost,DispositionCost,PickupAddress,DeliveryAddress,OriginAddress,Notes,DispositionNotes,CreatedDate");
+
+                foreach (var shipment in shipments)
+                {
+                    csv.AppendLine($"\"{shipment.ShipmentNumber}\",\"{shipment.Status}\",\"{shipment.TrackingNumber}\",\"{shipment.Carrier}\",{shipment.Weight},\"{shipment.WeightUnit}\",{shipment.NumberOfBoxes},\"{shipment.ScheduledPickupDate:yyyy-MM-dd}\",\"{shipment.ActualPickupDate:yyyy-MM-dd}\",\"{shipment.ShipmentDate:yyyy-MM-dd}\",\"{shipment.ReceivedDate:yyyy-MM-dd}\",{shipment.EstimatedValue},{shipment.ActualValue},{shipment.TransportationCost},{shipment.LogisticsCost},{shipment.DispositionCost},\"{shipment.PickupAddress}\",\"{shipment.DeliveryAddress}\",\"{shipment.OriginAddress}\",\"{shipment.Notes}\",\"{shipment.DispositionNotes}\",\"{shipment.DateCreated:yyyy-MM-dd}\"");
+                }
+
+                var bytes = Encoding.UTF8.GetBytes(csv.ToString());
+                return File(bytes, "text/csv", $"shipments_export_{DateTime.UtcNow:yyyyMMdd}.csv");
+            }
+
+            return BadRequest("Unsupported export format");
         }
     }
 

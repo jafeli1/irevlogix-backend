@@ -183,5 +183,51 @@ namespace irevlogix_backend.Controllers
             await _context.SaveChangesAsync();
             return NoContent();
         }
+
+        [HttpGet("export")]
+        public async Task<IActionResult> ExportProcessedMaterials(
+            [FromQuery] int? materialTypeId = null,
+            [FromQuery] string? qualityGrade = null,
+            [FromQuery] string? location = null,
+            [FromQuery] string? status = null,
+            [FromQuery] string export = "csv")
+        {
+            var clientId = GetClientId();
+
+            var query = _context.ProcessedMaterials
+                .Include(p => p.MaterialType)
+                .Include(p => p.ProcessingLot)
+                .AsQueryable();
+
+            if (!IsAdministrator())
+            {
+                query = query.Where(x => x.ClientId == clientId);
+            }
+
+            if (materialTypeId.HasValue) query = query.Where(x => x.MaterialTypeId == materialTypeId.Value);
+            if (!string.IsNullOrWhiteSpace(qualityGrade)) query = query.Where(x => x.QualityGrade != null && x.QualityGrade.Contains(qualityGrade));
+            if (!string.IsNullOrWhiteSpace(location)) query = query.Where(x => x.Location != null && x.Location.Contains(location));
+            if (!string.IsNullOrWhiteSpace(status)) query = query.Where(x => x.Status == status);
+
+            var materials = await query
+                .OrderByDescending(x => x.DateCreated)
+                .ToListAsync();
+
+            if (export.ToLower() == "csv")
+            {
+                var csv = new System.Text.StringBuilder();
+                csv.AppendLine("Description,Quantity,UnitOfMeasure,QualityGrade,Location,ProcessedWeight,WeightUnit,Status,ExpectedSalesPrice,ActualSalesPrice,SaleDate,IsHazardous,HazardousClassification,PurchaseCostPerUnit,ProcessingCostPerUnit,CertificationNumber,Notes,CreatedDate");
+
+                foreach (var material in materials)
+                {
+                    csv.AppendLine($"\"{material.Description}\",{material.Quantity},\"{material.UnitOfMeasure}\",\"{material.QualityGrade}\",\"{material.Location}\",{material.ProcessedWeight},\"{material.WeightUnit}\",\"{material.Status}\",{material.ExpectedSalesPrice},{material.ActualSalesPrice},\"{material.SaleDate:yyyy-MM-dd}\",{material.IsHazardous},\"{material.HazardousClassification}\",{material.PurchaseCostPerUnit},{material.ProcessingCostPerUnit},\"{material.CertificationNumber}\",\"{material.Notes}\",\"{material.DateCreated:yyyy-MM-dd}\"");
+                }
+
+                var bytes = System.Text.Encoding.UTF8.GetBytes(csv.ToString());
+                return File(bytes, "text/csv", $"processed_materials_export_{DateTime.UtcNow:yyyyMMdd}.csv");
+            }
+
+            return BadRequest("Unsupported export format");
+        }
     }
 }
