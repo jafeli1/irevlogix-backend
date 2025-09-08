@@ -61,7 +61,7 @@ namespace irevlogix_backend.Services
                 ["IsDataBearing"] = a.IsDataBearing,
                 ["CurrentLocation"] = a.CurrentLocation ?? "",
                 ["EstimatedValue"] = a.EstimatedValue ?? 0,
-                ["ActualValue"] = a.ActualValue ?? 0,
+                ["ActualSalePrice"] = a.ActualSalePrice ?? 0,
                 ["DateCreated"] = a.DateCreated
             }).ToList();
         }
@@ -121,7 +121,7 @@ namespace irevlogix_backend.Services
             return materials.Select(pm => new Dictionary<string, object>
             {
                 ["Description"] = pm.Description ?? "",
-                ["Quantity"] = pm.Quantity ?? 0,
+                ["Quantity"] = pm.Quantity,
                 ["UnitOfMeasure"] = pm.UnitOfMeasure ?? "",
                 ["QualityGrade"] = pm.QualityGrade ?? "",
                 ["Location"] = pm.Location ?? "",
