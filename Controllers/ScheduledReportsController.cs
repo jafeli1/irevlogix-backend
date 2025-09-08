@@ -11,7 +11,7 @@ namespace irevlogix_backend.Controllers
     [ApiController]
     [Route("api/[controller]")]
     [Authorize]
-    public class ScheduledReportsController : BaseController
+    public class ScheduledReportsController : ControllerBase
     {
         private readonly ApplicationDbContext _context;
         private readonly ILogger<ScheduledReportsController> _logger;
@@ -20,6 +20,21 @@ namespace irevlogix_backend.Controllers
         {
             _context = context;
             _logger = logger;
+        }
+
+        private string GetClientId()
+        {
+            return User.FindFirst("ClientId")?.Value ?? throw new UnauthorizedAccessException("ClientId not found in token");
+        }
+
+        private bool IsAdministrator()
+        {
+            return User.IsInRole("Administrator");
+        }
+
+        private int GetUserId()
+        {
+            return int.Parse(User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value ?? "0");
         }
 
         [HttpGet]
