@@ -5,6 +5,7 @@ using irevlogix_backend.Data;
 using irevlogix_backend.Models;
 using irevlogix_backend.Services;
 using System.Security.Claims;
+using System.Text;
 
 namespace irevlogix_backend.Controllers
 {
@@ -414,6 +415,74 @@ namespace irevlogix_backend.Controllers
         private string GenerateLotId()
         {
             return $"LOT-{DateTime.UtcNow:yyyyMMdd}-{Guid.NewGuid().ToString("N")[..8].ToUpper()}";
+        }
+
+        [HttpGet("export")]
+        public async Task<IActionResult> ExportProcessingLots(
+            [FromQuery] string? status = null,
+            [FromQuery] string? lotId = null,
+            [FromQuery] DateTime? startDate = null,
+            [FromQuery] DateTime? endDate = null,
+            [FromQuery] string export = "csv")
+        {
+            try
+            {
+                var clientId = GetClientId();
+                var query = _context.ProcessingLots
+                    .Include(pl => pl.Operator)
+                    .Include(pl => pl.SourceShipment)
+                    .AsQueryable();
+
+                if (!IsAdministrator())
+                {
+                    query = query.Where(pl => pl.ClientId == clientId);
+                }
+
+                if (!string.IsNullOrEmpty(status))
+                {
+                    query = query.Where(pl => pl.Status.Contains(status));
+                }
+
+                if (!string.IsNullOrEmpty(lotId))
+                {
+                    query = query.Where(pl => pl.LotNumber.Contains(lotId));
+                }
+
+                if (startDate.HasValue)
+                {
+                    query = query.Where(pl => pl.StartDate >= startDate.Value);
+                }
+
+                if (endDate.HasValue)
+                {
+                    query = query.Where(pl => pl.CompletionDate <= endDate.Value);
+                }
+
+                var lots = await query
+                    .OrderByDescending(pl => pl.DateCreated)
+                    .ToListAsync();
+
+                if (export.ToLower() == "csv")
+                {
+                    var csv = new StringBuilder();
+                    csv.AppendLine("LotNumber,Status,Description,StartDate,CompletionDate,TotalIncomingWeight,TotalProcessedWeight,ProcessingCost,IncomingMaterialCost,ExpectedRevenue,ActualRevenue,NetProfit,ContaminationPercentage,QualityControlNotes,CertificationStatus,CertificationNumber,ProcessingNotes,ProcessingMethod,CreatedDate");
+
+                    foreach (var lot in lots)
+                    {
+                        csv.AppendLine($"\"{lot.LotNumber}\",\"{lot.Status}\",\"{lot.Description}\",\"{lot.StartDate:yyyy-MM-dd}\",\"{lot.CompletionDate:yyyy-MM-dd}\",{lot.TotalIncomingWeight},{lot.TotalProcessedWeight},{lot.ProcessingCost},{lot.IncomingMaterialCost},{lot.ExpectedRevenue},{lot.ActualRevenue},{lot.NetProfit},{lot.ContaminationPercentage},\"{lot.QualityControlNotes}\",\"{lot.CertificationStatus}\",\"{lot.CertificationNumber}\",\"{lot.ProcessingNotes}\",\"{lot.ProcessingMethod}\",\"{lot.DateCreated:yyyy-MM-dd}\"");
+                    }
+
+                    var bytes = Encoding.UTF8.GetBytes(csv.ToString());
+                    return File(bytes, "text/csv", $"processing_lots_export_{DateTime.UtcNow:yyyyMMdd}.csv");
+                }
+
+                return BadRequest("Unsupported export format");
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error exporting processing lots");
+                return StatusCode(500, "Internal server error");
+            }
         }
     }
 

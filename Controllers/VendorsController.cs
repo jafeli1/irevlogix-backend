@@ -158,5 +158,46 @@ namespace irevlogix_backend.Controllers
 
             return CreatedAtAction(nameof(GetById), new { id = v.Id }, new { v.Id });
         }
+
+        [HttpGet("export")]
+        public async Task<IActionResult> ExportVendors(
+            [FromQuery] string? name = null,
+            [FromQuery] int? materialTypeId = null,
+            [FromQuery] string export = "csv")
+        {
+            var clientId = GetClientId();
+
+            var query = _context.Vendors.AsQueryable();
+
+            if (!IsAdministrator())
+            {
+                query = query.Where(x => x.ClientId == clientId);
+            }
+
+            if (!string.IsNullOrWhiteSpace(name))
+            {
+                query = query.Where(v => v.VendorName.Contains(name));
+            }
+
+            var vendors = await query
+                .OrderByDescending(x => x.DateCreated)
+                .ToListAsync();
+
+            if (export.ToLower() == "csv")
+            {
+                var csv = new System.Text.StringBuilder();
+                csv.AppendLine("VendorName,ContactPerson,Email,Phone,Address,City,State,PostalCode,Country,MaterialsOfInterest,PaymentTerms,VendorRating,VendorTier,UpstreamTierVendor,CreatedDate");
+
+                foreach (var vendor in vendors)
+                {
+                    csv.AppendLine($"\"{vendor.VendorName}\",\"{vendor.ContactPerson}\",\"{vendor.Email}\",\"{vendor.Phone}\",\"{vendor.Address}\",\"{vendor.City}\",\"{vendor.State}\",\"{vendor.PostalCode}\",\"{vendor.Country}\",\"{vendor.MaterialsOfInterest}\",\"{vendor.PaymentTerms}\",{vendor.VendorRating},\"{vendor.VendorTier}\",{vendor.UpstreamTierVendor},\"{vendor.DateCreated:yyyy-MM-dd}\"");
+                }
+
+                var bytes = System.Text.Encoding.UTF8.GetBytes(csv.ToString());
+                return File(bytes, "text/csv", $"vendors_export_{DateTime.UtcNow:yyyyMMdd}.csv");
+            }
+
+            return BadRequest("Unsupported export format");
+        }
     }
 }
