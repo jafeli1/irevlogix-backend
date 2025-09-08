@@ -11,6 +11,7 @@ namespace irevlogix_backend.Services
         Task<int> GetUnsuccessfulLoginAttemptsBeforeLockout(string clientId);
         Task<int> GetLockoutDurationMinutes(string clientId);
         Task<string> GetPasswordComplexityRequirements(string clientId);
+        Task<decimal> GetEsgFactorAsync(string clientId, string factorKey, decimal defaultValue);
     }
 
     public class ApplicationSettingsService : IApplicationSettingsService
@@ -60,6 +61,18 @@ namespace irevlogix_backend.Services
             if (!string.IsNullOrEmpty(setting?.PasswordComplexityRequirements))
                 return setting.PasswordComplexityRequirements;
             return "Minimum 8 characters, at least one uppercase letter, one lowercase letter, one number, and one special character."; // Default fallback
+        }
+
+        public async Task<decimal> GetEsgFactorAsync(string clientId, string factorKey, decimal defaultValue)
+        {
+            var setting = await _context.ApplicationSettings
+                .Where(s => s.ClientId == clientId && s.SettingKey == factorKey && s.Category == "ESG")
+                .FirstOrDefaultAsync();
+
+            if (setting != null && decimal.TryParse(setting.SettingValue, out var value))
+                return value;
+
+            return defaultValue;
         }
 
         private async Task<ApplicationSettings?> GetSettingByKey(string clientId, string settingKey)

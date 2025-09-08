@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using irevlogix_backend.Data;
 using irevlogix_backend.DTOs.Reports;
+using irevlogix_backend.Services;
 
 namespace irevlogix_backend.Controllers
 {
@@ -16,11 +17,13 @@ namespace irevlogix_backend.Controllers
     {
         private readonly ApplicationDbContext _context;
         private readonly ILogger<ReportsController> _logger;
+        private readonly IApplicationSettingsService _settingsService;
 
-        public ReportsController(ApplicationDbContext context, ILogger<ReportsController> logger)
+        public ReportsController(ApplicationDbContext context, ILogger<ReportsController> logger, IApplicationSettingsService settingsService)
         {
             _context = context;
             _logger = logger;
+            _settingsService = settingsService;
         }
 
         private string GetClientId()
@@ -61,9 +64,9 @@ namespace irevlogix_backend.Controllers
 
                 var factors = new EsgFactorsDto
                 {
-                    Co2ePerLb = 0.6m,
-                    WaterGalPerLb = 3.2m,
-                    EnergyKwhPerLb = 0.8m
+                    Co2ePerLb = await _settingsService.GetEsgFactorAsync(clientId, "Co2ePerLb", 0.6m),
+                    WaterGalPerLb = await _settingsService.GetEsgFactorAsync(clientId, "WaterGalPerLb", 3.2m),
+                    EnergyKwhPerLb = await _settingsService.GetEsgFactorAsync(clientId, "EnergyKwhPerLb", 0.8m)
                 };
 
                 var dto = new EsgSummaryDto
