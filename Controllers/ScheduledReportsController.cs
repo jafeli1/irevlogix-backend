@@ -22,10 +22,9 @@ namespace irevlogix_backend.Controllers
             _logger = logger;
         }
 
-        private int GetClientId()
+        private string GetClientId()
         {
-            var clientIdString = User.FindFirst("ClientId")?.Value ?? throw new UnauthorizedAccessException("ClientId not found in token");
-            return int.Parse(clientIdString);
+            return User.FindFirst("ClientId")?.Value ?? throw new UnauthorizedAccessException("ClientId not found in token");
         }
 
         private bool IsAdministrator()

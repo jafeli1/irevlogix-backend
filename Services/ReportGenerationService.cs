@@ -18,7 +18,7 @@ namespace irevlogix_backend.Services
             _logger = logger;
         }
 
-        public async Task<byte[]> GenerateExcelReportAsync(string dataSource, string[] selectedColumns, object? filters, object? sorting, int clientId)
+        public async Task<byte[]> GenerateExcelReportAsync(string dataSource, string[] selectedColumns, object? filters, object? sorting, string clientId)
         {
             try
             {
@@ -32,7 +32,7 @@ namespace irevlogix_backend.Services
             }
         }
 
-        private async Task<List<Dictionary<string, object>>> GetDataForReportAsync(string dataSource, object? filters, object? sorting, int clientId)
+        private async Task<List<Dictionary<string, object>>> GetDataForReportAsync(string dataSource, object? filters, object? sorting, string clientId)
         {
             return dataSource.ToLower() switch
             {
@@ -45,7 +45,7 @@ namespace irevlogix_backend.Services
             };
         }
 
-        private async Task<List<Dictionary<string, object>>> GetAssetsDataAsync(int clientId)
+        private async Task<List<Dictionary<string, object>>> GetAssetsDataAsync(string clientId)
         {
             var assets = await _context.Assets
                 .Where(a => a.ClientId == clientId)
@@ -66,7 +66,7 @@ namespace irevlogix_backend.Services
             }).ToList();
         }
 
-        private async Task<List<Dictionary<string, object>>> GetShipmentsDataAsync(int clientId)
+        private async Task<List<Dictionary<string, object>>> GetShipmentsDataAsync(string clientId)
         {
             var shipments = await _context.Shipments
                 .Where(s => s.ClientId == clientId)
@@ -89,7 +89,7 @@ namespace irevlogix_backend.Services
             }).ToList();
         }
 
-        private async Task<List<Dictionary<string, object>>> GetProcessingLotsDataAsync(int clientId)
+        private async Task<List<Dictionary<string, object>>> GetProcessingLotsDataAsync(string clientId)
         {
             var lots = await _context.ProcessingLots
                 .Where(pl => pl.ClientId == clientId)
@@ -112,7 +112,7 @@ namespace irevlogix_backend.Services
             }).ToList();
         }
 
-        private async Task<List<Dictionary<string, object>>> GetProcessedMaterialsDataAsync(int clientId)
+        private async Task<List<Dictionary<string, object>>> GetProcessedMaterialsDataAsync(string clientId)
         {
             var materials = await _context.ProcessedMaterials
                 .Where(pm => pm.ClientId == clientId)
@@ -134,7 +134,7 @@ namespace irevlogix_backend.Services
             }).ToList();
         }
 
-        private async Task<List<Dictionary<string, object>>> GetVendorsDataAsync(int clientId)
+        private async Task<List<Dictionary<string, object>>> GetVendorsDataAsync(string clientId)
         {
             var vendors = await _context.Vendors
                 .Where(v => v.ClientId == clientId)

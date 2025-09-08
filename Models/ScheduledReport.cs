@@ -43,7 +43,7 @@ namespace irevlogix_backend.Models
         public DateTime? NextRunDate { get; set; }
 
         [Required]
-        public int ClientId { get; set; }
+        public string ClientId { get; set; } = string.Empty;
 
         [Required]
         public int CreatedByUserId { get; set; }
