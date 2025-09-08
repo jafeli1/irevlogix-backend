@@ -119,13 +119,48 @@ namespace irevlogix_backend.Controllers
                 var totalIncomingCost = data.Sum(x => x.IncomingMaterialCost);
                 var netProfit = totalActualRevenue - (totalProcessingCost + totalIncomingCost);
 
+                var assets = _context.Assets.AsQueryable();
+                var processedMaterials = _context.ProcessedMaterials.AsQueryable();
+                
+                if (!IsAdministrator())
+                {
+                    assets = assets.Where(a => a.ClientId == clientId);
+                    processedMaterials = processedMaterials.Where(pm => pm.ClientId == clientId);
+                }
+
+                if (from.HasValue)
+                {
+                    assets = assets.Where(a => a.DateCreated >= from.Value);
+                    processedMaterials = processedMaterials.Where(pm => pm.DateCreated >= from.Value);
+                }
+                if (to.HasValue)
+                {
+                    assets = assets.Where(a => a.DateCreated <= to.Value);
+                    processedMaterials = processedMaterials.Where(pm => pm.DateCreated <= to.Value);
+                }
+
+                var reuseRevenue = await assets
+                    .Where(a => a.ReuseDisposition == true && a.FairMarketValue.HasValue)
+                    .SumAsync(a => a.FairMarketValue.Value);
+
+                var resaleRevenue = await assets
+                    .Where(a => a.ResaleDisposition == true && a.ActualSalePrice.HasValue)
+                    .SumAsync(a => a.ActualSalePrice.Value);
+
+                var materialSalesRevenue = await processedMaterials
+                    .Where(pm => pm.ActualSalesPrice.HasValue)
+                    .SumAsync(pm => pm.ActualSalesPrice.Value);
+
                 var dto = new FinancialSummaryDto
                 {
                     TotalActualRevenue = totalActualRevenue,
                     TotalExpectedRevenue = totalExpectedRevenue,
                     TotalProcessingCost = totalProcessingCost,
                     TotalIncomingMaterialCost = totalIncomingCost,
-                    NetProfit = netProfit
+                    NetProfit = netProfit,
+                    ReuseRevenue = reuseRevenue,
+                    ResaleRevenue = resaleRevenue,
+                    MaterialSalesRevenue = materialSalesRevenue
                 };
 
                 return Ok(dto);

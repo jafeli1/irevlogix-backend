@@ -7,5 +7,9 @@ namespace irevlogix_backend.DTOs.Reports
         public decimal TotalProcessingCost { get; set; }
         public decimal TotalIncomingMaterialCost { get; set; }
         public decimal NetProfit { get; set; }
+        
+        public decimal ReuseRevenue { get; set; }
+        public decimal ResaleRevenue { get; set; }
+        public decimal MaterialSalesRevenue { get; set; }
     }
 }
