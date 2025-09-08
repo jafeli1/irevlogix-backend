@@ -106,19 +106,19 @@ namespace irevlogix_backend.Controllers
 
         public class CreateVendorDto
         {
-            public string VendorName { get; set; }
-            public string ContactPerson { get; set; }
-            public string Email { get; set; }
-            public string Phone { get; set; }
-            public string Address { get; set; }
-            public string City { get; set; }
-            public string State { get; set; }
-            public string PostalCode { get; set; }
-            public string Country { get; set; }
-            public string MaterialsOfInterest { get; set; }
-            public string PaymentTerms { get; set; }
+            public string VendorName { get; set; } = string.Empty;
+            public string ContactPerson { get; set; } = string.Empty;
+            public string Email { get; set; } = string.Empty;
+            public string Phone { get; set; } = string.Empty;
+            public string Address { get; set; } = string.Empty;
+            public string City { get; set; } = string.Empty;
+            public string State { get; set; } = string.Empty;
+            public string PostalCode { get; set; } = string.Empty;
+            public string Country { get; set; } = string.Empty;
+            public string MaterialsOfInterest { get; set; } = string.Empty;
+            public string PaymentTerms { get; set; } = string.Empty;
             public decimal? VendorRating { get; set; }
-            public string VendorTier { get; set; }
+            public string VendorTier { get; set; } = string.Empty;
             public int? UpstreamTierVendor { get; set; }
         }
 

@@ -447,16 +447,14 @@ namespace irevlogix_backend.Data
                 entity.Property(e => e.SelectedColumns).IsRequired();
                 entity.Property(e => e.Frequency).IsRequired().HasMaxLength(20);
                 entity.Property(e => e.Recipients).IsRequired();
-                entity.HasOne(e => e.Client)
-                    .WithMany()
-                    .HasForeignKey(e => e.ClientId)
-                    .OnDelete(DeleteBehavior.Cascade);
+                entity.Property(e => e.ClientId).IsRequired();
                 entity.HasOne(e => e.CreatedByUser)
                     .WithMany()
                     .HasForeignKey(e => e.CreatedByUserId)
                     .OnDelete(DeleteBehavior.Restrict);
                 entity.HasIndex(e => new { e.Name, e.ClientId }).IsUnique();
                 entity.HasIndex(e => e.NextRunDate);
+                entity.HasIndex(e => e.ClientId);
             });
         }
     }

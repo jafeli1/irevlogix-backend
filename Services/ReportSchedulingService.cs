@@ -42,7 +42,6 @@ namespace irevlogix_backend.Services
 
                 var now = DateTime.UtcNow;
                 var dueReports = await context.ScheduledReports
-                    .Include(sr => sr.Client)
                     .Where(sr => sr.IsActive && sr.NextRunDate <= now)
                     .ToListAsync();
 
@@ -76,7 +75,8 @@ namespace irevlogix_backend.Services
             var excelData = await reportService.GenerateExcelReportAsync(report.DataSource, selectedColumns, filters, sorting, report.ClientId);
 
             var fileName = $"{report.Name}_{DateTime.UtcNow:yyyyMMdd_HHmm}.xlsx";
-            var tenantName = report.Client?.CompanyName ?? "iRevLogix";
+            var client = await context.Clients.FirstOrDefaultAsync(c => c.ClientId == report.ClientId);
+            var tenantName = client?.CompanyName ?? "iRevLogix";
             var filtersSummary = string.IsNullOrEmpty(report.Filters) ? "" : "Custom filters applied";
 
             var success = await emailService.SendScheduledReportAsync(
