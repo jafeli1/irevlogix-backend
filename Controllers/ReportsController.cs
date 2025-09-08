@@ -304,5 +304,88 @@ namespace irevlogix_backend.Controllers
                 return StatusCode(500, "Internal server error");
             }
         }
+
+        [HttpGet("columns/{dataSource}")]
+        public IActionResult GetDataSourceColumns(string dataSource)
+        {
+            var columns = dataSource.ToLower() switch
+            {
+                "assets" => new[]
+                {
+                    new { key = "AssetID", label = "Asset ID", type = "string" },
+                    new { key = "Manufacturer", label = "Manufacturer", type = "string" },
+                    new { key = "Model", label = "Model", type = "string" },
+                    new { key = "SerialNumber", label = "Serial Number", type = "string" },
+                    new { key = "Condition", label = "Condition", type = "string" },
+                    new { key = "IsDataBearing", label = "Data Bearing", type = "boolean" },
+                    new { key = "CurrentLocation", label = "Current Location", type = "string" },
+                    new { key = "EstimatedValue", label = "Estimated Value", type = "number" },
+                    new { key = "ActualValue", label = "Actual Value", type = "number" },
+                    new { key = "DateCreated", label = "Created Date", type = "date" }
+                },
+                "shipments" => new[]
+                {
+                    new { key = "ShipmentNumber", label = "Shipment Number", type = "string" },
+                    new { key = "Status", label = "Status", type = "string" },
+                    new { key = "TrackingNumber", label = "Tracking Number", type = "string" },
+                    new { key = "Carrier", label = "Carrier", type = "string" },
+                    new { key = "Weight", label = "Weight", type = "number" },
+                    new { key = "WeightUnit", label = "Weight Unit", type = "string" },
+                    new { key = "NumberOfBoxes", label = "Number of Boxes", type = "number" },
+                    new { key = "ScheduledPickupDate", label = "Scheduled Pickup Date", type = "date" },
+                    new { key = "ActualPickupDate", label = "Actual Pickup Date", type = "date" },
+                    new { key = "EstimatedValue", label = "Estimated Value", type = "number" },
+                    new { key = "ActualValue", label = "Actual Value", type = "number" },
+                    new { key = "DateCreated", label = "Created Date", type = "date" }
+                },
+                "processinglots" => new[]
+                {
+                    new { key = "LotNumber", label = "Lot Number", type = "string" },
+                    new { key = "Status", label = "Status", type = "string" },
+                    new { key = "Description", label = "Description", type = "string" },
+                    new { key = "StartDate", label = "Start Date", type = "date" },
+                    new { key = "CompletionDate", label = "Completion Date", type = "date" },
+                    new { key = "TotalIncomingWeight", label = "Total Incoming Weight", type = "number" },
+                    new { key = "TotalProcessedWeight", label = "Total Processed Weight", type = "number" },
+                    new { key = "ProcessingCost", label = "Processing Cost", type = "number" },
+                    new { key = "ExpectedRevenue", label = "Expected Revenue", type = "number" },
+                    new { key = "ActualRevenue", label = "Actual Revenue", type = "number" },
+                    new { key = "NetProfit", label = "Net Profit", type = "number" },
+                    new { key = "DateCreated", label = "Created Date", type = "date" }
+                },
+                "processedmaterials" => new[]
+                {
+                    new { key = "Description", label = "Description", type = "string" },
+                    new { key = "Quantity", label = "Quantity", type = "number" },
+                    new { key = "UnitOfMeasure", label = "Unit of Measure", type = "string" },
+                    new { key = "QualityGrade", label = "Quality Grade", type = "string" },
+                    new { key = "Location", label = "Location", type = "string" },
+                    new { key = "ProcessedWeight", label = "Processed Weight", type = "number" },
+                    new { key = "Status", label = "Status", type = "string" },
+                    new { key = "ExpectedSalesPrice", label = "Expected Sales Price", type = "number" },
+                    new { key = "ActualSalesPrice", label = "Actual Sales Price", type = "number" },
+                    new { key = "SaleDate", label = "Sale Date", type = "date" },
+                    new { key = "DateCreated", label = "Created Date", type = "date" }
+                },
+                "vendors" => new[]
+                {
+                    new { key = "VendorName", label = "Vendor Name", type = "string" },
+                    new { key = "ContactPerson", label = "Contact Person", type = "string" },
+                    new { key = "Email", label = "Email", type = "string" },
+                    new { key = "Phone", label = "Phone", type = "string" },
+                    new { key = "Address", label = "Address", type = "string" },
+                    new { key = "City", label = "City", type = "string" },
+                    new { key = "State", label = "State", type = "string" },
+                    new { key = "Country", label = "Country", type = "string" },
+                    new { key = "MaterialsOfInterest", label = "Materials of Interest", type = "string" },
+                    new { key = "VendorRating", label = "Vendor Rating", type = "number" },
+                    new { key = "VendorTier", label = "Vendor Tier", type = "string" },
+                    new { key = "DateCreated", label = "Created Date", type = "date" }
+                },
+                _ => Array.Empty<object>()
+            };
+
+            return Ok(columns);
+        }
     }
 }
