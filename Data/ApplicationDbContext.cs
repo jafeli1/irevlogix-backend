@@ -52,6 +52,7 @@ namespace irevlogix_backend.Data
         public DbSet<VendorCommunications> VendorCommunications { get; set; }
         public DbSet<VendorDocuments> VendorDocuments { get; set; }
         public DbSet<VendorFacility> VendorFacilities { get; set; }
+        public DbSet<ScheduledReport> ScheduledReports { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -436,6 +437,26 @@ namespace irevlogix_backend.Data
                     .OnDelete(DeleteBehavior.Cascade);
                 entity.HasIndex(e => new { e.VendorId, e.ClientId });
                 entity.HasIndex(e => e.ClientId);
+            });
+
+            modelBuilder.Entity<ScheduledReport>(entity =>
+            {
+                entity.HasKey(e => e.Id);
+                entity.Property(e => e.Name).IsRequired().HasMaxLength(200);
+                entity.Property(e => e.DataSource).IsRequired().HasMaxLength(50);
+                entity.Property(e => e.SelectedColumns).IsRequired();
+                entity.Property(e => e.Frequency).IsRequired().HasMaxLength(20);
+                entity.Property(e => e.Recipients).IsRequired();
+                entity.HasOne(e => e.Client)
+                    .WithMany()
+                    .HasForeignKey(e => e.ClientId)
+                    .OnDelete(DeleteBehavior.Cascade);
+                entity.HasOne(e => e.CreatedByUser)
+                    .WithMany()
+                    .HasForeignKey(e => e.CreatedByUserId)
+                    .OnDelete(DeleteBehavior.Restrict);
+                entity.HasIndex(e => new { e.Name, e.ClientId }).IsUnique();
+                entity.HasIndex(e => e.NextRunDate);
             });
         }
     }
