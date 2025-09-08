@@ -52,9 +52,6 @@ namespace irevlogix_backend.Models
 
         public DateTime DateModified { get; set; } = DateTime.UtcNow;
 
-        [ForeignKey("ClientId")]
-        public virtual Client? Client { get; set; }
-
         [ForeignKey("CreatedByUserId")]
         public virtual User? CreatedByUser { get; set; }
     }
