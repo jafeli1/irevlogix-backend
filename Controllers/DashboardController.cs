@@ -158,18 +158,20 @@ namespace irevlogix_backend.Controllers
                     salesQuery = salesQuery.Where(pms => pms.DateCreated <= to.Value);
                 }
 
-                var vendorPerformance = await salesQuery
-                    .GroupBy(pms => new { pms.VendorId, pms.Vendor.VendorName })
+                var allSales = await salesQuery.ToListAsync();
+                
+                var vendorPerformance = allSales
+                    .GroupBy(pms => new { pms.VendorId, VendorName = pms.Vendor?.VendorName ?? "Unknown" })
                     .Select(g => new VendorPerformanceDto
                     {
                         VendorId = g.Key.VendorId,
                         VendorName = g.Key.VendorName,
                         Revenue = g.Sum(pms => pms.InvoiceTotal ?? 0),
-                        ProcessingLots = g.Select(pms => pms.ProcessedMaterial.ProcessingLotId).Distinct().Count()
+                        ProcessingLots = g.Select(pms => pms.ProcessedMaterial?.ProcessingLotId).Distinct().Count()
                     })
                     .OrderByDescending(v => v.Revenue)
                     .Take(5)
-                    .ToListAsync();
+                    .ToList();
 
                 return Ok(vendorPerformance);
             }
