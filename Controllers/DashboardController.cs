@@ -111,7 +111,8 @@ namespace irevlogix_backend.Controllers
                     lotsQuery = lotsQuery.Where(pl => pl.DateCreated <= to.Value);
                 }
 
-                var monthlyData = await lotsQuery
+                var allLots = await lotsQuery.ToListAsync();
+                var monthlyData = allLots
                     .GroupBy(pl => new { Year = pl.DateCreated.Year, Month = pl.DateCreated.Month })
                     .Select(g => new CostRevenueDataDto
                     {
@@ -120,7 +121,7 @@ namespace irevlogix_backend.Controllers
                         Revenue = g.Sum(pl => pl.ActualRevenue ?? pl.ExpectedRevenue ?? 0)
                     })
                     .OrderBy(x => x.Period)
-                    .ToListAsync();
+                    .ToList();
 
                 return Ok(monthlyData);
             }
@@ -439,7 +440,8 @@ namespace irevlogix_backend.Controllers
                     lotsQuery = lotsQuery.Where(pl => pl.DateCreated <= to.Value);
                 }
 
-                var monthlyRevenue = await lotsQuery
+                var allLots = await lotsQuery.ToListAsync();
+                var monthlyRevenue = allLots
                     .GroupBy(pl => new { Year = pl.DateCreated.Year, Month = pl.DateCreated.Month })
                     .Select(g => new MonthlyRevenueDataDto
                     {
@@ -447,7 +449,7 @@ namespace irevlogix_backend.Controllers
                         Revenue = g.Sum(pl => pl.ActualRevenue ?? pl.ExpectedRevenue ?? 0)
                     })
                     .OrderBy(x => x.Month)
-                    .ToListAsync();
+                    .ToList();
 
                 return Ok(monthlyRevenue);
             }
