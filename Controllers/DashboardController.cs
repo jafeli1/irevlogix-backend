@@ -205,30 +205,32 @@ namespace irevlogix_backend.Controllers
                     .Where(pl => pl.StartDate.HasValue && pl.CompletionDate.HasValue)
                     .ToListAsync();
 
-                var processingTimeData = new List<ProcessingTimeDataDto>
+                var processingTimeData = new List<ProcessingTimeDataDto>();
+                
+                var shortLots = completedLots.Where(pl => (pl.CompletionDate!.Value - pl.StartDate!.Value).TotalDays <= 7).ToList();
+                var mediumLots = completedLots.Where(pl => (pl.CompletionDate!.Value - pl.StartDate!.Value).TotalDays > 7 && (pl.CompletionDate!.Value - pl.StartDate!.Value).TotalDays <= 14).ToList();
+                var longLots = completedLots.Where(pl => (pl.CompletionDate!.Value - pl.StartDate!.Value).TotalDays > 14).ToList();
+
+                processingTimeData.Add(new ProcessingTimeDataDto
                 {
-                    new ProcessingTimeDataDto
-                    {
-                        Stage = "0-7 days",
-                        Count = completedLots.Count(pl => (pl.CompletionDate!.Value - pl.StartDate!.Value).TotalDays <= 7),
-                        AverageTime = completedLots.Where(pl => (pl.CompletionDate!.Value - pl.StartDate!.Value).TotalDays <= 7)
-                            .DefaultIfEmpty().Average(pl => pl != null ? (decimal)(pl.CompletionDate!.Value - pl.StartDate!.Value).TotalDays : 0)
-                    },
-                    new ProcessingTimeDataDto
-                    {
-                        Stage = "8-14 days",
-                        Count = completedLots.Count(pl => (pl.CompletionDate!.Value - pl.StartDate!.Value).TotalDays > 7 && (pl.CompletionDate!.Value - pl.StartDate!.Value).TotalDays <= 14),
-                        AverageTime = completedLots.Where(pl => (pl.CompletionDate!.Value - pl.StartDate!.Value).TotalDays > 7 && (pl.CompletionDate!.Value - pl.StartDate!.Value).TotalDays <= 14)
-                            .DefaultIfEmpty().Average(pl => pl != null ? (decimal)(pl.CompletionDate!.Value - pl.StartDate!.Value).TotalDays : 0)
-                    },
-                    new ProcessingTimeDataDto
-                    {
-                        Stage = "15+ days",
-                        Count = completedLots.Count(pl => (pl.CompletionDate!.Value - pl.StartDate!.Value).TotalDays > 14),
-                        AverageTime = completedLots.Where(pl => (pl.CompletionDate!.Value - pl.StartDate!.Value).TotalDays > 14)
-                            .DefaultIfEmpty().Average(pl => pl != null ? (decimal)(pl.CompletionDate!.Value - pl.StartDate!.Value).TotalDays : 0)
-                    }
-                };
+                    Stage = "0-7 days",
+                    Count = shortLots.Count,
+                    AverageTime = shortLots.Any() ? (decimal)shortLots.Average(pl => (pl.CompletionDate!.Value - pl.StartDate!.Value).TotalDays) : 0
+                });
+
+                processingTimeData.Add(new ProcessingTimeDataDto
+                {
+                    Stage = "8-14 days",
+                    Count = mediumLots.Count,
+                    AverageTime = mediumLots.Any() ? (decimal)mediumLots.Average(pl => (pl.CompletionDate!.Value - pl.StartDate!.Value).TotalDays) : 0
+                });
+
+                processingTimeData.Add(new ProcessingTimeDataDto
+                {
+                    Stage = "15+ days",
+                    Count = longLots.Count,
+                    AverageTime = longLots.Any() ? (decimal)longLots.Average(pl => (pl.CompletionDate!.Value - pl.StartDate!.Value).TotalDays) : 0
+                });
 
                 return Ok(processingTimeData);
             }
@@ -345,8 +347,11 @@ namespace irevlogix_backend.Controllers
                     lotsQuery = lotsQuery.Where(pl => pl.DateCreated <= to.Value);
                 }
 
-                var certificatesData = await lotsQuery
+                var completedLots = await lotsQuery
                     .Where(pl => pl.CertificationStatus == "Completed" && pl.CompletionDate.HasValue)
+                    .ToListAsync();
+
+                var certificatesData = completedLots
                     .GroupBy(pl => pl.CompletionDate!.Value.Date)
                     .Select(g => new CertificatesIssuedDataDto
                     {
@@ -354,7 +359,7 @@ namespace irevlogix_backend.Controllers
                         Count = g.Count()
                     })
                     .OrderBy(c => c.Date)
-                    .ToListAsync();
+                    .ToList();
 
                 return Ok(certificatesData);
             }
@@ -387,16 +392,21 @@ namespace irevlogix_backend.Controllers
                     assetsQuery = assetsQuery.Where(a => a.DateCreated <= to.Value);
                 }
 
-                var totalAssets = await assetsQuery.CountAsync();
-                var dispositionData = await assetsQuery
+                var allAssets = await assetsQuery.ToListAsync();
+                var totalAssets = allAssets.Count;
+                
+                var dispositionGroups = allAssets
                     .GroupBy(a => a.ReuseDisposition ? "Reuse" : a.ResaleDisposition ? "Resale" : "Recycling")
+                    .ToList();
+
+                var dispositionData = dispositionGroups
                     .Select(g => new AssetDispositionDataDto
                     {
                         DispositionType = g.Key,
                         Count = g.Count(),
                         Percentage = totalAssets > 0 ? (decimal)g.Count() / totalAssets * 100 : 0
                     })
-                    .ToListAsync();
+                    .ToList();
 
                 return Ok(dispositionData);
             }
