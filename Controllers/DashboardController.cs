@@ -268,7 +268,8 @@ namespace irevlogix_backend.Controllers
                     itemsQuery = itemsQuery.Where(si => si.DateCreated <= to.Value);
                 }
 
-                var volumeData = await itemsQuery
+                var allItems = await itemsQuery.ToListAsync();
+                var volumeData = allItems
                     .GroupBy(si => si.MaterialType != null ? si.MaterialType.Name : "Unknown")
                     .Select(g => new InboundVolumeDataDto
                     {
@@ -277,7 +278,7 @@ namespace irevlogix_backend.Controllers
                         Count = g.Count()
                     })
                     .OrderByDescending(v => v.Weight)
-                    .ToListAsync();
+                    .ToList();
 
                 return Ok(volumeData);
             }
