@@ -30,12 +30,26 @@ namespace irevlogix_backend.Controllers
             return User.IsInRole("Administrator");
         }
 
+        private DateTime? ConvertToUtc(DateTime? dateTime)
+        {
+            if (!dateTime.HasValue) return null;
+            
+            if (dateTime.Value.Kind == DateTimeKind.Utc) return dateTime.Value;
+            
+            if (dateTime.Value.Kind == DateTimeKind.Unspecified)
+                return DateTime.SpecifyKind(dateTime.Value, DateTimeKind.Utc);
+            
+            return dateTime.Value.ToUniversalTime();
+        }
+
         [HttpGet("summary-metrics")]
         public async Task<ActionResult<SummaryMetricsDto>> GetSummaryMetrics([FromQuery] DateTime? from = null, [FromQuery] DateTime? to = null)
         {
             try
             {
                 var clientId = GetClientId();
+                var fromUtc = ConvertToUtc(from);
+                var toUtc = ConvertToUtc(to);
                 
                 var shipmentsQuery = _context.Shipments.AsQueryable();
                 var lotsQuery = _context.ProcessingLots.AsQueryable();
@@ -48,17 +62,17 @@ namespace irevlogix_backend.Controllers
                     assetsQuery = assetsQuery.Where(a => a.ClientId == clientId);
                 }
 
-                if (from.HasValue)
+                if (fromUtc.HasValue)
                 {
-                    shipmentsQuery = shipmentsQuery.Where(s => s.DateCreated >= from.Value);
-                    lotsQuery = lotsQuery.Where(pl => pl.DateCreated >= from.Value);
-                    assetsQuery = assetsQuery.Where(a => a.DateCreated >= from.Value);
+                    shipmentsQuery = shipmentsQuery.Where(s => s.DateCreated >= fromUtc.Value);
+                    lotsQuery = lotsQuery.Where(pl => pl.DateCreated >= fromUtc.Value);
+                    assetsQuery = assetsQuery.Where(a => a.DateCreated >= fromUtc.Value);
                 }
-                if (to.HasValue)
+                if (toUtc.HasValue)
                 {
-                    shipmentsQuery = shipmentsQuery.Where(s => s.DateCreated <= to.Value);
-                    lotsQuery = lotsQuery.Where(pl => pl.DateCreated <= to.Value);
-                    assetsQuery = assetsQuery.Where(a => a.DateCreated <= to.Value);
+                    shipmentsQuery = shipmentsQuery.Where(s => s.DateCreated <= toUtc.Value);
+                    lotsQuery = lotsQuery.Where(pl => pl.DateCreated <= toUtc.Value);
+                    assetsQuery = assetsQuery.Where(a => a.DateCreated <= toUtc.Value);
                 }
 
                 var activeShipments = await shipmentsQuery.CountAsync(s => s.Status != "Completed" && s.Status != "Delivered");
@@ -95,6 +109,8 @@ namespace irevlogix_backend.Controllers
             try
             {
                 var clientId = GetClientId();
+                var fromUtc = ConvertToUtc(from);
+                var toUtc = ConvertToUtc(to);
                 var lotsQuery = _context.ProcessingLots.AsQueryable();
                 
                 if (!IsAdministrator())
@@ -102,13 +118,13 @@ namespace irevlogix_backend.Controllers
                     lotsQuery = lotsQuery.Where(pl => pl.ClientId == clientId);
                 }
 
-                if (from.HasValue)
+                if (fromUtc.HasValue)
                 {
-                    lotsQuery = lotsQuery.Where(pl => pl.DateCreated >= from.Value);
+                    lotsQuery = lotsQuery.Where(pl => pl.DateCreated >= fromUtc.Value);
                 }
-                if (to.HasValue)
+                if (toUtc.HasValue)
                 {
-                    lotsQuery = lotsQuery.Where(pl => pl.DateCreated <= to.Value);
+                    lotsQuery = lotsQuery.Where(pl => pl.DateCreated <= toUtc.Value);
                 }
 
                 var allLots = await lotsQuery.ToListAsync();
@@ -138,6 +154,8 @@ namespace irevlogix_backend.Controllers
             try
             {
                 var clientId = GetClientId();
+                var fromUtc = ConvertToUtc(from);
+                var toUtc = ConvertToUtc(to);
                 var salesQuery = _context.ProcessedMaterialSales
                     .Include(pms => pms.Vendor)
                     .Include(pms => pms.ProcessedMaterial)
@@ -149,13 +167,13 @@ namespace irevlogix_backend.Controllers
                     salesQuery = salesQuery.Where(pms => pms.ClientId == clientId);
                 }
 
-                if (from.HasValue)
+                if (fromUtc.HasValue)
                 {
-                    salesQuery = salesQuery.Where(pms => pms.DateCreated >= from.Value);
+                    salesQuery = salesQuery.Where(pms => pms.DateCreated >= fromUtc.Value);
                 }
-                if (to.HasValue)
+                if (toUtc.HasValue)
                 {
-                    salesQuery = salesQuery.Where(pms => pms.DateCreated <= to.Value);
+                    salesQuery = salesQuery.Where(pms => pms.DateCreated <= toUtc.Value);
                 }
 
                 var allSales = await salesQuery.ToListAsync();
@@ -188,6 +206,8 @@ namespace irevlogix_backend.Controllers
             try
             {
                 var clientId = GetClientId();
+                var fromUtc = ConvertToUtc(from);
+                var toUtc = ConvertToUtc(to);
                 var lotsQuery = _context.ProcessingLots.AsQueryable();
                 
                 if (!IsAdministrator())
@@ -195,13 +215,13 @@ namespace irevlogix_backend.Controllers
                     lotsQuery = lotsQuery.Where(pl => pl.ClientId == clientId);
                 }
 
-                if (from.HasValue)
+                if (fromUtc.HasValue)
                 {
-                    lotsQuery = lotsQuery.Where(pl => pl.DateCreated >= from.Value);
+                    lotsQuery = lotsQuery.Where(pl => pl.DateCreated >= fromUtc.Value);
                 }
-                if (to.HasValue)
+                if (toUtc.HasValue)
                 {
-                    lotsQuery = lotsQuery.Where(pl => pl.DateCreated <= to.Value);
+                    lotsQuery = lotsQuery.Where(pl => pl.DateCreated <= toUtc.Value);
                 }
 
                 var completedLots = await lotsQuery
@@ -250,6 +270,8 @@ namespace irevlogix_backend.Controllers
             try
             {
                 var clientId = GetClientId();
+                var fromUtc = ConvertToUtc(from);
+                var toUtc = ConvertToUtc(to);
                 var itemsQuery = _context.ShipmentItems
                     .Include(si => si.MaterialType)
                     .AsQueryable();
@@ -259,13 +281,13 @@ namespace irevlogix_backend.Controllers
                     itemsQuery = itemsQuery.Where(si => si.ClientId == clientId);
                 }
 
-                if (from.HasValue)
+                if (fromUtc.HasValue)
                 {
-                    itemsQuery = itemsQuery.Where(si => si.DateCreated >= from.Value);
+                    itemsQuery = itemsQuery.Where(si => si.DateCreated >= fromUtc.Value);
                 }
-                if (to.HasValue)
+                if (toUtc.HasValue)
                 {
-                    itemsQuery = itemsQuery.Where(si => si.DateCreated <= to.Value);
+                    itemsQuery = itemsQuery.Where(si => si.DateCreated <= toUtc.Value);
                 }
 
                 var allItems = await itemsQuery.ToListAsync();
@@ -295,6 +317,8 @@ namespace irevlogix_backend.Controllers
             try
             {
                 var clientId = GetClientId();
+                var fromUtc = ConvertToUtc(from);
+                var toUtc = ConvertToUtc(to);
                 var lotsQuery = _context.ProcessingLots.AsQueryable();
                 
                 if (!IsAdministrator())
@@ -302,13 +326,13 @@ namespace irevlogix_backend.Controllers
                     lotsQuery = lotsQuery.Where(pl => pl.ClientId == clientId);
                 }
 
-                if (from.HasValue)
+                if (fromUtc.HasValue)
                 {
-                    lotsQuery = lotsQuery.Where(pl => pl.DateCreated >= from.Value);
+                    lotsQuery = lotsQuery.Where(pl => pl.DateCreated >= fromUtc.Value);
                 }
-                if (to.HasValue)
+                if (toUtc.HasValue)
                 {
-                    lotsQuery = lotsQuery.Where(pl => pl.DateCreated <= to.Value);
+                    lotsQuery = lotsQuery.Where(pl => pl.DateCreated <= toUtc.Value);
                 }
 
                 var totalProcessed = await lotsQuery.SumAsync(pl => pl.TotalProcessedWeight ?? pl.TotalIncomingWeight ?? 0);
@@ -335,6 +359,8 @@ namespace irevlogix_backend.Controllers
             try
             {
                 var clientId = GetClientId();
+                var fromUtc = ConvertToUtc(from);
+                var toUtc = ConvertToUtc(to);
                 var lotsQuery = _context.ProcessingLots.AsQueryable();
                 
                 if (!IsAdministrator())
@@ -342,13 +368,13 @@ namespace irevlogix_backend.Controllers
                     lotsQuery = lotsQuery.Where(pl => pl.ClientId == clientId);
                 }
 
-                if (from.HasValue)
+                if (fromUtc.HasValue)
                 {
-                    lotsQuery = lotsQuery.Where(pl => pl.DateCreated >= from.Value);
+                    lotsQuery = lotsQuery.Where(pl => pl.DateCreated >= fromUtc.Value);
                 }
-                if (to.HasValue)
+                if (toUtc.HasValue)
                 {
-                    lotsQuery = lotsQuery.Where(pl => pl.DateCreated <= to.Value);
+                    lotsQuery = lotsQuery.Where(pl => pl.DateCreated <= toUtc.Value);
                 }
 
                 var completedLots = await lotsQuery
@@ -380,6 +406,8 @@ namespace irevlogix_backend.Controllers
             try
             {
                 var clientId = GetClientId();
+                var fromUtc = ConvertToUtc(from);
+                var toUtc = ConvertToUtc(to);
                 var assetsQuery = _context.Assets.AsQueryable();
                 
                 if (!IsAdministrator())
@@ -387,13 +415,13 @@ namespace irevlogix_backend.Controllers
                     assetsQuery = assetsQuery.Where(a => a.ClientId == clientId);
                 }
 
-                if (from.HasValue)
+                if (fromUtc.HasValue)
                 {
-                    assetsQuery = assetsQuery.Where(a => a.DateCreated >= from.Value);
+                    assetsQuery = assetsQuery.Where(a => a.DateCreated >= fromUtc.Value);
                 }
-                if (to.HasValue)
+                if (toUtc.HasValue)
                 {
-                    assetsQuery = assetsQuery.Where(a => a.DateCreated <= to.Value);
+                    assetsQuery = assetsQuery.Where(a => a.DateCreated <= toUtc.Value);
                 }
 
                 var allAssets = await assetsQuery.ToListAsync();
@@ -427,6 +455,8 @@ namespace irevlogix_backend.Controllers
             try
             {
                 var clientId = GetClientId();
+                var fromUtc = ConvertToUtc(from);
+                var toUtc = ConvertToUtc(to);
                 var lotsQuery = _context.ProcessingLots.AsQueryable();
                 
                 if (!IsAdministrator())
@@ -434,13 +464,13 @@ namespace irevlogix_backend.Controllers
                     lotsQuery = lotsQuery.Where(pl => pl.ClientId == clientId);
                 }
 
-                if (from.HasValue)
+                if (fromUtc.HasValue)
                 {
-                    lotsQuery = lotsQuery.Where(pl => pl.DateCreated >= from.Value);
+                    lotsQuery = lotsQuery.Where(pl => pl.DateCreated >= fromUtc.Value);
                 }
-                if (to.HasValue)
+                if (toUtc.HasValue)
                 {
-                    lotsQuery = lotsQuery.Where(pl => pl.DateCreated <= to.Value);
+                    lotsQuery = lotsQuery.Where(pl => pl.DateCreated <= toUtc.Value);
                 }
 
                 var allLots = await lotsQuery.ToListAsync();
