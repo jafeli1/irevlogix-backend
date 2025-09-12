@@ -450,7 +450,7 @@ namespace irevlogix_backend.Data
                 entity.Property(e => e.ClientId).IsRequired();
                 entity.HasOne(e => e.CreatedByUser)
                     .WithMany()
-                    .HasForeignKey(e => e.CreatedByUserId)
+                    .HasForeignKey(e => e.CreatedBy)
                     .OnDelete(DeleteBehavior.Restrict);
                 entity.HasIndex(e => new { e.Name, e.ClientId }).IsUnique();
                 entity.HasIndex(e => e.NextRunDate);

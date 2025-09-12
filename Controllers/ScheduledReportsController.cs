@@ -118,7 +118,7 @@ namespace irevlogix_backend.Controllers
                     DayOfMonth = request.DayOfMonth,
                     IsActive = true,
                     ClientId = clientId,
-                    CreatedByUserId = userId,
+                    CreatedBy = userId,
                     DateCreated = DateTime.UtcNow,
                     DateModified = DateTime.UtcNow
                 };
