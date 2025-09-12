@@ -46,13 +46,13 @@ namespace irevlogix_backend.Models
         public string ClientId { get; set; } = string.Empty;
 
         [Required]
-        public int CreatedByUserId { get; set; }
+        public int CreatedBy { get; set; }
 
         public DateTime DateCreated { get; set; } = DateTime.UtcNow;
 
         public DateTime DateModified { get; set; } = DateTime.UtcNow;
 
-        [ForeignKey("CreatedByUserId")]
+        [ForeignKey("CreatedBy")]
         public virtual User? CreatedByUser { get; set; }
     }
 }
