@@ -22,11 +22,12 @@ namespace irevlogix_backend.Services
                 var smtpPort = int.Parse(Environment.GetEnvironmentVariable("SMTP_PORT") ?? "587");
                 var smtpUser = Environment.GetEnvironmentVariable("SMTP_USER") ?? "";
                 var smtpPass = Environment.GetEnvironmentVariable("SMTP_PASS") ?? "";
+                var smtpEnableSsl = bool.Parse(Environment.GetEnvironmentVariable("SMTP_ENABLE_SSL") ?? "true");
 
                 using var client = new SmtpClient(smtpHost, smtpPort)
                 {
                     Credentials = new NetworkCredential(smtpUser, smtpPass),
-                    EnableSsl = true
+                    EnableSsl = smtpEnableSsl
                 };
 
                 var mailMessage = new MailMessage
@@ -59,11 +60,12 @@ namespace irevlogix_backend.Services
                 var smtpPort = int.Parse(Environment.GetEnvironmentVariable("SMTP_PORT") ?? "587");
                 var smtpUser = Environment.GetEnvironmentVariable("SMTP_USER") ?? "";
                 var smtpPass = Environment.GetEnvironmentVariable("SMTP_PASS") ?? "";
+                var smtpEnableSsl = bool.Parse(Environment.GetEnvironmentVariable("SMTP_ENABLE_SSL") ?? "true");
 
                 using var client = new SmtpClient(smtpHost, smtpPort)
                 {
                     Credentials = new NetworkCredential(smtpUser, smtpPass),
-                    EnableSsl = true
+                    EnableSsl = smtpEnableSsl
                 };
 
                 var confirmationUrl = $"{baseUrl}/confirm-email?token={confirmationToken}&email={Uri.EscapeDataString(toEmail)}";
@@ -97,11 +99,12 @@ namespace irevlogix_backend.Services
                 var smtpPort = int.Parse(Environment.GetEnvironmentVariable("SMTP_PORT") ?? "587");
                 var smtpUser = Environment.GetEnvironmentVariable("SMTP_USER") ?? "";
                 var smtpPass = Environment.GetEnvironmentVariable("SMTP_PASS") ?? "";
+                var smtpEnableSsl = bool.Parse(Environment.GetEnvironmentVariable("SMTP_ENABLE_SSL") ?? "true");
 
                 using var client = new SmtpClient(smtpHost, smtpPort)
                 {
                     Credentials = new NetworkCredential(smtpUser, smtpPass),
-                    EnableSsl = true
+                    EnableSsl = smtpEnableSsl
                 };
 
                 var subject = $"Scheduled Report: {reportName} - {tenantName}";
