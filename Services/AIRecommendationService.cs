@@ -290,17 +290,21 @@ Each value should be a number representing the predicted quantity.";
             var now = DateTime.UtcNow;
             return aggregationPeriod.ToLower() switch
             {
-                "weekly" => {
-                    var futureDate = now.AddDays(7 * periodsAhead);
-                    var week = CultureInfo.CurrentCulture.Calendar.GetWeekOfYear(futureDate, CalendarWeekRule.FirstDay, DayOfWeek.Monday);
-                    return $"{futureDate.Year}-W{week:D2}";
-                },
-                "monthly" => {
-                    var futureDate = now.AddMonths(periodsAhead);
-                    return $"{futureDate.Year}-{futureDate.Month:D2}";
-                },
+                "weekly" => GetWeeklyPeriod(now.AddDays(7 * periodsAhead)),
+                "monthly" => GetMonthlyPeriod(now.AddMonths(periodsAhead)),
                 _ => throw new ArgumentException("Invalid aggregation period")
             };
+        }
+
+        private string GetWeeklyPeriod(DateTime date)
+        {
+            var week = CultureInfo.CurrentCulture.Calendar.GetWeekOfYear(date, CalendarWeekRule.FirstDay, DayOfWeek.Monday);
+            return $"{date.Year}-W{week:D2}";
+        }
+
+        private string GetMonthlyPeriod(DateTime date)
+        {
+            return $"{date.Year}-{date.Month:D2}";
         }
 
         public async Task<string> GetMaterialContaminationAnalysisAsync(string materialDescription, double contaminationPercentage)
