@@ -53,7 +53,7 @@ namespace irevlogix_backend.Controllers
 
         private bool IsAdministrator()
         {
-            return User.FindFirst("IsAdministrator")?.Value == "True";
+            return User.IsInRole("Administrator");
         }
     }
 }
