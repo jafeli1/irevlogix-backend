@@ -42,7 +42,7 @@ namespace irevlogix_backend.Services
 
                 var now = DateTime.UtcNow;
                 var dueReports = await context.ScheduledReports
-                    .Where(sr => sr.IsActive && sr.NextRunDate <= now)
+                    .Where(sr => sr.IsActive && sr.NextRunDate.HasValue && sr.NextRunDate <= now)
                     .ToListAsync();
 
                 foreach (var report in dueReports)
