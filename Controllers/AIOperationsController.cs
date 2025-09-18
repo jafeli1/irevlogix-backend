@@ -1,7 +1,8 @@
-using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Authorization;
-using irevlogix_backend.Services;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using System.Security.Claims;
+using irevlogix_backend.Services;
 
 namespace irevlogix_backend.Controllers
 {
@@ -29,10 +30,6 @@ namespace irevlogix_backend.Controllers
             try
             {
                 var clientId = GetClientId();
-                if (string.IsNullOrEmpty(clientId))
-                {
-                    return Unauthorized(new { message = "Client ID not found in token" });
-                }
 
                 var result = await _aiService.GetPredictiveReturnsForecastAsync(
                     clientId, materialType, originatorClientId, aggregationPeriod, weeksAhead);
@@ -42,7 +39,7 @@ namespace irevlogix_backend.Controllers
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error getting returns forecast");
-                return StatusCode(500, new { message = "Internal server error occurred while generating forecast" });
+                return StatusCode(500, "Internal server error");
             }
         }
 
