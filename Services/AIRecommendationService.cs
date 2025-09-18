@@ -2,6 +2,7 @@ using irevlogix_backend.Data;
 using irevlogix_backend.Models;
 using Microsoft.EntityFrameworkCore;
 using System.Text.Json;
+using System.Globalization;
 
 namespace irevlogix_backend.Services
 {
@@ -185,26 +186,125 @@ Provide only the category name.";
             }
         }
 
-        public async Task<string> GetPredictiveReturnsForecastAsync(string clientId, int daysAhead = 30)
+        public async Task<ReturnsForecastResult> GetPredictiveReturnsForecastAsync(string clientId, string? materialType = null, int? originatorClientId = null, string aggregationPeriod = "weekly", int weeksAhead = 4)
         {
             try
             {
-                var recentShipments = await _context.Shipments
-                    .Where(s => s.ClientId == clientId && s.DateCreated >= DateTime.UtcNow.AddDays(-90))
+                var totalShipments = await _context.Shipments
+                    .Where(s => s.ClientId == clientId && s.DateCreated >= DateTime.UtcNow.AddMonths(-24))
                     .CountAsync();
 
-                var prompt = $@"Based on historical data showing {recentShipments} shipments in the last 90 days, 
-predict the expected number of returns/shipments for the next {daysAhead} days. 
-Consider seasonal trends and provide a brief explanation of the forecast.";
+                if (totalShipments < 10)
+                {
+                    return new ReturnsForecastResult
+                    {
+                        HasSufficientData = false,
+                        InsufficientDataMessage = "Insufficient data for computation. Please ensure the following tables have adequate data:\n" +
+                            "• Shipments table: ScheduledPickupDate, ActualPickupDate, OriginatorClientId fields\n" +
+                            "• ShipmentItems table: MaterialType, Quantity fields\n" +
+                            "Minimum 10 shipments with 12-24 months of historical data required.",
+                        RequiredTables = new[] { "Shipments", "ShipmentItems" },
+                        RequiredFields = new[] { "ScheduledPickupDate", "ActualPickupDate", "MaterialType", "Quantity", "OriginatorClientId" }
+                    };
+                }
 
-                var response = await _openAIService.GetChatCompletionAsync(prompt);
-                return response;
+                var shipmentsQuery = _context.Shipments
+                    .Include(s => s.ShipmentItems)
+                    .ThenInclude(si => si.MaterialType)
+                    .Where(s => s.ClientId == clientId && s.DateCreated >= DateTime.UtcNow.AddMonths(-24));
+
+                if (originatorClientId.HasValue)
+                    shipmentsQuery = shipmentsQuery.Where(s => s.OriginatorClientId == originatorClientId.Value);
+
+                var shipments = await shipmentsQuery.ToListAsync();
+
+                var filteredItems = shipments.SelectMany(s => s.ShipmentItems)
+                    .Where(si => materialType == null || si.MaterialType?.Name == materialType);
+
+                var aggregatedData = aggregationPeriod.ToLower() switch
+                {
+                    "weekly" => filteredItems
+                        .GroupBy(si => new { 
+                            Year = si.Shipment.DateCreated.Year,
+                            Week = CultureInfo.CurrentCulture.Calendar.GetWeekOfYear(si.Shipment.DateCreated, CalendarWeekRule.FirstDay, DayOfWeek.Monday)
+                        })
+                        .Select(g => new { 
+                            Period = $"{g.Key.Year}-W{g.Key.Week:D2}",
+                            Volume = g.Sum(si => si.Quantity),
+                            Date = g.Min(si => si.Shipment.DateCreated)
+                        })
+                        .OrderBy(x => x.Date)
+                        .ToList(),
+                    "monthly" => filteredItems
+                        .GroupBy(si => new { si.Shipment.DateCreated.Year, si.Shipment.DateCreated.Month })
+                        .Select(g => new { 
+                            Period = $"{g.Key.Year}-{g.Key.Month:D2}",
+                            Volume = g.Sum(si => si.Quantity),
+                            Date = new DateTime(g.Key.Year, g.Key.Month, 1)
+                        })
+                        .OrderBy(x => x.Date)
+                        .ToList(),
+                    _ => throw new ArgumentException("Invalid aggregation period. Use 'weekly' or 'monthly'.")
+                };
+
+                var historicalDataString = string.Join(", ", aggregatedData.Select(d => $"{d.Period}: {d.Volume}"));
+                var materialTypeFilter = materialType ?? "all material types";
+                var clientFilter = originatorClientId.HasValue ? $" from client {originatorClientId}" : "";
+
+                var prompt = $@"Given the following {aggregationPeriod} return volumes for {materialTypeFilter}{clientFilter}: [{historicalDataString}], 
+predict the return volumes for the next {weeksAhead} {aggregationPeriod.TrimEnd('y')}s. 
+Consider seasonal trends, growth patterns, and any cyclical behavior in the data.
+Provide only the predicted values in a JSON array format: [period1_volume, period2_volume, period3_volume, period4_volume].
+Each value should be a number representing the predicted quantity.";
+
+                var response = await _openAIService.GetStructuredResponseAsync<int[]>(prompt);
+                
+                return new ReturnsForecastResult
+                {
+                    HasSufficientData = true,
+                    HistoricalData = aggregatedData.Select(d => new ForecastDataPoint { Period = d.Period, Volume = d.Volume }).ToList(),
+                    PredictedData = response?.Select((vol, idx) => new ForecastDataPoint 
+                    { 
+                        Period = GetFuturePeriod(aggregationPeriod, idx + 1), 
+                        Volume = vol 
+                    }).ToList() ?? new List<ForecastDataPoint>(),
+                    MaterialType = materialType,
+                    OriginatorClientId = originatorClientId,
+                    AggregationPeriod = aggregationPeriod,
+                    GeneratedAt = DateTime.UtcNow
+                };
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error getting predictive returns forecast");
-                return "Unable to generate forecast at this time.";
+                return new ReturnsForecastResult
+                {
+                    HasSufficientData = false,
+                    InsufficientDataMessage = "Error occurred during forecast generation. Please try again later."
+                };
             }
+        }
+
+        private string GetFuturePeriod(string aggregationPeriod, int periodsAhead)
+        {
+            var now = DateTime.UtcNow;
+            return aggregationPeriod.ToLower() switch
+            {
+                "weekly" => GetWeeklyPeriod(now.AddDays(7 * periodsAhead)),
+                "monthly" => GetMonthlyPeriod(now.AddMonths(periodsAhead)),
+                _ => throw new ArgumentException("Invalid aggregation period")
+            };
+        }
+
+        private string GetWeeklyPeriod(DateTime date)
+        {
+            var week = CultureInfo.CurrentCulture.Calendar.GetWeekOfYear(date, CalendarWeekRule.FirstDay, DayOfWeek.Monday);
+            return $"{date.Year}-W{week:D2}";
+        }
+
+        private string GetMonthlyPeriod(DateTime date)
+        {
+            return $"{date.Year}-{date.Month:D2}";
         }
 
         public async Task<string> GetMaterialContaminationAnalysisAsync(string materialDescription, double contaminationPercentage)
@@ -278,5 +378,25 @@ waste diversion from landfills, and social impact metrics.";
         public string PredictedGrade { get; set; } = string.Empty;
         public double Confidence { get; set; }
         public string Reasoning { get; set; } = string.Empty;
+    }
+
+    public class ReturnsForecastResult
+    {
+        public bool HasSufficientData { get; set; }
+        public string? InsufficientDataMessage { get; set; }
+        public string[]? RequiredTables { get; set; }
+        public string[]? RequiredFields { get; set; }
+        public List<ForecastDataPoint> HistoricalData { get; set; } = new();
+        public List<ForecastDataPoint> PredictedData { get; set; } = new();
+        public string? MaterialType { get; set; }
+        public int? OriginatorClientId { get; set; }
+        public string AggregationPeriod { get; set; } = "weekly";
+        public DateTime GeneratedAt { get; set; }
+    }
+
+    public class ForecastDataPoint
+    {
+        public string Period { get; set; } = string.Empty;
+        public int Volume { get; set; }
     }
 }
