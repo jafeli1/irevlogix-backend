@@ -6,7 +6,7 @@ using System.Security.Claims;
 namespace irevlogix_backend.Controllers
 {
     [ApiController]
-    [Route("api/ai-operations")]
+    [Route("api/[controller]")]
     [Authorize]
     public class AIOperationsController : ControllerBase
     {
