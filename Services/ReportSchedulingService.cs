@@ -17,11 +17,25 @@ namespace irevlogix_backend.Services
             _logger = logger;
         }
 
-        public Task StartAsync(CancellationToken cancellationToken)
+        public async Task StartAsync(CancellationToken cancellationToken)
         {
             _logger.LogInformation("Report Scheduling Service started");
-            _timer = new Timer(ProcessScheduledReports, null, TimeSpan.Zero, TimeSpan.FromMinutes(1));
-            return Task.CompletedTask;
+            
+            using var scope = _serviceProvider.CreateScope();
+            var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+            
+            var hasActiveReports = await context.ScheduledReports
+                .AnyAsync(sr => sr.IsActive && sr.NextRunDate.HasValue, cancellationToken);
+            
+            if (hasActiveReports)
+            {
+                _logger.LogInformation("Found active scheduled reports, starting timer");
+                _timer = new Timer(ProcessScheduledReports, null, TimeSpan.Zero, TimeSpan.FromMinutes(1));
+            }
+            else
+            {
+                _logger.LogInformation("No active scheduled reports found, timer will not start");
+            }
         }
 
         public Task StopAsync(CancellationToken cancellationToken)
@@ -44,6 +58,19 @@ namespace irevlogix_backend.Services
                 var dueReports = await context.ScheduledReports
                     .Where(sr => sr.IsActive && sr.NextRunDate.HasValue && sr.NextRunDate <= now)
                     .ToListAsync();
+
+                if (dueReports.Count == 0)
+                {
+                    var hasAnyActiveReports = await context.ScheduledReports
+                        .AnyAsync(sr => sr.IsActive && sr.NextRunDate.HasValue);
+                    
+                    if (!hasAnyActiveReports)
+                    {
+                        _logger.LogInformation("No active scheduled reports found, stopping timer to prevent unnecessary database queries");
+                        _timer?.Change(Timeout.Infinite, 0);
+                        return;
+                    }
+                }
 
                 foreach (var report in dueReports)
                 {
