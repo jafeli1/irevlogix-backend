@@ -42,29 +42,50 @@ namespace irevlogix_backend.Services
                         new { role = "user", content = prompt }
                     },
                     max_tokens = 500,
-                    temperature = 0.7
+                    temperature = 0.7,
+                    response_format = new { type = "json_object" }
                 };
 
                 var json = JsonSerializer.Serialize(requestBody);
                 var content = new StringContent(json, Encoding.UTF8, "application/json");
 
-                var response = await _httpClient.PostAsync("https://api.openai.com/v1/chat/completions", content);
-                response.EnsureSuccessStatusCode();
+                var endpoint = "https://api.openai.com/v1/chat/completions";
+                var response = await _httpClient.PostAsync(endpoint, content);
 
                 var responseContent = await response.Content.ReadAsStringAsync();
-                var responseData = JsonSerializer.Deserialize<JsonElement>(responseContent);
 
-                return responseData
-                    .GetProperty("choices")[0]
-                    .GetProperty("message")
-                    .GetProperty("content")
-                    .GetString() ?? string.Empty;
+                if (!response.IsSuccessStatusCode)
+                {
+                    _logger.LogError("OpenAI API call failed. StatusCode={StatusCode}, Endpoint={Endpoint}, Body={Body}", (int)response.StatusCode, endpoint, Truncate(responseContent, 2000));
+                    throw new HttpRequestException($"OpenAI request failed with status {(int)response.StatusCode}");
+                }
+
+                try
+                {
+                    var responseData = JsonSerializer.Deserialize<JsonElement>(responseContent);
+                    return responseData
+                        .GetProperty("choices")[0]
+                        .GetProperty("message")
+                        .GetProperty("content")
+                        .GetString() ?? string.Empty;
+                }
+                catch (Exception parseEx)
+                {
+                    _logger.LogError(parseEx, "Failed to parse OpenAI response JSON. RawBody={Body}", Truncate(responseContent, 2000));
+                    throw;
+                }
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error calling OpenAI API");
                 throw;
             }
+        }
+
+        private static string Truncate(string? value, int maxLen)
+        {
+            if (string.IsNullOrEmpty(value)) return string.Empty;
+            return value.Length <= maxLen ? value : value.Substring(0, maxLen);
         }
 
         public async Task<T?> GetStructuredResponseAsync<T>(string prompt, string systemMessage = "You are a helpful assistant. Respond only with valid JSON.")
@@ -78,11 +99,24 @@ namespace irevlogix_backend.Services
             try
             {
                 var response = await GetChatCompletionAsync(prompt, systemMessage);
-                return JsonSerializer.Deserialize<T>(response);
+                try
+                {
+                    return JsonSerializer.Deserialize<T>(response);
+                }
+                catch (Exception parseEx)
+                {
+                    _logger.LogError(parseEx, "Error deserializing OpenAI structured response to {Type}. RawText={Raw}", typeof(T).Name, Truncate(response, 2000));
+                    return default(T);
+                }
+            }
+            catch (HttpRequestException httpEx)
+            {
+                _logger.LogError(httpEx, "OpenAI HTTP error while requesting structured response");
+                return default(T);
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error parsing structured response from OpenAI");
+                _logger.LogError(ex, "Unexpected error obtaining structured response from OpenAI");
                 return default(T);
             }
         }

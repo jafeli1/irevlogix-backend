@@ -251,23 +251,25 @@ Provide only the category name.";
                 var materialTypeFilter = materialType ?? "all material types";
                 var clientFilter = originatorClientId.HasValue ? $" from client {originatorClientId}" : "";
 
-                var prompt = $@"Given the following {aggregationPeriod} return volumes for {materialTypeFilter}{clientFilter}: [{historicalDataString}], 
-predict the return volumes for the next {weeksAhead} {aggregationPeriod.TrimEnd('y')}s. 
-Consider seasonal trends, growth patterns, and any cyclical behavior in the data.
-Provide only the predicted values in a JSON array format: [period1_volume, period2_volume, period3_volume, period4_volume].
-Each value should be a number representing the predicted quantity.";
+                var prompt = $@"You are an API that only returns valid JSON. Given the following {aggregationPeriod} return volumes for {materialTypeFilter}{clientFilter}: [{historicalDataString}],
+predict the return volumes for the next {weeksAhead} {aggregationPeriod.TrimEnd('y')}s.
+Requirements:
+- Respond ONLY with a JSON object with a single key 'values' whose value is an array of {weeksAhead} integers.
+- No prose, no backticks, no comments, no keys other than 'values'.
+Example: {{""values"": [12, 14, 11, 13] }}";
 
-                var response = await _openAIService.GetStructuredResponseAsync<int[]>(prompt);
+                var response = await _openAIService.GetStructuredResponseAsync<IntArrayEnvelope>(prompt);
+                var preds = response?.values ?? Array.Empty<int>();
                 
                 return new ReturnsForecastResult
                 {
                     HasSufficientData = true,
                     HistoricalData = aggregatedData.Select(d => new ForecastDataPoint { Period = d.Period, Volume = d.Volume }).ToList(),
-                    PredictedData = response?.Select((vol, idx) => new ForecastDataPoint 
+                    PredictedData = preds.Select((vol, idx) => new ForecastDataPoint 
                     { 
                         Period = GetFuturePeriod(aggregationPeriod, idx + 1), 
                         Volume = vol 
-                    }).ToList() ?? new List<ForecastDataPoint>(),
+                    }).ToList(),
                     MaterialType = materialType,
                     OriginatorClientId = originatorClientId,
                     AggregationPeriod = aggregationPeriod,
@@ -398,5 +400,10 @@ waste diversion from landfills, and social impact metrics.";
     {
         public string Period { get; set; } = string.Empty;
         public int Volume { get; set; }
+    }
+
+    public class IntArrayEnvelope
+    {
+        public int[]? values { get; set; }
     }
 }
