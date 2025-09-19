@@ -42,7 +42,8 @@ namespace irevlogix_backend.Services
                         new { role = "user", content = prompt }
                     },
                     max_tokens = 500,
-                    temperature = 0.7
+                    temperature = 0.7,
+                    response_format = new { type = "json_object" }
                 };
 
                 var json = JsonSerializer.Serialize(requestBody);
