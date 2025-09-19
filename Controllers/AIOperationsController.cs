@@ -6,8 +6,10 @@ using irevlogix_backend.Services;
 
 namespace irevlogix_backend.Controllers
 {
+using Microsoft.AspNetCore.Routing;
     [ApiController]
     [Route("api/[controller]")]
+    [Route("api/ai-operations")]
     [Authorize]
     public class AIOperationsController : ControllerBase
     {
