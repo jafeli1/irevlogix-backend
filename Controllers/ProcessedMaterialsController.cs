@@ -37,7 +37,6 @@ namespace irevlogix_backend.Controllers
             var clientId = GetClientId();
 
             var q = _context.ProcessedMaterials
-                .Include(p => p.MaterialType)
                 .AsQueryable();
 
             if (!IsAdministrator())
@@ -53,14 +52,12 @@ namespace irevlogix_backend.Controllers
             var total = await q.CountAsync();
             Response.Headers["X-Total-Count"] = total.ToString();
 
-            var items = await q
+            var queryProjected = q
                 .OrderByDescending(x => x.DateCreated)
-                .Skip((page - 1) * pageSize)
-                .Take(pageSize)
                 .Select(x => new
                 {
                     x.Id,
-                    MaterialType = x.MaterialType == null ? null : new { x.MaterialType.Id, x.MaterialType.Name },
+                    MaterialType = x.MaterialType != null ? new { x.MaterialType.Id, x.MaterialType.Name } : null,
                     x.Quantity,
                     x.UnitOfMeasure,
                     x.QualityGrade,
@@ -68,6 +65,11 @@ namespace irevlogix_backend.Controllers
                     Status = x.Status,
                     ProcessingLotId = x.ProcessingLotId
                 })
+                .AsNoTracking();
+
+            var items = await queryProjected
+                .Skip((page - 1) * pageSize)
+                .Take(pageSize)
                 .ToListAsync();
 
             return Ok(items);
