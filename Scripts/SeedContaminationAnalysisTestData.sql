@@ -1,13 +1,13 @@
-INSERT INTO "MaterialTypes" ("Name","Description","DateCreated","DateUpdated","CreatedBy","UpdatedBy","ClientId")
-SELECT 'Mixed Plastics', 'Post-consumer mixed plastics', NOW(), NOW(), 1, 1, '7d02a831-2bcd-4435-a944-ed0788dfe9e4'
+INSERT INTO "MaterialTypes" ("Name","Description","IsActive","DateCreated","DateUpdated","CreatedBy","UpdatedBy","ClientId")
+SELECT 'Mixed Plastics', 'Post-consumer mixed plastics', TRUE, NOW(), NOW(), 1, 1, '7d02a831-2bcd-4435-a944-ed0788dfe9e4'
 WHERE NOT EXISTS (SELECT 1 FROM "MaterialTypes" WHERE "Name"='Mixed Plastics' AND "ClientId"='7d02a831-2bcd-4435-a944-ed0788dfe9e4');
 
-INSERT INTO "MaterialTypes" ("Name","Description","DateCreated","DateUpdated","CreatedBy","UpdatedBy","ClientId")
-SELECT 'Mixed Metals', 'Ferrous/non-ferrous mix', NOW(), NOW(), 1, 1, '7d02a831-2bcd-4435-a944-ed0788dfe9e4'
+INSERT INTO "MaterialTypes" ("Name","Description","IsActive","DateCreated","DateUpdated","CreatedBy","UpdatedBy","ClientId")
+SELECT 'Mixed Metals', 'Ferrous/non-ferrous mix', TRUE, NOW(), NOW(), 1, 1, '7d02a831-2bcd-4435-a944-ed0788dfe9e4'
 WHERE NOT EXISTS (SELECT 1 FROM "MaterialTypes" WHERE "Name"='Mixed Metals' AND "ClientId"='7d02a831-2bcd-4435-a944-ed0788dfe9e4');
 
-INSERT INTO "MaterialTypes" ("Name","Description","DateCreated","DateUpdated","CreatedBy","UpdatedBy","ClientId")
-SELECT 'Cardboard', 'OCC & paper fiber', NOW(), NOW(), 1, 1, '7d02a831-2bcd-4435-a944-ed0788dfe9e4'
+INSERT INTO "MaterialTypes" ("Name","Description","IsActive","DateCreated","DateUpdated","CreatedBy","UpdatedBy","ClientId")
+SELECT 'Cardboard', 'OCC & paper fiber', TRUE, NOW(), NOW(), 1, 1, '7d02a831-2bcd-4435-a944-ed0788dfe9e4'
 WHERE NOT EXISTS (SELECT 1 FROM "MaterialTypes" WHERE "Name"='Cardboard' AND "ClientId"='7d02a831-2bcd-4435-a944-ed0788dfe9e4');
 
 
@@ -54,8 +54,8 @@ WITH s1 AS (
 ), lot3 AS (
   SELECT "Id" as lotid FROM "ProcessingLots" WHERE "LotNumber"='LOT-CA-003'
 )
-INSERT INTO "ShipmentItems" ("ShipmentId","MaterialTypeId","ProcessingLotId","Description","Quantity","UnitOfMeasure","Weight","WeightUnit","Notes","DateCreated","DateUpdated","CreatedBy","UpdatedBy","ClientId")
-SELECT s1.sid, mt_plastics.mtid, lot1.lotid, 'Baled plastics with film contamination', 1, 'pallet', 120.0, 'kg', 'Plastic wrap and labels present', NOW() - INTERVAL '18 days', NOW() - INTERVAL '18 days', 1, 1, '7d02a831-2bcd-4435-a944-ed0788dfe9e4'
+INSERT INTO "ShipmentItems" ("ShipmentId","MaterialTypeId","ProcessingLotId","Description","Quantity","UnitOfMeasure","Weight","WeightUnit","Notes","IsDataBearingDevice","DateCreated","DateUpdated","CreatedBy","UpdatedBy","ClientId")
+SELECT s1.sid, mt_plastics.mtid, lot1.lotid, 'Baled plastics with film contamination', 1, 'pallet', 120.0, 'kg', 'Plastic wrap and labels present', FALSE, NOW() - INTERVAL '18 days', NOW() - INTERVAL '18 days', 1, 1, '7d02a831-2bcd-4435-a944-ed0788dfe9e4'
 FROM s1, mt_plastics, lot1
 WHERE NOT EXISTS (
   SELECT 1 FROM "ShipmentItems" si JOIN s1 ON si."ShipmentId"=s1.sid WHERE si."Description"='Baled plastics with film contamination'
@@ -68,8 +68,8 @@ WITH s2 AS (
 ), lot2 AS (
   SELECT "Id" as lotid FROM "ProcessingLots" WHERE "LotNumber"='LOT-CA-002'
 )
-INSERT INTO "ShipmentItems" ("ShipmentId","MaterialTypeId","ProcessingLotId","Description","Quantity","UnitOfMeasure","Weight","WeightUnit","Notes","DateCreated","DateUpdated","CreatedBy","UpdatedBy","ClientId")
-SELECT s2.sid, mt_metals.mtid, lot2.lotid, 'Mixed metals with trace glass', 1, 'pallet', 200.0, 'kg', 'Mixed metals with small glass shards', NOW() - INTERVAL '8 days', NOW() - INTERVAL '8 days', 1, 1, '7d02a831-2bcd-4435-a944-ed0788dfe9e4'
+INSERT INTO "ShipmentItems" ("ShipmentId","MaterialTypeId","ProcessingLotId","Description","Quantity","UnitOfMeasure","Weight","WeightUnit","Notes","IsDataBearingDevice","DateCreated","DateUpdated","CreatedBy","UpdatedBy","ClientId")
+SELECT s2.sid, mt_metals.mtid, lot2.lotid, 'Mixed metals with trace glass', 1, 'pallet', 200.0, 'kg', 'Mixed metals with small glass shards', FALSE, NOW() - INTERVAL '8 days', NOW() - INTERVAL '8 days', 1, 1, '7d02a831-2bcd-4435-a944-ed0788dfe9e4'
 FROM s2, mt_metals, lot2
 WHERE NOT EXISTS (
   SELECT 1 FROM "ShipmentItems" si JOIN s2 ON si."ShipmentId"=s2.sid WHERE si."Description"='Mixed metals with trace glass'
@@ -82,8 +82,8 @@ WITH s2 AS (
 ), lot3 AS (
   SELECT "Id" as lotid FROM "ProcessingLots" WHERE "LotNumber"='LOT-CA-003'
 )
-INSERT INTO "ShipmentItems" ("ShipmentId","MaterialTypeId","ProcessingLotId","Description","Quantity","UnitOfMeasure","Weight","WeightUnit","Notes","DateCreated","DateUpdated","CreatedBy","UpdatedBy","ClientId")
-SELECT s2.sid, mt_cardboard.mtid, lot3.lotid, 'Paper/cardboard with adhesive', 1, 'pallet', 150.0, 'kg', 'Cardboard pieces and adhesive residues', NOW() - INTERVAL '6 days', NOW() - INTERVAL '6 days', 1, 1, '7d02a831-2bcd-4435-a944-ed0788dfe9e4'
+INSERT INTO "ShipmentItems" ("ShipmentId","MaterialTypeId","ProcessingLotId","Description","Quantity","UnitOfMeasure","Weight","WeightUnit","Notes","IsDataBearingDevice","DateCreated","DateUpdated","CreatedBy","UpdatedBy","ClientId")
+SELECT s2.sid, mt_cardboard.mtid, lot3.lotid, 'Paper/cardboard with adhesive', 1, 'pallet', 150.0, 'kg', 'Cardboard pieces and adhesive residues', FALSE, NOW() - INTERVAL '6 days', NOW() - INTERVAL '6 days', 1, 1, '7d02a831-2bcd-4435-a944-ed0788dfe9e4'
 FROM s2, mt_cardboard, lot3
 WHERE NOT EXISTS (
   SELECT 1 FROM "ShipmentItems" si JOIN s2 ON si."ShipmentId"=s2.sid WHERE si."Description"='Paper/cardboard with adhesive'
@@ -118,8 +118,8 @@ WITH s1 AS (
 ), lot6 AS (
   SELECT "Id" as lotid FROM "ProcessingLots" WHERE "LotNumber"='LOT-CA-006'
 )
-INSERT INTO "ShipmentItems" ("ShipmentId","MaterialTypeId","ProcessingLotId","Description","Quantity","UnitOfMeasure","Weight","WeightUnit","Notes","DateCreated","DateUpdated","CreatedBy","UpdatedBy","ClientId")
-SELECT s1.sid, mt_plastics.mtid, lot4.lotid, 'Plastics with food/film residue', 1, 'pallet', 110.0, 'kg', 'Food residue and films on plastics', NOW() - INTERVAL '15 days', NOW() - INTERVAL '15 days', 1, 1, '7d02a831-2bcd-4435-a944-ed0788dfe9e4'
+INSERT INTO "ShipmentItems" ("ShipmentId","MaterialTypeId","ProcessingLotId","Description","Quantity","UnitOfMeasure","Weight","WeightUnit","Notes","IsDataBearingDevice","DateCreated","DateUpdated","CreatedBy","UpdatedBy","ClientId")
+SELECT s1.sid, mt_plastics.mtid, lot4.lotid, 'Plastics with food/film residue', 1, 'pallet', 110.0, 'kg', 'Food residue and films on plastics', FALSE, NOW() - INTERVAL '15 days', NOW() - INTERVAL '15 days', 1, 1, '7d02a831-2bcd-4435-a944-ed0788dfe9e4'
 FROM s1, mt_plastics, lot4
 WHERE NOT EXISTS (
   SELECT 1 FROM "ShipmentItems" si JOIN s1 ON si."ShipmentId"=s1.sid WHERE si."Description"='Plastics with food/film residue'
@@ -132,8 +132,8 @@ WITH s2 AS (
 ), lot5 AS (
   SELECT "Id" as lotid FROM "ProcessingLots" WHERE "LotNumber"='LOT-CA-005'
 )
-INSERT INTO "ShipmentItems" ("ShipmentId","MaterialTypeId","ProcessingLotId","Description","Quantity","UnitOfMeasure","Weight","WeightUnit","Notes","DateCreated","DateUpdated","CreatedBy","UpdatedBy","ClientId")
-SELECT s2.sid, mt_metals.mtid, lot5.lotid, 'Metal with painted components', 1, 'pallet', 90.0, 'kg', 'Metal loads with painted parts', NOW() - INTERVAL '12 days', NOW() - INTERVAL '12 days', 1, 1, '7d02a831-2bcd-4435-a944-ed0788dfe9e4'
+INSERT INTO "ShipmentItems" ("ShipmentId","MaterialTypeId","ProcessingLotId","Description","Quantity","UnitOfMeasure","Weight","WeightUnit","Notes","IsDataBearingDevice","DateCreated","DateUpdated","CreatedBy","UpdatedBy","ClientId")
+SELECT s2.sid, mt_metals.mtid, lot5.lotid, 'Metal with painted components', 1, 'pallet', 90.0, 'kg', 'Metal loads with painted parts', FALSE, NOW() - INTERVAL '12 days', NOW() - INTERVAL '12 days', 1, 1, '7d02a831-2bcd-4435-a944-ed0788dfe9e4'
 FROM s2, mt_metals, lot5
 WHERE NOT EXISTS (
   SELECT 1 FROM "ShipmentItems" si JOIN s2 ON si."ShipmentId"=s2.sid WHERE si."Description"='Metal with painted components'
@@ -146,8 +146,8 @@ WITH s1 AS (
 ), lot6 AS (
   SELECT "Id" as lotid FROM "ProcessingLots" WHERE "LotNumber"='LOT-CA-006'
 )
-INSERT INTO "ShipmentItems" ("ShipmentId","MaterialTypeId","ProcessingLotId","Description","Quantity","UnitOfMeasure","Weight","WeightUnit","Notes","DateCreated","DateUpdated","CreatedBy","UpdatedBy","ClientId")
-SELECT s1.sid, mt_cardboard.mtid, lot6.lotid, 'Cardboard with tape/staples', 1, 'pallet', 140.0, 'kg', 'Cardboard with tape and staples', NOW() - INTERVAL '14 days', NOW() - INTERVAL '14 days', 1, 1, '7d02a831-2bcd-4435-a944-ed0788dfe9e4'
+INSERT INTO "ShipmentItems" ("ShipmentId","MaterialTypeId","ProcessingLotId","Description","Quantity","UnitOfMeasure","Weight","WeightUnit","Notes","IsDataBearingDevice","DateCreated","DateUpdated","CreatedBy","UpdatedBy","ClientId")
+SELECT s1.sid, mt_cardboard.mtid, lot6.lotid, 'Cardboard with tape/staples', 1, 'pallet', 140.0, 'kg', 'Cardboard with tape and staples', FALSE, NOW() - INTERVAL '14 days', NOW() - INTERVAL '14 days', 1, 1, '7d02a831-2bcd-4435-a944-ed0788dfe9e4'
 FROM s1, mt_cardboard, lot6
 WHERE NOT EXISTS (
   SELECT 1 FROM "ShipmentItems" si JOIN s1 ON si."ShipmentId"=s1.sid WHERE si."Description"='Cardboard with tape/staples'
