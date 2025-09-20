@@ -6,7 +6,7 @@ using System.Globalization;
 
 namespace irevlogix_backend.Services
 {
-    public class AIRecommendationService
+    public partial class AIRecommendationService
     {
         private readonly OpenAIService _openAIService;
         private readonly ApplicationDbContext _context;
@@ -402,6 +402,182 @@ waste diversion from landfills, and social impact metrics.";
         public int Volume { get; set; }
     }
 
+    public class ContaminationAIResponse
+    {
+        public List<string> common_contaminants { get; set; } = new();
+        public List<string> preventative_measures { get; set; } = new();
+        public List<string> supplier_improvements { get; set; } = new();
+    }
+
+    public class ContaminationSourceRow
+    {
+        public int ProcessingLotId { get; set; }
+        public string? MaterialType { get; set; }
+        public double? ContaminationPercentage { get; set; }
+        public string? IncomingMaterialNotes { get; set; }
+        public double? ActualReceivedWeight { get; set; }
+        public int? OriginatorClientId { get; set; }
+        public string? OriginatorName { get; set; }
+        public int? ShipmentId { get; set; }
+        public DateTime DateCreated { get; set; }
+    }
+
+    public class ContaminationAnalysisResult
+    {
+        public List<string> CommonContaminants { get; set; } = new();
+        public List<string> PreventativeMeasures { get; set; } = new();
+        public List<string> SupplierImprovements { get; set; } = new();
+        public List<ContaminationSourceRow> UsedRows { get; set; } = new();
+        public int TotalRows { get; set; }
+        public string? MaterialType { get; set; }
+        public int? OriginatorClientId { get; set; }
+        public int PeriodWeeks { get; set; }
+        public DateTime GeneratedAt { get; set; } = DateTime.UtcNow;
+    }
+
+        public async Task<ContaminationAnalysisResult> GetMaterialContaminationInsightsAsync(
+            string clientId, string? materialType = null, int? originatorClientId = null, int periodWeeks = 4)
+        {
+            try
+            {
+                var cutoff = DateTime.UtcNow.AddDays(-7 * periodWeeks);
+
+                var lotsQuery = _context.ProcessingLots
+                    .Where(l => l.ClientId == clientId && l.DateCreated >= cutoff);
+
+                var lots = await lotsQuery.ToListAsync();
+                if (lots.Count == 0)
+                {
+                    return new ContaminationAnalysisResult
+                    {
+                        CommonContaminants = new List<string>(),
+                        PreventativeMeasures = new List<string>(),
+                        SupplierImprovements = new List<string>(),
+                        UsedRows = new List<ContaminationSourceRow>(),
+                        TotalRows = 0,
+                        MaterialType = materialType,
+                        OriginatorClientId = originatorClientId,
+                        PeriodWeeks = periodWeeks,
+                        GeneratedAt = DateTime.UtcNow
+                    };
+                }
+
+                var shipmentIds = lots.Where(l => l.SourceShipmentId.HasValue).Select(l => l.SourceShipmentId!.Value).Distinct().ToList();
+
+                var shipmentsQuery = _context.Shipments
+                    .Include(s => s.ShipmentItems)
+                        .ThenInclude(si => si.MaterialType)
+                    .Where(s => s.ClientId == clientId && shipmentIds.Contains(s.Id));
+
+                if (originatorClientId.HasValue)
+                {
+                    shipmentsQuery = shipmentsQuery.Where(s => s.OriginatorClientId == originatorClientId.Value);
+                }
+
+                var shipments = await shipmentsQuery.ToListAsync();
+                var shipmentsById = shipments.ToDictionary(s => s.Id, s => s);
+
+                if (originatorClientId.HasValue)
+                {
+                    lots = lots.Where(l => l.SourceShipmentId.HasValue && shipmentsById.ContainsKey(l.SourceShipmentId.Value)).ToList();
+                }
+
+                if (!string.IsNullOrWhiteSpace(materialType))
+                {
+                    lots = lots.Where(l =>
+                    {
+                        if (!l.SourceShipmentId.HasValue) return false;
+                        if (!shipmentsById.TryGetValue(l.SourceShipmentId.Value, out var s)) return false;
+                        return s.ShipmentItems.Any(si => si.MaterialType != null && si.MaterialType.Name == materialType);
+                    }).ToList();
+                }
+
+                var totalRows = lots.Count;
+
+                var rows = new List<ContaminationSourceRow>();
+                foreach (var lot in lots)
+                {
+                    Shipment? s = null;
+                    if (lot.SourceShipmentId.HasValue)
+                    {
+                        shipmentsById.TryGetValue(lot.SourceShipmentId.Value, out s);
+                    }
+
+                    string? mtName = null;
+                    if (s != null)
+                    {
+                        mtName = s.ShipmentItems.FirstOrDefault(si => si.MaterialType != null)?.MaterialType?.Name;
+                    }
+
+                    rows.Add(new ContaminationSourceRow
+                    {
+                        ProcessingLotId = lot.Id,
+                        MaterialType = mtName,
+                        ContaminationPercentage = lot.ContaminationPercentage,
+                        IncomingMaterialNotes = lot.IncomingMaterialNotes,
+                        ActualReceivedWeight = lot.TotalIncomingWeight ?? 0,
+                        OriginatorClientId = s?.OriginatorClientId,
+                        OriginatorName = null,
+                        ShipmentId = s?.Id,
+                        DateCreated = lot.DateCreated
+                    });
+                }
+
+                var usedRows = rows.Take(50).ToList();
+
+                var summaries = usedRows.Select(r =>
+                    $"Material: {(string.IsNullOrWhiteSpace(r.MaterialType) ? "Unknown" : r.MaterialType)}; " +
+                    $"Contamination: {(r.ContaminationPercentage ?? 0):0.##}%; " +
+                    $"Notes: {(string.IsNullOrWhiteSpace(r.IncomingMaterialNotes) ? "None" : r.IncomingMaterialNotes)}; " +
+                    $"Weight: {(r.ActualReceivedWeight ?? 0):0.##} kg"
+                ).ToList();
+
+                var description = string.Join(" | ", summaries);
+
+                var mtFilter = string.IsNullOrWhiteSpace(materialType) ? "all material types" : materialType!;
+                var weeks = periodWeeks;
+
+                var prompt = $@"You are an API that only returns valid JSON.
+Given the following material details for recycling lots over the last {weeks} weeks for {mtFilter}:
+{description}
+Analyze this information to identify common contaminants and suggest specific preventative measures or improvements to discuss with suppliers.
+Respond ONLY with a JSON object that exactly matches:
+{{""common_contaminants"": [], ""preventative_measures"": [], ""supplier_improvements"": []}}";
+
+                var ai = await _openAIService.GetStructuredResponseAsync<ContaminationAIResponse>(prompt);
+                var result = new ContaminationAnalysisResult
+                {
+                    CommonContaminants = ai?.common_contaminants ?? new List<string>(),
+                    PreventativeMeasures = ai?.preventative_measures ?? new List<string>(),
+                    SupplierImprovements = ai?.supplier_improvements ?? new List<string>(),
+                    UsedRows = usedRows,
+                    TotalRows = totalRows,
+                    MaterialType = materialType,
+                    OriginatorClientId = originatorClientId,
+                    PeriodWeeks = periodWeeks,
+                    GeneratedAt = DateTime.UtcNow
+                };
+
+                return result;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error generating material contamination analysis");
+                return new ContaminationAnalysisResult
+                {
+                    CommonContaminants = new List<string>(),
+                    PreventativeMeasures = new List<string>(),
+                    SupplierImprovements = new List<string>(),
+                    UsedRows = new List<ContaminationSourceRow>(),
+                    TotalRows = 0,
+                    MaterialType = materialType,
+                    OriginatorClientId = originatorClientId,
+                    PeriodWeeks = periodWeeks,
+                    GeneratedAt = DateTime.UtcNow
+                };
+            }
+        }
+ 
     public class IntArrayEnvelope
     {
         public int[]? values { get; set; }

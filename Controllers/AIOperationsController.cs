@@ -45,6 +45,29 @@ using Microsoft.AspNetCore.Routing;
             }
         }
 
+        [HttpGet("contamination-analysis")]
+        public async Task<IActionResult> GetContaminationAnalysis(
+            [FromQuery] string? materialType = null,
+            [FromQuery] int? originatorClientId = null,
+            [FromQuery] int periodWeeks = 4)
+        {
+            try
+            {
+                if (periodWeeks != 4 && periodWeeks != 8) periodWeeks = 4;
+                var clientId = GetClientId();
+
+                var result = await _aiService.GetMaterialContaminationInsightsAsync(
+                    clientId, materialType, originatorClientId, periodWeeks);
+
+                return Ok(result);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error getting contamination analysis");
+                return StatusCode(500, "Internal server error");
+            }
+        }
+
         private string GetClientId()
         {
             return User.FindFirst("ClientId")?.Value ?? throw new UnauthorizedAccessException("ClientId not found in token");
