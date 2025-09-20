@@ -47,11 +47,7 @@ namespace irevlogix_backend.Controllers
             try
             {
                 var clientId = GetClientId();
-                var query = _context.ProcessingLots
-                    .Include(pl => pl.Operator)
-                    .Include(pl => pl.ProcessingSteps)
-                    .Include(pl => pl.ProcessedMaterials)
-                    .AsQueryable();
+                var query = _context.ProcessingLots.AsQueryable();
 
                 if (!IsAdministrator())
                 {
@@ -71,14 +67,23 @@ namespace irevlogix_backend.Controllers
                     query = query.Where(pl => pl.StartDate <= endDate.Value);
 
                 var totalCount = await query.CountAsync();
-                var lots = await query
+                Response.Headers["X-Total-Count"] = totalCount.ToString();
+
+                var items = await query
                     .OrderByDescending(pl => pl.DateCreated)
+                    .Select(pl => new
+                    {
+                        pl.Id,
+                        pl.LotNumber,
+                        pl.Status,
+                        pl.DateCreated
+                    })
+                    .AsNoTracking()
                     .Skip((page - 1) * pageSize)
                     .Take(pageSize)
                     .ToListAsync();
 
-                Response.Headers.Add("X-Total-Count", totalCount.ToString());
-                return Ok(lots);
+                return Ok(items);
             }
             catch (Exception ex)
             {
