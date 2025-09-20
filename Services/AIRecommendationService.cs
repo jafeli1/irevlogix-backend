@@ -327,118 +327,7 @@ Provide recommendations for processing and quality improvement strategies.";
             }
         }
 
-        public async Task<string> GetESGImpactForecastAsync(string clientId)
-        {
-            try
-            {
-                var totalAssets = await _context.Assets
-                    .Where(a => a.ClientId == clientId)
-                    .CountAsync();
-
-                var totalWeight = await _context.ProcessingLots
-                    .Where(p => p.ClientId == clientId)
-                    .SumAsync(p => p.TotalIncomingWeight ?? 0);
-
-                var prompt = $@"Based on the following recycling data:
-Total assets processed: {totalAssets}
-Total material weight processed: {totalWeight} kg
-Provide an ESG (Environmental, Social, Governance) impact forecast including carbon footprint reduction, 
-waste diversion from landfills, and social impact metrics.";
-
-                var response = await _openAIService.GetChatCompletionAsync(prompt);
-                return response;
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error getting ESG impact forecast");
-                return "Unable to generate ESG forecast at this time.";
-            }
-        }
-    }
-
-    public class MaterialClassificationSuggestion
-    {
-        public string[] SuggestedCategories { get; set; } = new string[0];
-        public double Confidence { get; set; }
-    }
-
-    public class DispositionRecommendation
-    {
-        public string RecommendedDisposition { get; set; } = string.Empty;
-        public string Justification { get; set; } = string.Empty;
-    }
-
-    public class AssetCategorizationSuggestion
-    {
-        public string SuggestedCategory { get; set; } = string.Empty;
-        public string SuggestedManufacturer { get; set; } = string.Empty;
-        public string SuggestedModel { get; set; } = string.Empty;
-    }
-
-    public class QualityGradePrediction
-    {
-        public string PredictedGrade { get; set; } = string.Empty;
-        public double Confidence { get; set; }
-        public string Reasoning { get; set; } = string.Empty;
-    }
-
-    public class ReturnsForecastResult
-    {
-        public bool HasSufficientData { get; set; }
-        public string? InsufficientDataMessage { get; set; }
-        public string[]? RequiredTables { get; set; }
-        public string[]? RequiredFields { get; set; }
-        public List<ForecastDataPoint> HistoricalData { get; set; } = new();
-        public List<ForecastDataPoint> PredictedData { get; set; } = new();
-        public string? MaterialType { get; set; }
-        public int? OriginatorClientId { get; set; }
-        public string AggregationPeriod { get; set; } = "weekly";
-        public DateTime GeneratedAt { get; set; }
-    }
-
-    public class ForecastDataPoint
-    {
-        public string Period { get; set; } = string.Empty;
-        public int Volume { get; set; }
-    }
-
-    public class ContaminationAIResponse
-    {
-        public List<string> common_contaminants { get; set; } = new();
-        public List<string> preventative_measures { get; set; } = new();
-        public List<string> supplier_improvements { get; set; } = new();
-    }
-
-    public class ContaminationSourceRow
-    {
-        public int ProcessingLotId { get; set; }
-        public string? MaterialType { get; set; }
-        public double? ContaminationPercentage { get; set; }
-        public string? IncomingMaterialNotes { get; set; }
-        public double? ActualReceivedWeight { get; set; }
-        public int? OriginatorClientId { get; set; }
-        public string? OriginatorName { get; set; }
-        public int? ShipmentId { get; set; }
-        public DateTime DateCreated { get; set; }
-    }
-
-    public class ContaminationAnalysisResult
-    {
-        public List<string> CommonContaminants { get; set; } = new();
-        public List<string> PreventativeMeasures { get; set; } = new();
-        public List<string> SupplierImprovements { get; set; } = new();
-        public List<ContaminationSourceRow> UsedRows { get; set; } = new();
-        public int TotalRows { get; set; }
-        public string? MaterialType { get; set; }
-        public int? OriginatorClientId { get; set; }
-        public int PeriodWeeks { get; set; }
-        public DateTime GeneratedAt { get; set; } = DateTime.UtcNow;
-    }
-
-    public partial class AIRecommendationService
-    {
-
-    public async Task<ContaminationAnalysisResult> GetMaterialContaminationInsightsAsync(
+        public async Task<ContaminationAnalysisResult> GetMaterialContaminationInsightsAsync(
             string clientId, string? materialType = null, int? originatorClientId = null, int periodWeeks = 4)
         {
             try
@@ -580,7 +469,115 @@ Respond ONLY with a JSON object that exactly matches:
                 };
             }
         }
+
+        public async Task<string> GetESGImpactForecastAsync(string clientId)
+        {
+            try
+            {
+                var totalAssets = await _context.Assets
+                    .Where(a => a.ClientId == clientId)
+                    .CountAsync();
+
+                var totalWeight = await _context.ProcessingLots
+                    .Where(p => p.ClientId == clientId)
+                    .SumAsync(p => p.TotalIncomingWeight ?? 0);
+
+                var prompt = $@"Based on the following recycling data:
+Total assets processed: {totalAssets}
+Total material weight processed: {totalWeight} kg
+Provide an ESG (Environmental, Social, Governance) impact forecast including carbon footprint reduction, 
+waste diversion from landfills, and social impact metrics.";
+
+                var response = await _openAIService.GetChatCompletionAsync(prompt);
+                return response;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error getting ESG impact forecast");
+                return "Unable to generate ESG forecast at this time.";
+            }
+        }
     }
+
+    public class MaterialClassificationSuggestion
+    {
+        public string[] SuggestedCategories { get; set; } = new string[0];
+        public double Confidence { get; set; }
+    }
+
+    public class DispositionRecommendation
+    {
+        public string RecommendedDisposition { get; set; } = string.Empty;
+        public string Justification { get; set; } = string.Empty;
+    }
+
+    public class AssetCategorizationSuggestion
+    {
+        public string SuggestedCategory { get; set; } = string.Empty;
+        public string SuggestedManufacturer { get; set; } = string.Empty;
+        public string SuggestedModel { get; set; } = string.Empty;
+    }
+
+    public class QualityGradePrediction
+    {
+        public string PredictedGrade { get; set; } = string.Empty;
+        public double Confidence { get; set; }
+        public string Reasoning { get; set; } = string.Empty;
+    }
+
+    public class ReturnsForecastResult
+    {
+        public bool HasSufficientData { get; set; }
+        public string? InsufficientDataMessage { get; set; }
+        public string[]? RequiredTables { get; set; }
+        public string[]? RequiredFields { get; set; }
+        public List<ForecastDataPoint> HistoricalData { get; set; } = new();
+        public List<ForecastDataPoint> PredictedData { get; set; } = new();
+        public string? MaterialType { get; set; }
+        public int? OriginatorClientId { get; set; }
+        public string AggregationPeriod { get; set; } = "weekly";
+        public DateTime GeneratedAt { get; set; }
+    }
+
+    public class ForecastDataPoint
+    {
+        public string Period { get; set; } = string.Empty;
+        public int Volume { get; set; }
+    }
+
+    public class ContaminationAIResponse
+    {
+        public List<string> common_contaminants { get; set; } = new();
+        public List<string> preventative_measures { get; set; } = new();
+        public List<string> supplier_improvements { get; set; } = new();
+    }
+
+    public class ContaminationSourceRow
+    {
+        public int ProcessingLotId { get; set; }
+        public string? MaterialType { get; set; }
+        public double? ContaminationPercentage { get; set; }
+        public string? IncomingMaterialNotes { get; set; }
+        public double? ActualReceivedWeight { get; set; }
+        public int? OriginatorClientId { get; set; }
+        public string? OriginatorName { get; set; }
+        public int? ShipmentId { get; set; }
+        public DateTime DateCreated { get; set; }
+    }
+
+    public class ContaminationAnalysisResult
+    {
+        public List<string> CommonContaminants { get; set; } = new();
+        public List<string> PreventativeMeasures { get; set; } = new();
+        public List<string> SupplierImprovements { get; set; } = new();
+        public List<ContaminationSourceRow> UsedRows { get; set; } = new();
+        public int TotalRows { get; set; }
+        public string? MaterialType { get; set; }
+        public int? OriginatorClientId { get; set; }
+        public int PeriodWeeks { get; set; }
+        public DateTime GeneratedAt { get; set; } = DateTime.UtcNow;
+    }
+
 
  
     public class IntArrayEnvelope
