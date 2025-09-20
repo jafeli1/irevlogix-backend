@@ -357,6 +357,7 @@ Provide recommendations for processing and quality improvement strategies.";
                 var shipmentIds = lots.Where(l => l.SourceShipmentId.HasValue).Select(l => l.SourceShipmentId!.Value).Distinct().ToList();
 
                 var shipmentsQuery = _context.Shipments
+                    .Include(s => s.OriginatorClient)
                     .Include(s => s.ShipmentItems)
                         .ThenInclude(si => si.MaterialType)
                     .Where(s => s.ClientId == clientId && shipmentIds.Contains(s.Id));
@@ -409,7 +410,7 @@ Provide recommendations for processing and quality improvement strategies.";
                         IncomingMaterialNotes = lot.IncomingMaterialNotes,
                         ActualReceivedWeight = lot.TotalIncomingWeight ?? 0,
                         OriginatorClientId = s?.OriginatorClientId,
-                        OriginatorName = null,
+                        OriginatorName = s?.OriginatorClient?.CompanyName ?? null,
                         ShipmentId = s?.Id,
                         DateCreated = lot.DateCreated
                     });
