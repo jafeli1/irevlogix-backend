@@ -435,6 +435,9 @@ waste diversion from landfills, and social impact metrics.";
         public DateTime GeneratedAt { get; set; } = DateTime.UtcNow;
     }
 
+    public partial class AIRecommendationService
+    {
+
     public async Task<ContaminationAnalysisResult> GetMaterialContaminationInsightsAsync(
             string clientId, string? materialType = null, int? originatorClientId = null, int periodWeeks = 4)
         {
@@ -577,6 +580,8 @@ Respond ONLY with a JSON object that exactly matches:
                 };
             }
         }
+    }
+
  
     public class IntArrayEnvelope
     {
