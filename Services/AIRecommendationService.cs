@@ -335,7 +335,8 @@ Provide recommendations for processing and quality improvement strategies.";
                 var cutoff = DateTime.UtcNow.AddDays(-7 * periodWeeks);
 
                 var lotsQuery = _context.ProcessingLots
-                    .Where(l => l.ClientId == clientId && l.DateCreated >= cutoff);
+                    .Where(l => l.ClientId == clientId && l.DateCreated >= cutoff && l.SourceShipmentId != null)
+                    .OrderByDescending(l => l.DateCreated);
 
                 var lots = await lotsQuery.ToListAsync();
                 if (lots.Count == 0)
