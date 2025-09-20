@@ -556,9 +556,9 @@ waste diversion from landfills, and social impact metrics.";
     {
         public int ProcessingLotId { get; set; }
         public string? MaterialType { get; set; }
-        public double? ContaminationPercentage { get; set; }
+        public decimal? ContaminationPercentage { get; set; }
         public string? IncomingMaterialNotes { get; set; }
-        public double? ActualReceivedWeight { get; set; }
+        public decimal? ActualReceivedWeight { get; set; }
         public int? OriginatorClientId { get; set; }
         public string? OriginatorName { get; set; }
         public int? ShipmentId { get; set; }
