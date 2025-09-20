@@ -160,6 +160,168 @@ FROM s2, mt_metals, lot5
 WHERE NOT EXISTS (
   SELECT 1 FROM "ShipmentItems" si JOIN s2 ON si."ShipmentId"=s2.sid WHERE si."Description"='Metal with painted components'
 );
+UPDATE "ProcessingLots" l
+SET "SourceShipmentId" = s."Id"
+FROM "Shipments" s
+WHERE l."LotNumber" = 'LOT-CA-001'
+  AND l."ClientId" = (SELECT cid FROM tmp_client_ctx)
+  AND s."TrackingNumber" = 'TRK-CA-001'
+  AND s."ClientId" = (SELECT cid FROM tmp_client_ctx)
+  AND l."SourceShipmentId" IS NULL;
+
+UPDATE "ProcessingLots" l
+SET "SourceShipmentId" = s."Id"
+FROM "Shipments" s
+WHERE l."LotNumber" = 'LOT-CA-002'
+  AND l."ClientId" = (SELECT cid FROM tmp_client_ctx)
+  AND s."TrackingNumber" = 'TRK-CA-002'
+  AND s."ClientId" = (SELECT cid FROM tmp_client_ctx)
+  AND l."SourceShipmentId" IS NULL;
+
+UPDATE "ProcessingLots" l
+SET "SourceShipmentId" = s."Id"
+FROM "Shipments" s
+WHERE l."LotNumber" = 'LOT-CA-003'
+  AND l."ClientId" = (SELECT cid FROM tmp_client_ctx)
+  AND s."TrackingNumber" = 'TRK-CA-002'
+  AND s."ClientId" = (SELECT cid FROM tmp_client_ctx)
+  AND l."SourceShipmentId" IS NULL;
+
+UPDATE "ProcessingLots" l
+SET "SourceShipmentId" = s."Id"
+FROM "Shipments" s
+WHERE l."LotNumber" = 'LOT-CA-004'
+  AND l."ClientId" = (SELECT cid FROM tmp_client_ctx)
+  AND s."TrackingNumber" = 'TRK-CA-001'
+  AND s."ClientId" = (SELECT cid FROM tmp_client_ctx)
+  AND l."SourceShipmentId" IS NULL;
+
+UPDATE "ProcessingLots" l
+SET "SourceShipmentId" = s."Id"
+FROM "Shipments" s
+WHERE l."LotNumber" = 'LOT-CA-005'
+  AND l."ClientId" = (SELECT cid FROM tmp_client_ctx)
+  AND s."TrackingNumber" = 'TRK-CA-002'
+  AND s."ClientId" = (SELECT cid FROM tmp_client_ctx)
+  AND l."SourceShipmentId" IS NULL;
+
+UPDATE "ProcessingLots" l
+SET "SourceShipmentId" = s."Id"
+FROM "Shipments" s
+WHERE l."LotNumber" = 'LOT-CA-006'
+  AND l."ClientId" = (SELECT cid FROM tmp_client_ctx)
+  AND s."TrackingNumber" = 'TRK-CA-001'
+  AND s."ClientId" = (SELECT cid FROM tmp_client_ctx)
+  AND l."SourceShipmentId" IS NULL;
+WITH admin_c AS (
+  SELECT cid FROM tmp_client_ctx
+), s1 AS (
+  SELECT "Id" AS sid FROM "Shipments" WHERE "TrackingNumber"='TRK-CA-001' AND "ClientId"=(SELECT cid FROM admin_c) LIMIT 1
+), s2 AS (
+  SELECT "Id" AS sid FROM "Shipments" WHERE "TrackingNumber"='TRK-CA-002' AND "ClientId"=(SELECT cid FROM admin_c) LIMIT 1
+)
+UPDATE "ProcessingLots" l SET "ClientId"=(SELECT cid FROM admin_c)
+WHERE l."LotNumber" IN ('LOT-CA-001','LOT-CA-002','LOT-CA-003','LOT-CA-004','LOT-CA-005','LOT-CA-006');
+
+WITH admin_c AS (
+  SELECT cid FROM tmp_client_ctx
+), s1 AS (
+  SELECT "Id" AS sid FROM "Shipments" WHERE "TrackingNumber"='TRK-CA-001' AND "ClientId"=(SELECT cid FROM admin_c) LIMIT 1
+)
+UPDATE "ProcessingLots" l SET "SourceShipmentId"=(SELECT sid FROM s1)
+WHERE l."LotNumber" IN ('LOT-CA-001','LOT-CA-004','LOT-CA-006')
+  AND l."ClientId"=(SELECT cid FROM admin_c);
+
+WITH admin_c AS (
+  SELECT cid FROM tmp_client_ctx
+), s2 AS (
+  SELECT "Id" AS sid FROM "Shipments" WHERE "TrackingNumber"='TRK-CA-002' AND "ClientId"=(SELECT cid FROM admin_c) LIMIT 1
+)
+UPDATE "ProcessingLots" l SET "SourceShipmentId"=(SELECT sid FROM s2)
+WHERE l."LotNumber" IN ('LOT-CA-002','LOT-CA-003','LOT-CA-005')
+  AND l."ClientId"=(SELECT cid FROM admin_c);
+
+WITH admin_c AS (
+  SELECT cid FROM tmp_client_ctx
+), s1 AS (
+  SELECT "Id" AS sid FROM "Shipments" WHERE "TrackingNumber"='TRK-CA-001' AND "ClientId"=(SELECT cid FROM admin_c) LIMIT 1
+), mt_plastics AS (
+  SELECT "Id" AS mtid FROM "MaterialTypes" WHERE "Name"='Mixed Plastics' AND "ClientId"=(SELECT cid FROM admin_c)
+), lot4 AS (
+  SELECT "Id" AS lotid FROM "ProcessingLots" WHERE "LotNumber"='LOT-CA-004' AND "ClientId"=(SELECT cid FROM admin_c)
+)
+INSERT INTO "ShipmentItems" ("ShipmentId","MaterialTypeId","ProcessingLotId","Description","Quantity","UnitOfMeasure","Weight","WeightUnit","Notes","IsDataBearingDevice","DateCreated","DateUpdated","CreatedBy","UpdatedBy","ClientId")
+SELECT s1.sid, mt_plastics.mtid, lot4.lotid, 'Plastics with food/film residue', 1, 'pallet', 110.0, 'kg', 'Food residue and films on plastics', FALSE, NOW() - INTERVAL '15 days', NOW() - INTERVAL '15 days', 1, 1, (SELECT cid FROM admin_c)
+FROM s1, mt_plastics, lot4
+WHERE NOT EXISTS (
+  SELECT 1 FROM "ShipmentItems" si WHERE si."ShipmentId"=(SELECT sid FROM s1) AND si."Description"='Plastics with food/film residue' AND si."ClientId"=(SELECT cid FROM admin_c)
+);
+
+WITH admin_c AS (
+  SELECT cid FROM tmp_client_ctx
+), s1 AS (
+  SELECT "Id" AS sid FROM "Shipments" WHERE "TrackingNumber"='TRK-CA-001' AND "ClientId"=(SELECT cid FROM admin_c) LIMIT 1
+), mt_plastics AS (
+  SELECT "Id" AS mtid FROM "MaterialTypes" WHERE "Name"='Mixed Plastics' AND "ClientId"=(SELECT cid FROM admin_c)
+), lot1 AS (
+  SELECT "Id" AS lotid FROM "ProcessingLots" WHERE "LotNumber"='LOT-CA-001' AND "ClientId"=(SELECT cid FROM admin_c)
+)
+INSERT INTO "ShipmentItems" ("ShipmentId","MaterialTypeId","ProcessingLotId","Description","Quantity","UnitOfMeasure","Weight","WeightUnit","Notes","IsDataBearingDevice","DateCreated","DateUpdated","CreatedBy","UpdatedBy","ClientId")
+SELECT s1.sid, mt_plastics.mtid, lot1.lotid, 'Baled plastics with film contamination', 1, 'pallet', 120.0, 'kg', 'Plastic wrap and labels present', FALSE, NOW() - INTERVAL '18 days', NOW() - INTERVAL '18 days', 1, 1, (SELECT cid FROM admin_c)
+FROM s1, mt_plastics, lot1
+WHERE NOT EXISTS (
+  SELECT 1 FROM "ShipmentItems" si WHERE si."ShipmentId"=(SELECT sid FROM s1) AND si."Description"='Baled plastics with film contamination' AND si."ClientId"=(SELECT cid FROM admin_c)
+);
+
+WITH admin_c AS (
+  SELECT cid FROM tmp_client_ctx
+), s1 AS (
+  SELECT "Id" AS sid FROM "Shipments" WHERE "TrackingNumber"='TRK-CA-001' AND "ClientId"=(SELECT cid FROM admin_c) LIMIT 1
+), mt_cardboard AS (
+  SELECT "Id" AS mtid FROM "MaterialTypes" WHERE "Name"='Cardboard' AND "ClientId"=(SELECT cid FROM admin_c)
+), lot6 AS (
+  SELECT "Id" AS lotid FROM "ProcessingLots" WHERE "LotNumber"='LOT-CA-006' AND "ClientId"=(SELECT cid FROM admin_c)
+)
+INSERT INTO "ShipmentItems" ("ShipmentId","MaterialTypeId","ProcessingLotId","Description","Quantity","UnitOfMeasure","Weight","WeightUnit","Notes","IsDataBearingDevice","DateCreated","DateUpdated","CreatedBy","UpdatedBy","ClientId")
+SELECT s1.sid, mt_cardboard.mtid, lot6.lotid, 'Cardboard with tape/staples', 1, 'pallet', 140.0, 'kg', 'Cardboard with tape and staples', FALSE, NOW() - INTERVAL '14 days', NOW() - INTERVAL '14 days', 1, 1, (SELECT cid FROM admin_c)
+FROM s1, mt_cardboard, lot6
+WHERE NOT EXISTS (
+  SELECT 1 FROM "ShipmentItems" si WHERE si."ShipmentId"=(SELECT sid FROM s1) AND si."Description"='Cardboard with tape/staples' AND si."ClientId"=(SELECT cid FROM admin_c)
+);
+
+WITH admin_c AS (
+  SELECT cid FROM tmp_client_ctx
+), s2 AS (
+  SELECT "Id" AS sid FROM "Shipments" WHERE "TrackingNumber"='TRK-CA-002' AND "ClientId"=(SELECT cid FROM admin_c) LIMIT 1
+), mt_metals AS (
+  SELECT "Id" AS mtid FROM "MaterialTypes" WHERE "Name"='Mixed Metals' AND "ClientId"=(SELECT cid FROM admin_c)
+), lot2 AS (
+  SELECT "Id" AS lotid FROM "ProcessingLots" WHERE "LotNumber"='LOT-CA-002' AND "ClientId"=(SELECT cid FROM admin_c)
+)
+INSERT INTO "ShipmentItems" ("ShipmentId","MaterialTypeId","ProcessingLotId","Description","Quantity","UnitOfMeasure","Weight","WeightUnit","Notes","IsDataBearingDevice","DateCreated","DateUpdated","CreatedBy","UpdatedBy","ClientId")
+SELECT s2.sid, mt_metals.mtid, lot2.lotid, 'Mixed metals with trace glass', 1, 'pallet', 200.0, 'kg', 'Mixed metals with small glass shards', FALSE, NOW() - INTERVAL '8 days', NOW() - INTERVAL '8 days', 1, 1, (SELECT cid FROM admin_c)
+FROM s2, mt_metals, lot2
+WHERE NOT EXISTS (
+  SELECT 1 FROM "ShipmentItems" si WHERE si."ShipmentId"=(SELECT sid FROM s2) AND si."Description"='Mixed metals with trace glass' AND si."ClientId"=(SELECT cid FROM admin_c)
+);
+
+WITH admin_c AS (
+  SELECT cid FROM tmp_client_ctx
+), s2 AS (
+  SELECT "Id" AS sid FROM "Shipments" WHERE "TrackingNumber"='TRK-CA-002' AND "ClientId"=(SELECT cid FROM admin_c) LIMIT 1
+), mt_cardboard AS (
+  SELECT "Id" AS mtid FROM "MaterialTypes" WHERE "Name"='Cardboard' AND "ClientId"=(SELECT cid FROM admin_c)
+), lot3 AS (
+  SELECT "Id" AS lotid FROM "ProcessingLots" WHERE "LotNumber"='LOT-CA-003' AND "ClientId"=(SELECT cid FROM admin_c)
+)
+INSERT INTO "ShipmentItems" ("ShipmentId","MaterialTypeId","ProcessingLotId","Description","Quantity","UnitOfMeasure","Weight","WeightUnit","Notes","IsDataBearingDevice","DateCreated","DateUpdated","CreatedBy","UpdatedBy","ClientId")
+SELECT s2.sid, mt_cardboard.mtid, lot3.lotid, 'Paper/cardboard with adhesive', 1, 'pallet', 150.0, 'kg', 'Cardboard pieces and adhesive residues', FALSE, NOW() - INTERVAL '6 days', NOW() - INTERVAL '6 days', 1, 1, (SELECT cid FROM admin_c)
+FROM s2, mt_cardboard, lot3
+WHERE NOT EXISTS (
+  SELECT 1 FROM "ShipmentItems" si WHERE si."ShipmentId"=(SELECT sid FROM s2) AND si."Description"='Paper/cardboard with adhesive' AND si."ClientId"=(SELECT cid FROM admin_c)
+);
+
+
 
 WITH s1 AS (
   SELECT "Id" as sid FROM "Shipments" WHERE "TrackingNumber"='TRK-CA-001'
