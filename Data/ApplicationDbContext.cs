@@ -52,6 +52,7 @@ namespace irevlogix_backend.Data
         public DbSet<VendorCommunications> VendorCommunications { get; set; }
         public DbSet<VendorDocuments> VendorDocuments { get; set; }
         public DbSet<ComplianceTrackerDocument> ComplianceTrackerDocuments { get; set; }
+        public DbSet<ComplianceTrackerCertification> ComplianceTrackerCertifications { get; set; }
         public DbSet<VendorFacility> VendorFacilities { get; set; }
         public DbSet<ScheduledReport> ScheduledReports { get; set; }
 
