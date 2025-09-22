@@ -51,6 +51,7 @@ namespace irevlogix_backend.Data
         public DbSet<VendorPricing> VendorPricing { get; set; }
         public DbSet<VendorCommunications> VendorCommunications { get; set; }
         public DbSet<VendorDocuments> VendorDocuments { get; set; }
+        public DbSet<ComplianceTrackerDocument> ComplianceTrackerDocuments { get; set; }
         public DbSet<VendorFacility> VendorFacilities { get; set; }
         public DbSet<ScheduledReport> ScheduledReports { get; set; }
 
@@ -456,6 +457,16 @@ namespace irevlogix_backend.Data
                 entity.HasIndex(e => e.NextRunDate);
                 entity.HasIndex(e => e.ClientId);
             });
+            modelBuilder.Entity<ComplianceTrackerDocument>(entity =>
+            {
+                entity.ToTable("ComplianceTrackerDocuments");
+                entity.HasKey(e => e.Id);
+                entity.HasIndex(e => e.ClientId);
+                entity.Property(e => e.Filename).HasMaxLength(255);
+                entity.Property(e => e.ContentType).HasMaxLength(100);
+                entity.Property(e => e.DocumentType).HasMaxLength(200);
+            });
+
         }
     }
 }
