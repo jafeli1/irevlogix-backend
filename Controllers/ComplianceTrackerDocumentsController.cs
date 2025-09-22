@@ -23,6 +23,15 @@ namespace irevlogix_backend.Controllers
         {
             return User.IsInRole("Administrator");
         }
+        private static DateTime? ToUtc(DateTime? dt)
+        {
+            if (!dt.HasValue) return null;
+            var v = dt.Value;
+            if (v.Kind == DateTimeKind.Utc) return v;
+            if (v.Kind == DateTimeKind.Unspecified) v = DateTime.SpecifyKind(v, DateTimeKind.Utc);
+            return v.ToUniversalTime();
+        }
+
 
         [HttpGet]
         public async Task<IActionResult> GetList([FromQuery] int page = 1, [FromQuery] int pageSize = 25)
@@ -124,11 +133,11 @@ namespace irevlogix_backend.Controllers
                 Filename = dto.Filename,
                 ContentType = dto.ContentType,
                 DocumentType = dto.DocumentType,
-                IssueDate = dto.IssueDate,
-                ExpirationDate = dto.ExpirationDate,
-                DateReceived = dto.DateReceived,
+                IssueDate = ToUtc(dto.IssueDate),
+                ExpirationDate = ToUtc(dto.ExpirationDate),
+                DateReceived = ToUtc(dto.DateReceived),
                 ReviewComment = dto.ReviewComment,
-                LastReviewDate = dto.LastReviewDate,
+                LastReviewDate = ToUtc(dto.LastReviewDate),
                 ReviewedBy = dto.ReviewedBy,
                 ClientId = clientId,
                 CreatedBy = int.Parse(userId),
@@ -176,11 +185,11 @@ namespace irevlogix_backend.Controllers
             if (!string.IsNullOrEmpty(dto.Filename)) entity.Filename = dto.Filename;
             if (!string.IsNullOrEmpty(dto.ContentType)) entity.ContentType = dto.ContentType;
             if (!string.IsNullOrEmpty(dto.DocumentType)) entity.DocumentType = dto.DocumentType;
-            if (dto.IssueDate.HasValue) entity.IssueDate = dto.IssueDate;
-            if (dto.ExpirationDate.HasValue) entity.ExpirationDate = dto.ExpirationDate;
-            if (dto.DateReceived.HasValue) entity.DateReceived = dto.DateReceived;
+            if (dto.IssueDate.HasValue) entity.IssueDate = ToUtc(dto.IssueDate);
+            if (dto.ExpirationDate.HasValue) entity.ExpirationDate = ToUtc(dto.ExpirationDate);
+            if (dto.DateReceived.HasValue) entity.DateReceived = ToUtc(dto.DateReceived);
             if (!string.IsNullOrEmpty(dto.ReviewComment)) entity.ReviewComment = dto.ReviewComment;
-            if (dto.LastReviewDate.HasValue) entity.LastReviewDate = dto.LastReviewDate;
+            if (dto.LastReviewDate.HasValue) entity.LastReviewDate = ToUtc(dto.LastReviewDate);
             if (dto.ReviewedBy.HasValue) entity.ReviewedBy = dto.ReviewedBy;
 
             entity.UpdatedBy = int.Parse(userId);
@@ -245,11 +254,11 @@ namespace irevlogix_backend.Controllers
                 Filename = file.FileName,
                 ContentType = file.ContentType,
                 DocumentType = documentType,
-                IssueDate = issueDate,
-                ExpirationDate = expirationDate,
-                DateReceived = dateReceived,
+                IssueDate = ToUtc(issueDate),
+                ExpirationDate = ToUtc(expirationDate),
+                DateReceived = ToUtc(dateReceived),
                 ReviewComment = reviewComment,
-                LastReviewDate = lastReviewDate,
+                LastReviewDate = ToUtc(lastReviewDate),
                 ReviewedBy = reviewedBy,
                 ClientId = clientId,
                 CreatedBy = int.Parse(userId),
