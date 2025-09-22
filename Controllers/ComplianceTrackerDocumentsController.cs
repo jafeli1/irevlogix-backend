@@ -269,6 +269,8 @@ namespace irevlogix_backend.Controllers
                 contentType = file.ContentType,
                 fileSize = file.Length
             });
+        }
+
         [HttpPost("{id:int}/upload")]
         public async Task<IActionResult> ReplaceFile([FromRoute] int id, IFormFile file)
         {
@@ -313,7 +315,7 @@ namespace irevlogix_backend.Controllers
             await _context.SaveChangesAsync();
             return Ok(new { id = entity.Id, documentUrl = entity.DocumentUrl, filename = entity.Filename, contentType = entity.ContentType });
         }
-
+        
         [HttpDelete("{id:int}/file")]
         public async Task<IActionResult> DeleteFile([FromRoute] int id)
         {
@@ -340,8 +342,6 @@ namespace irevlogix_backend.Controllers
 
             await _context.SaveChangesAsync();
             return NoContent();
-        }
-
         }
     }
 }
