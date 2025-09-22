@@ -270,5 +270,78 @@ namespace irevlogix_backend.Controllers
                 fileSize = file.Length
             });
         }
+
+        [HttpPost("{id:int}/upload")]
+        public async Task<IActionResult> ReplaceFile([FromRoute] int id, IFormFile file)
+        {
+            var clientId = User.FindFirst("ClientId")?.Value;
+            var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if ((string.IsNullOrEmpty(clientId) && !IsAdministrator()) || string.IsNullOrEmpty(userId)) return Unauthorized();
+
+            var query = _context.ComplianceTrackerDocuments.Where(x => x.Id == id);
+            if (!IsAdministrator()) query = query.Where(x => x.ClientId == clientId);
+            var entity = await query.FirstOrDefaultAsync();
+            if (entity == null) return NotFound();
+
+            if (file == null || file.Length == 0) return BadRequest("No file uploaded");
+
+            var allowedExtensions = new[] { ".pdf", ".doc", ".docx", ".jpg", ".jpeg", ".png" };
+            var fileExtension = Path.GetExtension(file.FileName).ToLowerInvariant();
+            if (!allowedExtensions.Contains(fileExtension)) return BadRequest("File type not allowed");
+
+            if (!string.IsNullOrEmpty(entity.DocumentUrl))
+            {
+                var oldPath = entity.DocumentUrl.Replace("/", Path.DirectorySeparatorChar.ToString());
+                if (System.IO.File.Exists(oldPath)) System.IO.File.Delete(oldPath);
+            }
+
+            var uploadsPath = Path.Combine("upload", entity.ClientId, "ComplianceTrackerDocuments");
+            Directory.CreateDirectory(uploadsPath);
+
+            var newFileName = $"{Guid.NewGuid()}{fileExtension}";
+            var newPath = Path.Combine(uploadsPath, newFileName);
+            using (var stream = new FileStream(newPath, FileMode.Create))
+            {
+                await file.CopyToAsync(stream);
+            }
+            var relativePath = Path.Combine("upload", entity.ClientId, "ComplianceTrackerDocuments", newFileName).Replace("\\", "/");
+
+            entity.DocumentUrl = relativePath;
+            entity.Filename = file.FileName;
+            entity.ContentType = file.ContentType;
+            entity.UpdatedBy = int.Parse(userId!);
+            entity.DateUpdated = DateTime.UtcNow;
+
+            await _context.SaveChangesAsync();
+            return Ok(new { id = entity.Id, documentUrl = entity.DocumentUrl, filename = entity.Filename, contentType = entity.ContentType });
+        }
+        
+        [HttpDelete("{id:int}/file")]
+        public async Task<IActionResult> DeleteFile([FromRoute] int id)
+        {
+            var clientId = User.FindFirst("ClientId")?.Value;
+            var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if ((string.IsNullOrEmpty(clientId) && !IsAdministrator()) || string.IsNullOrEmpty(userId)) return Unauthorized();
+
+            var query = _context.ComplianceTrackerDocuments.Where(x => x.Id == id);
+            if (!IsAdministrator()) query = query.Where(x => x.ClientId == clientId);
+            var entity = await query.FirstOrDefaultAsync();
+            if (entity == null) return NotFound();
+
+            if (!string.IsNullOrEmpty(entity.DocumentUrl))
+            {
+                var path = entity.DocumentUrl.Replace("/", Path.DirectorySeparatorChar.ToString());
+                if (System.IO.File.Exists(path)) System.IO.File.Delete(path);
+            }
+
+            entity.DocumentUrl = null;
+            entity.Filename = null;
+            entity.ContentType = null;
+            entity.UpdatedBy = int.Parse(userId!);
+            entity.DateUpdated = DateTime.UtcNow;
+
+            await _context.SaveChangesAsync();
+            return NoContent();
+        }
     }
 }
