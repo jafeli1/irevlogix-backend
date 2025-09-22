@@ -52,6 +52,8 @@ namespace irevlogix_backend.Controllers
                     query = query.Where(sr => sr.ClientId == clientId);
                 }
 
+                query = query.Where(sr => sr.IsActive);
+
                 var reports = await query
                     .OrderByDescending(sr => sr.DateCreated)
                     .ToListAsync();
@@ -107,6 +109,8 @@ namespace irevlogix_backend.Controllers
                 var scheduledReport = new ScheduledReport
                 {
                     Name = request.Name,
+                    ReportType = request.ReportType,
+                    Schedule = request.Schedule,
                     DataSource = request.DataSource,
                     SelectedColumns = JsonSerializer.Serialize(request.SelectedColumns),
                     Filters = request.Filters != null ? JsonSerializer.Serialize(request.Filters) : null,
@@ -116,11 +120,12 @@ namespace irevlogix_backend.Controllers
                     DeliveryTime = request.DeliveryTime,
                     DayOfWeek = request.DayOfWeek,
                     DayOfMonth = request.DayOfMonth,
+                    Parameters = request.Parameters,
                     IsActive = true,
                     ClientId = clientId,
                     CreatedBy = userId,
                     DateCreated = DateTime.UtcNow,
-                    DateModified = DateTime.UtcNow
+                    DateModified = null
                 };
 
                 scheduledReport.NextRunDate = CalculateNextRunDate(scheduledReport);
@@ -158,6 +163,8 @@ namespace irevlogix_backend.Controllers
                 }
 
                 report.Name = request.Name;
+                report.ReportType = request.ReportType;
+                report.Schedule = request.Schedule;
                 report.DataSource = request.DataSource;
                 report.SelectedColumns = JsonSerializer.Serialize(request.SelectedColumns);
                 report.Filters = request.Filters != null ? JsonSerializer.Serialize(request.Filters) : null;
@@ -168,6 +175,8 @@ namespace irevlogix_backend.Controllers
                 report.DayOfWeek = request.DayOfWeek;
                 report.DayOfMonth = request.DayOfMonth;
                 report.IsActive = request.IsActive;
+                report.Parameters = request.Parameters;
+                report.LastModifiedBy = User.Identity?.Name;
                 report.DateModified = DateTime.UtcNow;
 
                 report.NextRunDate = CalculateNextRunDate(report);
@@ -306,6 +315,8 @@ namespace irevlogix_backend.Controllers
     public class CreateScheduledReportRequest
     {
         public string Name { get; set; } = string.Empty;
+        public string ReportType { get; set; } = string.Empty;
+        public string Schedule { get; set; } = string.Empty;
         public string DataSource { get; set; } = string.Empty;
         public string[] SelectedColumns { get; set; } = Array.Empty<string>();
         public object? Filters { get; set; }
@@ -315,6 +326,7 @@ namespace irevlogix_backend.Controllers
         public TimeSpan DeliveryTime { get; set; } = TimeSpan.FromHours(9);
         public int? DayOfWeek { get; set; }
         public int? DayOfMonth { get; set; }
+        public string? Parameters { get; set; }
     }
 
     public class UpdateScheduledReportRequest : CreateScheduledReportRequest
