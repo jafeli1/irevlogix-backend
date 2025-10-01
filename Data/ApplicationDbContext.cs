@@ -55,6 +55,7 @@ namespace irevlogix_backend.Data
         public DbSet<ComplianceTrackerCertification> ComplianceTrackerCertifications { get; set; }
         public DbSet<VendorFacility> VendorFacilities { get; set; }
         public DbSet<ScheduledReport> ScheduledReports { get; set; }
+        public DbSet<Recycler> Recyclers { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
