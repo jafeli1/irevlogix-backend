@@ -714,6 +714,7 @@ namespace irevlogix_backend.Controllers
             {
                 var clientId = GetClientId();
                 var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? "0");
+                var isAdmin = IsAdministrator();
 
                 var existingRole = await _context.Roles
                     .Where(r => r.Name == request.Name && r.ClientId == clientId)
@@ -722,20 +723,65 @@ namespace irevlogix_backend.Controllers
                 if (existingRole != null)
                     return BadRequest("Role with this name already exists");
 
-                var role = new Role
+                if (isAdmin)
                 {
-                    Name = request.Name,
-                    Description = request.Description,
-                    IsSystemRole = false,
-                    ClientId = clientId,
-                    CreatedBy = userId,
-                    UpdatedBy = userId
-                };
+                    var activeClientIds = await _context.Users
+                        .Where(u => u.IsActive)
+                        .Select(u => u.ClientId)
+                        .Distinct()
+                        .ToListAsync();
 
-                _context.Roles.Add(role);
-                await _context.SaveChangesAsync();
+                    var createdRoles = new List<Role>();
+                    foreach (var tenantClientId in activeClientIds)
+                    {
+                        var existingTenantRole = await _context.Roles
+                            .Where(r => r.Name == request.Name && r.ClientId == tenantClientId)
+                            .FirstOrDefaultAsync();
 
-                return CreatedAtAction(nameof(GetRole), new { id = role.Id }, role);
+                        if (existingTenantRole == null)
+                        {
+                            var role = new Role
+                            {
+                                Name = request.Name,
+                                Description = request.Description,
+                                IsSystemRole = false,
+                                ClientId = tenantClientId,
+                                CreatedBy = userId,
+                                UpdatedBy = userId
+                            };
+                            _context.Roles.Add(role);
+                            createdRoles.Add(role);
+                        }
+                    }
+
+                    await _context.SaveChangesAsync();
+
+                    _logger.LogInformation("Administrator created role '{RoleName}' for {TenantCount} tenants", 
+                        request.Name, createdRoles.Count);
+
+                    var currentClientRole = await _context.Roles
+                        .Where(r => r.Name == request.Name && r.ClientId == clientId)
+                        .FirstOrDefaultAsync();
+
+                    return CreatedAtAction(nameof(GetRole), new { id = currentClientRole!.Id }, currentClientRole);
+                }
+                else
+                {
+                    var role = new Role
+                    {
+                        Name = request.Name,
+                        Description = request.Description,
+                        IsSystemRole = false,
+                        ClientId = clientId,
+                        CreatedBy = userId,
+                        UpdatedBy = userId
+                    };
+
+                    _context.Roles.Add(role);
+                    await _context.SaveChangesAsync();
+
+                    return CreatedAtAction(nameof(GetRole), new { id = role.Id }, role);
+                }
             }
             catch (Exception ex)
             {
@@ -979,12 +1025,13 @@ namespace irevlogix_backend.Controllers
             {
                 var clientId = GetClientId();
                 var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? "0");
+                var isAdmin = IsAdministrator();
 
                 var query = _context.Roles
                     .Include(r => r.RolePermissions)
                     .Where(r => r.Id == id);
                 
-                if (!IsAdministrator())
+                if (!isAdmin)
                 {
                     query = query.Where(r => r.ClientId == clientId);
                 }
@@ -997,30 +1044,94 @@ namespace irevlogix_backend.Controllers
                 if (role.IsSystemRole)
                     return BadRequest("Cannot modify permissions for system roles");
 
-                var validPermissions = await _context.Permissions
-                    .Where(p => p.ClientId == clientId && request.PermissionIds.Contains(p.Id))
-                    .Select(p => p.Id)
-                    .ToListAsync();
-
-                _context.RolePermissions.RemoveRange(role.RolePermissions);
-
-                foreach (var permissionId in validPermissions)
+                if (isAdmin)
                 {
-                    var rolePermission = new RolePermission
+                    var rolesWithSameName = await _context.Roles
+                        .Include(r => r.RolePermissions)
+                        .Where(r => r.Name == role.Name)
+                        .ToListAsync();
+
+                    var allClientIds = rolesWithSameName.Select(r => r.ClientId).Distinct().ToList();
+
+                    foreach (var tenantClientId in allClientIds)
                     {
-                        RoleId = id,
-                        PermissionId = permissionId,
-                        CreatedBy = userId,
-                        UpdatedBy = userId
-                    };
-                    _context.RolePermissions.Add(rolePermission);
+                        var tenantRole = rolesWithSameName.FirstOrDefault(r => r.ClientId == tenantClientId);
+                        if (tenantRole == null) continue;
+
+                        var tenantPermissions = await _context.Permissions
+                            .Where(p => p.ClientId == tenantClientId && request.PermissionIds.Contains(p.Id))
+                            .ToListAsync();
+
+                        var permissionMapping = new Dictionary<int, int>();
+                        foreach (var requestedPermId in request.PermissionIds)
+                        {
+                            var requestedPerm = await _context.Permissions.FindAsync(requestedPermId);
+                            if (requestedPerm == null) continue;
+
+                            var matchingTenantPerm = tenantPermissions.FirstOrDefault(p => 
+                                p.Name == requestedPerm.Name && 
+                                p.Module == requestedPerm.Module && 
+                                p.Action == requestedPerm.Action);
+
+                            if (matchingTenantPerm != null)
+                            {
+                                permissionMapping[requestedPermId] = matchingTenantPerm.Id;
+                            }
+                        }
+
+                        _context.RolePermissions.RemoveRange(tenantRole.RolePermissions);
+
+                        foreach (var mappedPermId in permissionMapping.Values)
+                        {
+                            var rolePermission = new RolePermission
+                            {
+                                RoleId = tenantRole.Id,
+                                PermissionId = mappedPermId,
+                                ClientId = tenantClientId,
+                                CreatedBy = userId,
+                                UpdatedBy = userId
+                            };
+                            _context.RolePermissions.Add(rolePermission);
+                        }
+
+                        tenantRole.UpdatedBy = userId;
+                        tenantRole.DateUpdated = DateTime.UtcNow;
+                    }
+
+                    await _context.SaveChangesAsync();
+                    
+                    _logger.LogInformation("Administrator updated permissions for role '{RoleName}' across {TenantCount} tenants", 
+                        role.Name, rolesWithSameName.Count);
+
+                    return NoContent();
                 }
+                else
+                {
+                    var validPermissions = await _context.Permissions
+                        .Where(p => p.ClientId == clientId && request.PermissionIds.Contains(p.Id))
+                        .Select(p => p.Id)
+                        .ToListAsync();
 
-                role.UpdatedBy = userId;
-                role.DateUpdated = DateTime.UtcNow;
+                    _context.RolePermissions.RemoveRange(role.RolePermissions);
 
-                await _context.SaveChangesAsync();
-                return NoContent();
+                    foreach (var permissionId in validPermissions)
+                    {
+                        var rolePermission = new RolePermission
+                        {
+                            RoleId = id,
+                            PermissionId = permissionId,
+                            CreatedBy = userId,
+                            UpdatedBy = userId
+                        };
+                        _context.RolePermissions.Add(rolePermission);
+                    }
+
+                    role.UpdatedBy = userId;
+                    role.DateUpdated = DateTime.UtcNow;
+
+                    await _context.SaveChangesAsync();
+                    return NoContent();
+                }
             }
             catch (Exception ex)
             {
