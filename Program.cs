@@ -24,6 +24,8 @@ builder.Services.AddHttpClient();
 
 builder.Services.AddScoped<OpenAIService>();
 builder.Services.AddScoped<AIRecommendationService>();
+builder.Services.AddScoped<EbayApiService>();
+builder.Services.AddScoped<MarketIntelligenceService>();
 builder.Services.AddScoped<IApplicationSettingsService, ApplicationSettingsService>();
 builder.Services.AddScoped<IPasswordValidationService, PasswordValidationService>();
 builder.Services.AddScoped<IEmailService, EmailService>();
