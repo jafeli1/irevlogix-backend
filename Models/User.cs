@@ -56,6 +56,8 @@ namespace irevlogix_backend.Models
         
         public DateTime? LastLoginDate { get; set; }
         
+        public DateTime? LastPasswordChangeDate { get; set; }
+        
         public int FailedLoginAttempts { get; set; } = 0;
         
         public DateTime? LockoutEndDate { get; set; }
