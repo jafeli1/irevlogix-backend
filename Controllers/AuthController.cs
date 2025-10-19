@@ -75,19 +75,11 @@ namespace irevlogix_backend.Controllers
                 return Unauthorized(new { message = "Invalid credentials" });
             }
 
-            var passwordAge = (DateTime.UtcNow - user.DateCreated).Days;
+            var passwordChangeDate = user.LastPasswordChangeDate ?? user.DateCreated;
+            var passwordAge = (DateTime.UtcNow - passwordChangeDate).Days;
 
             var isPasswordExpired = passwordAge >= passwordExpiryDays;
             var isPasswordExpiringSoon = passwordAge >= (passwordExpiryDays - 7); // Warning 7 days before expiry
-
-            if (isPasswordExpired)
-            {
-                return Unauthorized(new { 
-                    message = "Password has expired. Please change your password.",
-                    passwordExpired = true,
-                    requirePasswordChange = true
-                });
-            }
 
             user.FailedLoginAttempts = 0;
             user.LockoutEndDate = null;
@@ -95,7 +87,7 @@ namespace irevlogix_backend.Controllers
             await _context.SaveChangesAsync();
 
             var loginTimeout = await _settingsService.GetLoginTimeoutMinutes(user.ClientId);
-            var token = GenerateJwtToken(user);
+            var token = GenerateJwtToken(user, isPasswordExpired);
 
             var response = new
             {
@@ -109,6 +101,7 @@ namespace irevlogix_backend.Controllers
                     clientId = user.ClientId,
                     roles = user.UserRoles.Select(ur => ur.Role.Name).ToList()
                 },
+                passwordExpired = isPasswordExpired,
                 passwordExpiringSoon = isPasswordExpiringSoon,
                 daysUntilPasswordExpiry = passwordExpiryDays - passwordAge,
                 sessionTimeoutMinutes = loginTimeout
@@ -164,7 +157,7 @@ namespace irevlogix_backend.Controllers
             return Ok(new { message = "Registration successful! Please check your email to confirm your account." });
         }
 
-        private string GenerateJwtToken(User user)
+        private string GenerateJwtToken(User user, bool isPasswordExpired = false)
         {
             var tokenHandler = new JwtSecurityTokenHandler();
             var key = Encoding.ASCII.GetBytes(Environment.GetEnvironmentVariable("JWT_SECRET") ?? 
@@ -180,6 +173,11 @@ namespace irevlogix_backend.Controllers
                 new Claim("LoginTime", DateTimeOffset.UtcNow.ToUnixTimeSeconds().ToString())
             };
             
+            if (isPasswordExpired)
+            {
+                claims.Add(new Claim("PasswordExpired", "true"));
+            }
+            
             foreach (var userRole in user.UserRoles)
             {
                 claims.Add(new Claim(ClaimTypes.Role, userRole.Role.Name));
@@ -188,7 +186,7 @@ namespace irevlogix_backend.Controllers
             var tokenDescriptor = new SecurityTokenDescriptor
             {
                 Subject = new ClaimsIdentity(claims),
-                Expires = DateTime.UtcNow.AddHours(24),
+                Expires = isPasswordExpired ? DateTime.UtcNow.AddMinutes(15) : DateTime.UtcNow.AddHours(24),
                 SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(key), SecurityAlgorithms.HmacSha256Signature)
             };
             var token = tokenHandler.CreateToken(tokenDescriptor);
@@ -237,7 +235,10 @@ namespace irevlogix_backend.Controllers
                 return Unauthorized(new { message = "User not authenticated" });
             }
 
-            var user = await _context.Users.FindAsync(int.Parse(userId));
+            var user = await _context.Users
+                .Include(u => u.UserRoles)
+                .ThenInclude(ur => ur.Role)
+                .FirstOrDefaultAsync(u => u.Id == int.Parse(userId));
             if (user == null)
             {
                 return NotFound(new { message = "User not found" });
@@ -257,10 +258,21 @@ namespace irevlogix_backend.Controllers
             }
 
             user.PasswordHash = HashPassword(request.NewPassword);
+            user.LastPasswordChangeDate = DateTime.UtcNow;
             user.UpdatedBy = user.Id;
             user.DateUpdated = DateTime.UtcNow;
 
             await _context.SaveChangesAsync();
+
+            var isPasswordExpired = User.FindFirst("PasswordExpired")?.Value == "true";
+            if (isPasswordExpired)
+            {
+                var newToken = GenerateJwtToken(user, false);
+                return Ok(new { 
+                    message = "Password changed successfully",
+                    token = newToken
+                });
+            }
 
             return Ok(new { message = "Password changed successfully" });
         }
