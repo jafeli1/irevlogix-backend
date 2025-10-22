@@ -417,9 +417,7 @@ Return your analysis in a structured JSON format with the following schema:
 
                 var materials = components.Select(c => c.Material.ToLower()).Distinct().ToList();
 
-                var allRecyclers = await _context.Recyclers
-                    .Where(r => r.ClientId == clientId && r.IsActive)
-                    .ToListAsync();
+                var allRecyclers = await _context.Recyclers.ToListAsync();
 
                 var scoredRecyclers = new List<(Models.Recycler recycler, int score, string reason)>();
 
@@ -446,24 +444,22 @@ Return your analysis in a structured JSON format with the following schema:
                         reasons.Add($"{materialMatches} material match{(materialMatches > 1 ? "es" : "")}");
                     }
 
-                    var recyclerPostal = recycler.PostalCode ?? "";
-                    var recyclerCity = (recycler.City ?? "").ToLower();
-                    var recyclerState = (recycler.State ?? "").ToLower();
-                    var userPostal = user.PostalCode ?? "";
+                    var recyclerAddress = (recycler.Address ?? "").ToLower();
+                    var userPostal = (user.PostalCode ?? "").ToLower();
                     var userCity = (user.City ?? "").ToLower();
                     var userState = (user.State ?? "").ToLower();
 
-                    if (!string.IsNullOrEmpty(recyclerPostal) && !string.IsNullOrEmpty(userPostal) && recyclerPostal == userPostal)
+                    if (!string.IsNullOrEmpty(userPostal) && recyclerAddress.Contains(userPostal))
                     {
                         score += 30;
-                        reasons.Add("Same postal code");
+                        reasons.Add("Same postal code area");
                     }
-                    else if (!string.IsNullOrEmpty(recyclerCity) && !string.IsNullOrEmpty(userCity) && recyclerCity == userCity)
+                    else if (!string.IsNullOrEmpty(userCity) && recyclerAddress.Contains(userCity))
                     {
                         score += 20;
                         reasons.Add("Same city");
                     }
-                    else if (!string.IsNullOrEmpty(recyclerState) && !string.IsNullOrEmpty(userState) && recyclerState == userState)
+                    else if (!string.IsNullOrEmpty(userState) && recyclerAddress.Contains(userState))
                     {
                         score += 10;
                         reasons.Add("Same state");
@@ -501,7 +497,7 @@ Return your analysis in a structured JSON format with the following schema:
 
                     if (scoredRecyclers.Count == 0)
                     {
-                        _logger.LogInformation("No material matches found, selecting any active recyclers");
+                        _logger.LogInformation("No material matches found, selecting any recyclers");
                         foreach (var recycler in allRecyclers.Take(10))
                         {
                             scoredRecyclers.Add((recycler, 1, "Active recycler"));
@@ -524,7 +520,7 @@ Return your analysis in a structured JSON format with the following schema:
                     })
                     .ToList();
 
-                _logger.LogInformation("Found {Count} matching recyclers for client {ClientId}", topRecyclers.Count, clientId);
+                _logger.LogInformation("Found {Count} matching recyclers", topRecyclers.Count);
 
                 return topRecyclers;
             }
