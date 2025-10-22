@@ -2,7 +2,10 @@ using System.Text;
 using System.Text.Json;
 using System.Net.Http;
 using System.Net.Http.Headers;
+using Microsoft.EntityFrameworkCore;
 using irevlogix_backend.DTOs;
+using irevlogix_backend.Data;
+using irevlogix_backend.Models;
 
 namespace irevlogix_backend.Services
 {
@@ -12,20 +15,23 @@ namespace irevlogix_backend.Services
         private readonly IConfiguration _configuration;
         private readonly ILogger<MarketIntelligenceService> _logger;
         private readonly EbayApiService _ebayApiService;
+        private readonly ApplicationDbContext _context;
 
         public MarketIntelligenceService(
             HttpClient httpClient,
             IConfiguration configuration,
             ILogger<MarketIntelligenceService> logger,
-            EbayApiService ebayApiService)
+            EbayApiService ebayApiService,
+            ApplicationDbContext context)
         {
             _httpClient = httpClient;
             _configuration = configuration;
             _logger = logger;
             _ebayApiService = ebayApiService;
+            _context = context;
         }
 
-        public async Task<ProductAnalysisResult> AnalyzeProductByImageAsync(string clientId, string base64Image)
+        public async Task<ProductAnalysisResult> AnalyzeProductByImageAsync(string clientId, string base64Image, int userId)
         {
             _logger.LogInformation("Starting product analysis by image for client: {ClientId}", clientId);
 
@@ -36,10 +42,12 @@ namespace irevlogix_backend.Services
 
             var gptAnalysis = await AnalyzeWithGPTAsync(productInfo, base64Image: base64Image);
 
+            await SaveProductAnalysisAsync(clientId, gptAnalysis, userId, productDescription: null, imagePath: null);
+
             return gptAnalysis;
         }
 
-        public async Task<ProductAnalysisResult> AnalyzeProductByDescriptionAsync(string clientId, string description)
+        public async Task<ProductAnalysisResult> AnalyzeProductByDescriptionAsync(string clientId, string description, int userId)
         {
             _logger.LogInformation("Starting product analysis by description for client: {ClientId}", clientId);
 
@@ -49,6 +57,8 @@ namespace irevlogix_backend.Services
             var productInfo = await ExtractProductInfoFromEbayAsync(ebayData, isImageSearch: false);
 
             var gptAnalysis = await AnalyzeWithGPTAsync(productInfo, textDescription: description);
+
+            await SaveProductAnalysisAsync(clientId, gptAnalysis, userId, productDescription: description, imagePath: null);
 
             return gptAnalysis;
         }
@@ -292,6 +302,101 @@ Return your analysis in a structured JSON format with the following schema:
                 return prop.GetString();
             }
             return null;
+        }
+
+        private async Task SaveProductAnalysisAsync(string clientId, ProductAnalysisResult analysisResult, int userId, string? productDescription, string? imagePath)
+        {
+            try
+            {
+                var productAnalysis = new ProductAnalysis
+                {
+                    ClientId = clientId,
+                    ProductName = analysisResult.ProductName,
+                    Brand = analysisResult.Brand,
+                    Model = analysisResult.Model,
+                    Category = analysisResult.Category,
+                    ProductDescription = productDescription,
+                    ImagePath = imagePath,
+                    Specifications = analysisResult.Specifications != null ? JsonSerializer.Serialize(analysisResult.Specifications) : null,
+                    Components = analysisResult.Components != null ? JsonSerializer.Serialize(analysisResult.Components) : null,
+                    MarketPrice = analysisResult.MarketPrice != null ? JsonSerializer.Serialize(analysisResult.MarketPrice) : null,
+                    Summary = analysisResult.Summary,
+                    EbayListings = analysisResult.EbayListings != null ? JsonSerializer.Serialize(analysisResult.EbayListings) : null,
+                    AnalysisDate = DateTime.UtcNow,
+                    LastMarketRefresh = DateTime.UtcNow,
+                    IsActive = true,
+                    CreatedBy = userId,
+                    UpdatedBy = userId,
+                    DateCreated = DateTime.UtcNow,
+                    DateUpdated = DateTime.UtcNow
+                };
+
+                _context.ProductAnalyses.Add(productAnalysis);
+                await _context.SaveChangesAsync();
+
+                _logger.LogInformation("Saved product analysis for {ProductName} (Client: {ClientId})", 
+                    analysisResult.ProductName, clientId);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error saving product analysis to database");
+            }
+        }
+
+        public async Task<int> RefreshMarketDataAsync()
+        {
+            _logger.LogInformation("Starting daily market data refresh job");
+
+            var analysesToRefresh = await _context.ProductAnalyses
+                .Where(pa => pa.IsActive && 
+                      (pa.LastMarketRefresh == null || 
+                       pa.LastMarketRefresh.Value.Date < DateTime.UtcNow.Date))
+                .Take(100)
+                .ToListAsync();
+
+            int refreshedCount = 0;
+
+            foreach (var analysis in analysesToRefresh)
+            {
+                try
+                {
+                    var searchQuery = $"{analysis.Brand} {analysis.Model} {analysis.ProductName}".Trim();
+                    var ebayResponse = await _ebayApiService.SearchItemsByKeywordAsync(analysis.ClientId, searchQuery);
+                    var ebayData = JsonDocument.Parse(ebayResponse);
+                    var productInfo = await ExtractProductInfoFromEbayAsync(ebayData, isImageSearch: false);
+
+                    if (productInfo.Items.Any())
+                    {
+                        var avgPrice = productInfo.Items.Average(i => i.Price);
+                        var minPrice = productInfo.Items.Min(i => i.Price);
+                        var maxPrice = productInfo.Items.Max(i => i.Price);
+
+                        var updatedMarketPrice = new
+                        {
+                            averagePrice = $"${avgPrice:F2}",
+                            priceRange = $"${minPrice:F2} - ${maxPrice:F2}",
+                            marketTrend = "Stable"
+                        };
+
+                        analysis.MarketPrice = JsonSerializer.Serialize(updatedMarketPrice);
+                        analysis.EbayListings = JsonSerializer.Serialize(productInfo.Items.Take(3));
+                        analysis.LastMarketRefresh = DateTime.UtcNow;
+                        analysis.DateUpdated = DateTime.UtcNow;
+
+                        refreshedCount++;
+                    }
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex, "Error refreshing market data for product analysis ID: {Id}", analysis.Id);
+                }
+            }
+
+            await _context.SaveChangesAsync();
+
+            _logger.LogInformation("Market data refresh completed. Refreshed {Count} products", refreshedCount);
+
+            return refreshedCount;
         }
     }
 

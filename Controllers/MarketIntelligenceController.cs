@@ -34,6 +34,13 @@ namespace irevlogix_backend.Controllers
                     return Unauthorized(new { message = "Client ID not found" });
                 }
 
+                var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+                if (!int.TryParse(userIdClaim, out int userId))
+                {
+                    _logger.LogWarning("UserId not found in user claims");
+                    return Unauthorized(new { message = "User ID not found" });
+                }
+
                 if (string.IsNullOrEmpty(request.Base64Image) && string.IsNullOrEmpty(request.ProductDescription))
                 {
                     return BadRequest(new { message = "Either product image or description must be provided" });
@@ -44,12 +51,12 @@ namespace irevlogix_backend.Controllers
                 if (!string.IsNullOrEmpty(request.Base64Image))
                 {
                     _logger.LogInformation("Analyzing product by image for client: {ClientId}", clientId);
-                    result = await _marketIntelligenceService.AnalyzeProductByImageAsync(clientId, request.Base64Image);
+                    result = await _marketIntelligenceService.AnalyzeProductByImageAsync(clientId, request.Base64Image, userId);
                 }
                 else
                 {
                     _logger.LogInformation("Analyzing product by description for client: {ClientId}", clientId);
-                    result = await _marketIntelligenceService.AnalyzeProductByDescriptionAsync(clientId, request.ProductDescription!);
+                    result = await _marketIntelligenceService.AnalyzeProductByDescriptionAsync(clientId, request.ProductDescription!, userId);
                 }
 
                 return Ok(result);

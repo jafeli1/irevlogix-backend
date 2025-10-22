@@ -56,6 +56,7 @@ namespace irevlogix_backend.Data
         public DbSet<VendorFacility> VendorFacilities { get; set; }
         public DbSet<ScheduledReport> ScheduledReports { get; set; }
         public DbSet<Recycler> Recyclers { get; set; }
+        public DbSet<ProductAnalysis> ProductAnalyses { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -467,6 +468,29 @@ namespace irevlogix_backend.Data
                 entity.Property(e => e.Filename).HasMaxLength(255);
                 entity.Property(e => e.ContentType).HasMaxLength(100);
                 entity.Property(e => e.DocumentType).HasMaxLength(200);
+            });
+
+            modelBuilder.Entity<ProductAnalysis>(entity =>
+            {
+                entity.HasKey(e => e.Id);
+                entity.Property(e => e.ProductName).IsRequired().HasMaxLength(500);
+                entity.Property(e => e.Brand).HasMaxLength(200);
+                entity.Property(e => e.Model).HasMaxLength(200);
+                entity.Property(e => e.Category).HasMaxLength(200);
+                entity.Property(e => e.ProductDescription).HasColumnType("text");
+                entity.Property(e => e.ImagePath).HasMaxLength(1000);
+                entity.Property(e => e.Specifications).HasColumnType("jsonb");
+                entity.Property(e => e.Components).HasColumnType("jsonb");
+                entity.Property(e => e.MarketPrice).HasColumnType("jsonb");
+                entity.Property(e => e.Summary).HasColumnType("text");
+                entity.Property(e => e.EbayListings).HasColumnType("jsonb");
+                entity.Property(e => e.AnalysisDate).IsRequired();
+                entity.Property(e => e.IsActive).IsRequired().HasDefaultValue(true);
+                entity.HasIndex(e => e.ClientId);
+                entity.HasIndex(e => e.AnalysisDate);
+                entity.HasIndex(e => e.LastMarketRefresh);
+                entity.HasIndex(e => e.IsActive);
+                entity.HasIndex(e => e.ProductName);
             });
 
         }
