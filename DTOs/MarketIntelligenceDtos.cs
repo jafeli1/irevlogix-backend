@@ -17,6 +17,7 @@ namespace irevlogix_backend.DTOs
         public MarketPriceInfo MarketPrice { get; set; } = new();
         public string Summary { get; set; } = "";
         public List<EbayListingDto> EbayListings { get; set; } = new();
+        public List<MatchedRecyclerDto> MatchedRecyclers { get; set; } = new();
     }
 
     public class RecyclableComponent
@@ -42,5 +43,22 @@ namespace irevlogix_backend.DTOs
         public string Condition { get; set; } = "";
         public string ItemUrl { get; set; } = "";
         public string ImageUrl { get; set; } = "";
+    }
+
+    public class MatchedRecyclerDto
+    {
+        public string CompanyName { get; set; } = "";
+        public string Address { get; set; } = "";
+        public string CertificationType { get; set; } = "";
+        public string ContactPhone { get; set; } = "";
+        public string ContactEmail { get; set; } = "";
+        public int MatchScore { get; set; }
+        public string MatchReason { get; set; } = "";
+    }
+
+    public class RecyclerMatchRequest
+    {
+        public List<string> Materials { get; set; } = new();
+        public List<string> Components { get; set; } = new();
     }
 }

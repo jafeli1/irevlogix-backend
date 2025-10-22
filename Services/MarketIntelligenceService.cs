@@ -42,6 +42,8 @@ namespace irevlogix_backend.Services
 
             var gptAnalysis = await AnalyzeWithGPTAsync(productInfo, base64Image: base64Image);
 
+            gptAnalysis.MatchedRecyclers = await FindMatchingRecyclersAsync(clientId, userId, gptAnalysis.Components);
+
             await SaveProductAnalysisAsync(clientId, gptAnalysis, userId, productDescription: null, imagePath: null);
 
             return gptAnalysis;
@@ -57,6 +59,8 @@ namespace irevlogix_backend.Services
             var productInfo = await ExtractProductInfoFromEbayAsync(ebayData, isImageSearch: false);
 
             var gptAnalysis = await AnalyzeWithGPTAsync(productInfo, textDescription: description);
+
+            gptAnalysis.MatchedRecyclers = await FindMatchingRecyclersAsync(clientId, userId, gptAnalysis.Components);
 
             await SaveProductAnalysisAsync(clientId, gptAnalysis, userId, productDescription: description, imagePath: null);
 
@@ -250,7 +254,8 @@ Return your analysis in a structured JSON format with the following schema:
                         Condition = i.Condition,
                         ItemUrl = i.ItemUrl,
                         ImageUrl = i.ImageUrl
-                    }).ToList()
+                    }).ToList(),
+                    MatchedRecyclers = new List<MatchedRecyclerDto>()
                 };
 
                 if (analysisJson.RootElement.TryGetProperty("specifications", out var specs))
@@ -397,6 +402,133 @@ Return your analysis in a structured JSON format with the following schema:
             _logger.LogInformation("Market data refresh completed. Refreshed {Count} products", refreshedCount);
 
             return refreshedCount;
+        }
+
+        public async Task<List<MatchedRecyclerDto>> FindMatchingRecyclersAsync(string clientId, int userId, List<RecyclableComponent> components)
+        {
+            try
+            {
+                var user = await _context.Users.FirstOrDefaultAsync(u => u.Id == userId);
+                if (user == null)
+                {
+                    _logger.LogWarning("User {UserId} not found for recycler matching", userId);
+                    return new List<MatchedRecyclerDto>();
+                }
+
+                var materials = components.Select(c => c.Material.ToLower()).Distinct().ToList();
+
+                var allRecyclers = await _context.Recyclers.ToListAsync();
+
+                var scoredRecyclers = new List<(Models.Recycler recycler, int score, string reason)>();
+
+                foreach (var recycler in allRecyclers)
+                {
+                    int score = 0;
+                    var reasons = new List<string>();
+
+                    var recyclerMaterials = (recycler.MaterialTypesHandled ?? "").ToLower();
+                    var recyclerServices = (recycler.ServicesOffered ?? "").ToLower();
+
+                    int materialMatches = 0;
+                    foreach (var material in materials)
+                    {
+                        if (recyclerMaterials.Contains(material) || recyclerServices.Contains(material))
+                        {
+                            materialMatches++;
+                        }
+                    }
+
+                    if (materialMatches > 0)
+                    {
+                        score += materialMatches * 10;
+                        reasons.Add($"{materialMatches} material match{(materialMatches > 1 ? "es" : "")}");
+                    }
+
+                    var recyclerAddress = (recycler.Address ?? "").ToLower();
+                    var userPostal = (user.PostalCode ?? "").ToLower();
+                    var userCity = (user.City ?? "").ToLower();
+                    var userState = (user.State ?? "").ToLower();
+
+                    if (!string.IsNullOrEmpty(userPostal) && recyclerAddress.Contains(userPostal))
+                    {
+                        score += 30;
+                        reasons.Add("Same postal code area");
+                    }
+                    else if (!string.IsNullOrEmpty(userCity) && recyclerAddress.Contains(userCity))
+                    {
+                        score += 20;
+                        reasons.Add("Same city");
+                    }
+                    else if (!string.IsNullOrEmpty(userState) && recyclerAddress.Contains(userState))
+                    {
+                        score += 10;
+                        reasons.Add("Same state");
+                    }
+
+                    if (score > 0)
+                    {
+                        scoredRecyclers.Add((recycler, score, string.Join(", ", reasons)));
+                    }
+                }
+
+                if (scoredRecyclers.Count == 0)
+                {
+                    _logger.LogInformation("No proximity matches found, selecting top recyclers by material match only");
+                    
+                    foreach (var recycler in allRecyclers)
+                    {
+                        var recyclerMaterials = (recycler.MaterialTypesHandled ?? "").ToLower();
+                        var recyclerServices = (recycler.ServicesOffered ?? "").ToLower();
+
+                        int materialMatches = 0;
+                        foreach (var material in materials)
+                        {
+                            if (recyclerMaterials.Contains(material) || recyclerServices.Contains(material))
+                            {
+                                materialMatches++;
+                            }
+                        }
+
+                        if (materialMatches > 0)
+                        {
+                            scoredRecyclers.Add((recycler, materialMatches * 10, $"{materialMatches} material match{(materialMatches > 1 ? "es" : "")}"));
+                        }
+                    }
+
+                    if (scoredRecyclers.Count == 0)
+                    {
+                        _logger.LogInformation("No material matches found, selecting any recyclers");
+                        foreach (var recycler in allRecyclers.Take(10))
+                        {
+                            scoredRecyclers.Add((recycler, 1, "Active recycler"));
+                        }
+                    }
+                }
+
+                var topRecyclers = scoredRecyclers
+                    .OrderByDescending(r => r.score)
+                    .Take(10)
+                    .Select(r => new MatchedRecyclerDto
+                    {
+                        CompanyName = r.recycler.CompanyName,
+                        Address = r.recycler.Address ?? "",
+                        CertificationType = r.recycler.CertificationType ?? "",
+                        ContactPhone = r.recycler.ContactPhone ?? "",
+                        ContactEmail = r.recycler.ContactEmail ?? "",
+                        MatchScore = r.score,
+                        MatchReason = r.reason
+                    })
+                    .ToList();
+
+                _logger.LogInformation("Found {Count} matching recyclers", topRecyclers.Count);
+
+                return topRecyclers;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error finding matching recyclers");
+                return new List<MatchedRecyclerDto>();
+            }
         }
     }
 
