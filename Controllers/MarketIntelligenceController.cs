@@ -67,5 +67,33 @@ namespace irevlogix_backend.Controllers
                 return StatusCode(500, new { message = "An error occurred while analyzing the product", error = ex.Message });
             }
         }
+
+        [HttpPost("component-price")]
+        public async Task<ActionResult<ComponentPriceResult>> GetComponentPrice([FromBody] ComponentPriceRequest request)
+        {
+            try
+            {
+                var clientId = User.FindFirst("ClientId")?.Value;
+                if (string.IsNullOrEmpty(clientId))
+                {
+                    _logger.LogWarning("ClientId not found in user claims");
+                    return Unauthorized(new { message = "Client ID not found" });
+                }
+
+                if (string.IsNullOrEmpty(request.ComponentName))
+                {
+                    return BadRequest(new { message = "Component name must be provided" });
+                }
+
+                var result = await _marketIntelligenceService.GetComponentPriceAsync(clientId, request.ComponentName);
+
+                return Ok(result);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error fetching component price");
+                return StatusCode(500, new { message = "An error occurred while fetching component price", error = ex.Message });
+            }
+        }
     }
 }

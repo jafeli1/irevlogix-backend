@@ -127,8 +127,9 @@ namespace irevlogix_backend.Services
 Your task is to:
 1. Identify the product name, brand, model, and key specifications
 2. List all recyclable components and materials (metals, plastics, rare earth elements, etc.)
-3. Provide estimated resale values based on current market data
-4. Be concise and factual in your analysis
+3. Categorize components into: valuable scrap metals, components for resale, general recyclables, and hazardous components
+4. Provide estimated resale values based on current market data
+5. Be concise and factual in your analysis
 
 Return your analysis in a structured JSON format with the following schema:
 {
@@ -142,9 +143,30 @@ Return your analysis in a structured JSON format with the following schema:
   ""components"": [
     {
       ""name"": ""string"",
-      ""material"": ""string"",
+      ""material"": ""string (e.g., aluminum, copper, steel, plastic, etc.)"",
       ""estimatedWeight"": ""string"",
       ""estimatedValue"": ""string""
+    }
+  ],
+  ""resaleComponents"": [
+    {
+      ""name"": ""string (e.g., circuit board, motor, transformer)"",
+      ""description"": ""string"",
+      ""estimatedValue"": ""string""
+    }
+  ],
+  ""generalRecyclables"": [
+    {
+      ""name"": ""string (e.g., plastic casing, glass, wiring)"",
+      ""material"": ""string"",
+      ""recyclingNotes"": ""string""
+    }
+  ],
+  ""hazardousComponents"": [
+    {
+      ""name"": ""string (e.g., capacitor, battery, mercury switch)"",
+      ""hazardType"": ""string (e.g., electrical, chemical, radioactive)"",
+      ""safetyWarning"": ""string (specific handling instructions)""
     }
   ],
   ""marketPrice"": {
@@ -255,7 +277,10 @@ Return your analysis in a structured JSON format with the following schema:
                         ItemUrl = i.ItemUrl,
                         ImageUrl = i.ImageUrl
                     }).ToList(),
-                    MatchedRecyclers = new List<MatchedRecyclerDto>()
+                    MatchedRecyclers = new List<MatchedRecyclerDto>(),
+                    ResaleComponents = new List<ResaleComponent>(),
+                    GeneralRecyclables = new List<GeneralRecyclable>(),
+                    HazardousComponents = new List<HazardousComponent>()
                 };
 
                 if (analysisJson.RootElement.TryGetProperty("specifications", out var specs))
@@ -285,6 +310,45 @@ Return your analysis in a structured JSON format with the following schema:
                     result.MarketPrice.AveragePrice = GetJsonString(marketPrice, "averagePrice") ?? "";
                     result.MarketPrice.PriceRange = GetJsonString(marketPrice, "priceRange") ?? "";
                     result.MarketPrice.MarketTrend = GetJsonString(marketPrice, "marketTrend") ?? "";
+                }
+
+                if (analysisJson.RootElement.TryGetProperty("resaleComponents", out var resaleComponents))
+                {
+                    foreach (var comp in resaleComponents.EnumerateArray())
+                    {
+                        result.ResaleComponents.Add(new ResaleComponent
+                        {
+                            Name = GetJsonString(comp, "name") ?? "",
+                            Description = GetJsonString(comp, "description") ?? "",
+                            EstimatedValue = GetJsonString(comp, "estimatedValue") ?? ""
+                        });
+                    }
+                }
+
+                if (analysisJson.RootElement.TryGetProperty("generalRecyclables", out var generalRecyclables))
+                {
+                    foreach (var item in generalRecyclables.EnumerateArray())
+                    {
+                        result.GeneralRecyclables.Add(new GeneralRecyclable
+                        {
+                            Name = GetJsonString(item, "name") ?? "",
+                            Material = GetJsonString(item, "material") ?? "",
+                            RecyclingNotes = GetJsonString(item, "recyclingNotes") ?? ""
+                        });
+                    }
+                }
+
+                if (analysisJson.RootElement.TryGetProperty("hazardousComponents", out var hazardousComponents))
+                {
+                    foreach (var hazard in hazardousComponents.EnumerateArray())
+                    {
+                        result.HazardousComponents.Add(new HazardousComponent
+                        {
+                            Name = GetJsonString(hazard, "name") ?? "",
+                            HazardType = GetJsonString(hazard, "hazardType") ?? "",
+                            SafetyWarning = GetJsonString(hazard, "safetyWarning") ?? ""
+                        });
+                    }
                 }
 
                 return result;
@@ -528,6 +592,61 @@ Return your analysis in a structured JSON format with the following schema:
             {
                 _logger.LogError(ex, "Error finding matching recyclers");
                 return new List<MatchedRecyclerDto>();
+            }
+        }
+
+        public async Task<ComponentPriceResult> GetComponentPriceAsync(string clientId, string componentName)
+        {
+            try
+            {
+                _logger.LogInformation("Fetching price for component: {ComponentName}", componentName);
+
+                var ebayResponse = await _ebayApiService.SearchItemsByKeywordAsync(clientId, componentName);
+                var ebayData = JsonDocument.Parse(ebayResponse);
+                var productInfo = await ExtractProductInfoFromEbayAsync(ebayData, isImageSearch: false);
+
+                var result = new ComponentPriceResult
+                {
+                    ComponentName = componentName,
+                    Listings = new List<EbayListingDto>()
+                };
+
+                if (productInfo.Items.Any())
+                {
+                    var avgPrice = productInfo.Items.Average(i => i.Price);
+                    var minPrice = productInfo.Items.Min(i => i.Price);
+                    var maxPrice = productInfo.Items.Max(i => i.Price);
+
+                    result.AveragePrice = $"${avgPrice:F2}";
+                    result.PriceRange = $"${minPrice:F2} - ${maxPrice:F2}";
+                    result.Listings = productInfo.Items.Take(3).Select(i => new EbayListingDto
+                    {
+                        Title = i.Title,
+                        Price = i.Price,
+                        Currency = i.Currency,
+                        Condition = i.Condition,
+                        ItemUrl = i.ItemUrl,
+                        ImageUrl = i.ImageUrl
+                    }).ToList();
+                }
+                else
+                {
+                    result.AveragePrice = "No prices available";
+                    result.PriceRange = "No prices available";
+                }
+
+                return result;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error fetching component price for {ComponentName}", componentName);
+                return new ComponentPriceResult
+                {
+                    ComponentName = componentName,
+                    AveragePrice = "Error fetching price",
+                    PriceRange = "Error fetching price",
+                    Listings = new List<EbayListingDto>()
+                };
             }
         }
     }

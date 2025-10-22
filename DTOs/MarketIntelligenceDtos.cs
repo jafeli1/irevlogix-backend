@@ -18,6 +18,30 @@ namespace irevlogix_backend.DTOs
         public string Summary { get; set; } = "";
         public List<EbayListingDto> EbayListings { get; set; } = new();
         public List<MatchedRecyclerDto> MatchedRecyclers { get; set; } = new();
+        public List<ResaleComponent> ResaleComponents { get; set; } = new();
+        public List<GeneralRecyclable> GeneralRecyclables { get; set; } = new();
+        public List<HazardousComponent> HazardousComponents { get; set; } = new();
+    }
+
+    public class ResaleComponent
+    {
+        public string Name { get; set; } = "";
+        public string Description { get; set; } = "";
+        public string EstimatedValue { get; set; } = "";
+    }
+
+    public class GeneralRecyclable
+    {
+        public string Name { get; set; } = "";
+        public string Material { get; set; } = "";
+        public string RecyclingNotes { get; set; } = "";
+    }
+
+    public class HazardousComponent
+    {
+        public string Name { get; set; } = "";
+        public string HazardType { get; set; } = "";
+        public string SafetyWarning { get; set; } = "";
     }
 
     public class RecyclableComponent
@@ -60,5 +84,18 @@ namespace irevlogix_backend.DTOs
     {
         public List<string> Materials { get; set; } = new();
         public List<string> Components { get; set; } = new();
+    }
+
+    public class ComponentPriceRequest
+    {
+        public string ComponentName { get; set; } = "";
+    }
+
+    public class ComponentPriceResult
+    {
+        public string ComponentName { get; set; } = "";
+        public string AveragePrice { get; set; } = "";
+        public string PriceRange { get; set; } = "";
+        public List<EbayListingDto> Listings { get; set; } = new();
     }
 }
