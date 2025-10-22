@@ -18,6 +18,36 @@ namespace irevlogix_backend.DTOs
         public string Summary { get; set; } = "";
         public List<EbayListingDto> EbayListings { get; set; } = new();
         public List<MatchedRecyclerDto> MatchedRecyclers { get; set; } = new();
+        public VisualizationData? ChartData { get; set; }
+    }
+
+    public class VisualizationData
+    {
+        public ComponentCompositionChart ComponentComposition { get; set; } = new();
+        public MetalCompositionChart MetalComposition { get; set; } = new();
+        public ValueDistributionChart ValueDistribution { get; set; } = new();
+    }
+
+    public class ComponentCompositionChart
+    {
+        public List<ChartDataPoint> Data { get; set; } = new();
+    }
+
+    public class MetalCompositionChart
+    {
+        public List<ChartDataPoint> Data { get; set; } = new();
+    }
+
+    public class ValueDistributionChart
+    {
+        public List<ChartDataPoint> Data { get; set; } = new();
+    }
+
+    public class ChartDataPoint
+    {
+        public string Label { get; set; } = "";
+        public double Value { get; set; }
+        public string Color { get; set; } = "";
     }
 
     public class RecyclableComponent
