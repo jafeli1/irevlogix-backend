@@ -31,6 +31,7 @@ builder.Services.AddScoped<IPasswordValidationService, PasswordValidationService
 builder.Services.AddScoped<IEmailService, EmailService>();
 builder.Services.AddScoped<IReportGenerationService, ReportGenerationService>();
 builder.Services.AddHostedService<ReportSchedulingService>();
+builder.Services.AddHostedService<MarketDataRefreshService>();
 
 // Configure JWT Authentication
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
