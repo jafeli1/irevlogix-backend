@@ -44,6 +44,8 @@ namespace irevlogix_backend.Services
 
             gptAnalysis.MatchedRecyclers = await FindMatchingRecyclersAsync(clientId, userId, gptAnalysis.Components);
 
+            gptAnalysis.ChartData = GenerateVisualizationData(gptAnalysis);
+
             await SaveProductAnalysisAsync(clientId, gptAnalysis, userId, productDescription: null, imagePath: null);
 
             return gptAnalysis;
@@ -61,6 +63,8 @@ namespace irevlogix_backend.Services
             var gptAnalysis = await AnalyzeWithGPTAsync(productInfo, textDescription: description);
 
             gptAnalysis.MatchedRecyclers = await FindMatchingRecyclersAsync(clientId, userId, gptAnalysis.Components);
+
+            gptAnalysis.ChartData = GenerateVisualizationData(gptAnalysis);
 
             await SaveProductAnalysisAsync(clientId, gptAnalysis, userId, productDescription: description, imagePath: null);
 
@@ -529,6 +533,188 @@ Return your analysis in a structured JSON format with the following schema:
                 _logger.LogError(ex, "Error finding matching recyclers");
                 return new List<MatchedRecyclerDto>();
             }
+        }
+
+        private VisualizationData GenerateVisualizationData(ProductAnalysisResult analysis)
+        {
+            var visualizationData = new VisualizationData();
+
+            var materialGroups = new Dictionary<string, double>();
+            foreach (var component in analysis.Components)
+            {
+                var material = component.Material.ToLower();
+                
+                string category;
+                if (material.Contains("aluminum") || material.Contains("copper") || material.Contains("steel") || 
+                    material.Contains("iron") || material.Contains("brass") || material.Contains("bronze") || 
+                    material.Contains("zinc") || material.Contains("lead") || material.Contains("nickel") || 
+                    material.Contains("tin") || material.Contains("gold") || material.Contains("silver"))
+                {
+                    category = "Metals";
+                }
+                else if (material.Contains("plastic") || material.Contains("polymer") || material.Contains("resin"))
+                {
+                    category = "Plastics";
+                }
+                else if (material.Contains("glass"))
+                {
+                    category = "Glass";
+                }
+                else if (material.Contains("electronic") || material.Contains("circuit") || material.Contains("pcb"))
+                {
+                    category = "Electronics";
+                }
+                else
+                {
+                    category = "Other Materials";
+                }
+
+                if (!materialGroups.ContainsKey(category))
+                {
+                    materialGroups[category] = 0;
+                }
+                materialGroups[category]++;
+            }
+
+            var colors = new Dictionary<string, string>
+            {
+                { "Metals", "#3b82f6" },
+                { "Plastics", "#10b981" },
+                { "Glass", "#8b5cf6" },
+                { "Electronics", "#f59e0b" },
+                { "Other Materials", "#6b7280" }
+            };
+
+            foreach (var group in materialGroups)
+            {
+                visualizationData.ComponentComposition.Data.Add(new ChartDataPoint
+                {
+                    Label = group.Key,
+                    Value = group.Value,
+                    Color = colors.ContainsKey(group.Key) ? colors[group.Key] : "#6b7280"
+                });
+            }
+
+            var metalComponents = analysis.Components
+                .Where(c => c.Material.ToLower().Contains("aluminum") || 
+                           c.Material.ToLower().Contains("copper") || 
+                           c.Material.ToLower().Contains("steel") || 
+                           c.Material.ToLower().Contains("iron") || 
+                           c.Material.ToLower().Contains("brass") || 
+                           c.Material.ToLower().Contains("bronze") || 
+                           c.Material.ToLower().Contains("gold") || 
+                           c.Material.ToLower().Contains("silver"))
+                .ToList();
+
+            if (metalComponents.Any())
+            {
+                var metalWeights = new Dictionary<string, double>();
+                double totalWeight = 0;
+
+                foreach (var metal in metalComponents)
+                {
+                    var weightStr = metal.EstimatedWeight.ToLower().Replace("lbs", "").Replace("lb", "").Replace("~", "").Trim();
+                    if (double.TryParse(weightStr, out var weight))
+                    {
+                        var materialName = metal.Material;
+                        if (!metalWeights.ContainsKey(materialName))
+                        {
+                            metalWeights[materialName] = 0;
+                        }
+                        metalWeights[materialName] += weight;
+                        totalWeight += weight;
+                    }
+                }
+
+                var metalColors = new Dictionary<string, string>
+                {
+                    { "aluminum", "#94a3b8" },
+                    { "copper", "#ea580c" },
+                    { "steel", "#475569" },
+                    { "iron", "#1e293b" },
+                    { "brass", "#fbbf24" },
+                    { "bronze", "#92400e" },
+                    { "gold", "#fcd34d" },
+                    { "silver", "#e5e7eb" }
+                };
+
+                foreach (var metalWeight in metalWeights)
+                {
+                    var percentage = totalWeight > 0 ? (metalWeight.Value / totalWeight) * 100 : 0;
+                    var colorKey = metalWeight.Key.ToLower();
+                    var color = metalColors.FirstOrDefault(c => colorKey.Contains(c.Key)).Value ?? "#6b7280";
+
+                    visualizationData.MetalComposition.Data.Add(new ChartDataPoint
+                    {
+                        Label = metalWeight.Key,
+                        Value = Math.Round(percentage, 2),
+                        Color = color
+                    });
+                }
+            }
+
+            var componentValues = new Dictionary<string, double>
+            {
+                { "Scrap Metal Value", 0 },
+                { "Resale Value", 0 },
+                { "Recyclable Value", 0 }
+            };
+
+            foreach (var component in analysis.Components)
+            {
+                var valueStr = component.EstimatedValue.Replace("$", "").Replace("~", "").Trim();
+                
+                var parts = valueStr.Split('-');
+                double value = 0;
+                if (parts.Length == 2)
+                {
+                    if (double.TryParse(parts[0], out var min) && double.TryParse(parts[1], out var max))
+                    {
+                        value = (min + max) / 2;
+                    }
+                }
+                else if (double.TryParse(valueStr, out var singleValue))
+                {
+                    value = singleValue;
+                }
+
+                var material = component.Material.ToLower();
+                if (material.Contains("aluminum") || material.Contains("copper") || material.Contains("steel") || 
+                    material.Contains("iron") || material.Contains("brass") || material.Contains("metal"))
+                {
+                    componentValues["Scrap Metal Value"] += value;
+                }
+                else if (material.Contains("electronic") || material.Contains("circuit") || material.Contains("motor"))
+                {
+                    componentValues["Resale Value"] += value;
+                }
+                else
+                {
+                    componentValues["Recyclable Value"] += value;
+                }
+            }
+
+            var valueColors = new Dictionary<string, string>
+            {
+                { "Scrap Metal Value", "#ef4444" },
+                { "Resale Value", "#22c55e" },
+                { "Recyclable Value", "#3b82f6" }
+            };
+
+            foreach (var valueType in componentValues)
+            {
+                if (valueType.Value > 0)
+                {
+                    visualizationData.ValueDistribution.Data.Add(new ChartDataPoint
+                    {
+                        Label = valueType.Key,
+                        Value = Math.Round(valueType.Value, 2),
+                        Color = valueColors[valueType.Key]
+                    });
+                }
+            }
+
+            return visualizationData;
         }
     }
 
