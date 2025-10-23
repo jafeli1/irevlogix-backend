@@ -472,6 +472,7 @@ namespace irevlogix_backend.Data
 
             modelBuilder.Entity<ProductAnalysis>(entity =>
             {
+                entity.ToTable("ProductAnalysis");
                 entity.HasKey(e => e.Id);
                 entity.Property(e => e.ProductName).IsRequired().HasMaxLength(500);
                 entity.Property(e => e.Brand).HasMaxLength(200);
