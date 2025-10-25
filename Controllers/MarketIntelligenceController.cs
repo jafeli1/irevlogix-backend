@@ -67,5 +67,42 @@ namespace irevlogix_backend.Controllers
                 return StatusCode(500, new { message = "An error occurred while analyzing the product", error = ex.Message });
             }
         }
+
+        [HttpPost("upload")]
+        public async Task<ActionResult<object>> UploadProductImage(IFormFile file)
+        {
+            try
+            {
+                var clientId = User.FindFirst("ClientId")?.Value;
+                if (string.IsNullOrEmpty(clientId))
+                {
+                    _logger.LogWarning("ClientId not found in user claims");
+                    return Unauthorized(new { message = "Client ID not found" });
+                }
+
+                if (file == null || file.Length == 0)
+                    return BadRequest("No file uploaded");
+
+                var uploadsPath = Path.Combine("upload", clientId, "MarketIntelligence");
+                Directory.CreateDirectory(uploadsPath);
+
+                var fileName = $"{Guid.NewGuid()}_{file.FileName}";
+                var filePath = Path.Combine(uploadsPath, fileName);
+
+                using (var stream = new FileStream(filePath, FileMode.Create))
+                {
+                    await file.CopyToAsync(stream);
+                }
+
+                _logger.LogInformation("Uploaded market intelligence image for client: {ClientId}, file: {FileName}", clientId, fileName);
+
+                return Ok(new { fileName = file.FileName, filePath = fileName });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error uploading market intelligence image");
+                return StatusCode(500, "Internal server error");
+            }
+        }
     }
 }
