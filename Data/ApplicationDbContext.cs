@@ -57,6 +57,7 @@ namespace irevlogix_backend.Data
         public DbSet<ScheduledReport> ScheduledReports { get; set; }
         public DbSet<Recycler> Recyclers { get; set; }
         public DbSet<ProductAnalysis> ProductAnalyses { get; set; }
+        public DbSet<ProductAnalysisContactOptIn> ProductAnalysisContactOptIns { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -492,6 +493,25 @@ namespace irevlogix_backend.Data
                 entity.HasIndex(e => e.LastMarketRefresh);
                 entity.HasIndex(e => e.IsActive);
                 entity.HasIndex(e => e.ProductName);
+            });
+
+            modelBuilder.Entity<ProductAnalysisContactOptIn>(entity =>
+            {
+                entity.ToTable("ProductAnalysisContactOptIn");
+                entity.HasKey(e => e.Id);
+                entity.Property(e => e.UserId).IsRequired();
+                entity.Property(e => e.UploadedPhotoPath).HasMaxLength(1000);
+                entity.Property(e => e.DetailedDescription).HasColumnType("text");
+                entity.Property(e => e.ProductSummary).HasColumnType("text");
+                entity.Property(e => e.SecondaryMarketPriceAnalysis).HasColumnType("text");
+                entity.Property(e => e.RecyclersMatched).HasColumnType("text");
+                entity.Property(e => e.ProductAnalysisVisualizationData).HasColumnType("jsonb");
+                entity.Property(e => e.OptIn).IsRequired().HasDefaultValue(false);
+                entity.Property(e => e.PreferredContactEmail).HasMaxLength(200);
+                entity.Property(e => e.PreferredContactPhone).HasMaxLength(200);
+                entity.HasIndex(e => e.UserId);
+                entity.HasIndex(e => e.OptIn);
+                entity.HasIndex(e => e.DateCreated);
             });
 
         }
